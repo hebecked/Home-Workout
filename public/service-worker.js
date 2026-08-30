@@ -1,4 +1,4 @@
-const CACHE = 'home-workout-v1';
+const CACHE = 'home-workout-v2';
 const APP_SHELL = ['/', '/index.html', '/manifest.webmanifest', '/icon.svg', '/maskable-icon.svg'];
 
 self.addEventListener('install', (event) => {

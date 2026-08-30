@@ -5,7 +5,7 @@ import { clearWorkoutSession, loadPlans, loadWorkoutSession, savePlan, saveWorko
 import { validateWorkoutPlan, type WorkoutPlan } from '../core/plan-schema';
 import { createWorkoutSession, dispatchWorkout, getWorkoutSnapshot, type WorkoutSession } from '../core/workout-engine';
 
-const APP_CONFIG: { githubUrl: string } = { githubUrl: '' };
+const APP_CONFIG: { githubUrl: string } = { githubUrl: 'https://github.com/hebecked/Home-Workout' };
 const escapeHtml = (value: string): string => value.replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[character]!);
 const formatClock = (milliseconds: number): string => {
   const seconds = Math.max(0, Math.ceil(milliseconds / 1000));
@@ -44,11 +44,16 @@ export class HomeWorkoutApp {
     const savedPlansLabel = this.route() === 'home' ? 'Saved routines' : 'My Plans · Meine Pläne';
     this.root.innerHTML = `
       <header class="site-header">
-        <a href="#home" class="brand" aria-label="Home Workout home"><span class="brand-mark">HW</span><span>Home Workout</span></a>
+        <a href="#home" class="brand" aria-label="Home Workout"><span class="brand-mark">HW</span><span>Home Workout</span></a>
         <nav aria-label="Primary"><a href="#instructions" aria-label="Workout guide">Instructions</a><a href="#plans" aria-label="${savedPlansLabel}">My Plans</a></nav>
       </header>
       <main id="main" tabindex="-1">${content}</main>
       <footer><span>Private by design · Offline ready</span><span>PolyForm Perimeter 1.0.0</span></footer>`;
+    this.root.querySelector<HTMLAnchorElement>('.brand')?.addEventListener('click', (event) => {
+      if (this.route() !== 'workout' || !this.session) return;
+      event.preventDefault();
+      this.requestAbortWorkout();
+    });
   }
 
   private render(): void {
@@ -64,6 +69,16 @@ export class HomeWorkoutApp {
 
   private renderHome(): void {
     const title = this.activePlan.name.en ?? Object.values(this.activePlan.name)[0] ?? 'Workout';
+    const previews = this.activePlan.exercises.map((exercise, index) => {
+      const definition = EXERCISES_BY_ID.get(exercise.exerciseId);
+      const englishName = exercise.translations.en?.name ?? Object.values(exercise.translations)[0]?.name ?? exercise.exerciseId;
+      const germanName = exercise.translations.de?.name;
+      return `<article class="exercise-preview-card">
+        <span class="preview-number">${String(index + 1).padStart(2, '0')}</span>
+        <img src="${definition?.illustration ?? '/icon.svg'}" alt="${escapeHtml([englishName, germanName].filter(Boolean).join(' · '))}" loading="eager">
+        <div><strong>${escapeHtml(englishName)}</strong>${germanName ? `<span>${escapeHtml(germanName)}</span>` : ''}</div>
+      </article>`;
+    }).join('');
     this.shell(`
       <section class="home-grid">
         <div class="intro-block">
@@ -80,6 +95,10 @@ export class HomeWorkoutApp {
           </div>
           <button class="primary start-button" data-action="start">START WORKOUT <span aria-hidden="true">→</span></button>
         </article>
+      </section>
+      <section class="exercise-preview" aria-labelledby="exercise-preview-title">
+        <div class="preview-heading"><div><p class="eyebrow">LOCAL ILLUSTRATIONS · LOKALE GRAFIKEN</p><h2 id="exercise-preview-title">Inside this workout · Deine Übungen</h2></div><span>${this.activePlan.exercises.length} illustrated movements</span></div>
+        <div class="exercise-preview-grid">${previews}</div>
       </section>
       <nav class="action-grid" aria-label="Workout options">
         <a class="action-card" href="#instructions"><span class="action-number">01</span><strong>Instructions · Anleitung</strong><span>How the flow works</span></a>
@@ -98,6 +117,31 @@ export class HomeWorkoutApp {
     saveWorkoutSession(localStorage, this.session);
     location.hash = 'workout';
     this.render();
+  }
+
+  private requestAbortWorkout(): void {
+    const existingDialog = document.querySelector<HTMLDialogElement>('[data-abort-dialog]');
+    if (existingDialog) return;
+    const dialog = document.createElement('dialog');
+    dialog.dataset.abortDialog = '';
+    dialog.setAttribute('aria-labelledby', 'abort-workout-title');
+    dialog.innerHTML = `<form method="dialog">
+      <p class="eyebrow">END SESSION · TRAINING BEENDEN</p>
+      <h2 id="abort-workout-title">End workout · Training beenden?</h2>
+      <p>Your current progress will be cleared and you will return to the start page.<br>Dein aktueller Fortschritt wird gelöscht und du kehrst zur Startseite zurück.</p>
+      <div class="dialog-actions"><button value="cancel" autofocus>Continue workout · Training fortsetzen</button><button class="danger" value="abort" aria-label="Training beenden">End workout · Training beenden</button></div>
+    </form>`;
+    document.body.append(dialog);
+    dialog.addEventListener('close', () => {
+      if (dialog.returnValue === 'abort') {
+        clearWorkoutSession(localStorage);
+        this.session = null;
+        location.hash = 'home';
+        this.render();
+      }
+      dialog.remove();
+    }, { once: true });
+    dialog.showModal();
   }
 
   private renderWorkout(): void {
@@ -133,7 +177,8 @@ export class HomeWorkoutApp {
             <button data-action="previous" aria-label="Previous · Zurück">← <span>Previous</span></button>
             <button class="pause" data-action="pause" aria-label="${snapshot.paused ? 'Resume · Fortsetzen' : 'Pause'}">${snapshot.paused ? '▶' : 'Ⅱ'}</button>
             <button data-action="next" aria-label="Next · Weiter"><span>Next</span> →</button>
-          </div>`}
+          </div>
+          <button class="abort-workout" data-action="abort">Abort workout · Training beenden</button>`}
       </section>`);
 
     const act = (name: string, action: Parameters<typeof dispatchWorkout>[2]): void => {
@@ -152,6 +197,7 @@ export class HomeWorkoutApp {
       act('reps-up', { type: 'SET_REPETITIONS', value: current + 1 });
     }
     this.root.querySelector('[data-action="finish"]')?.addEventListener('click', () => { clearWorkoutSession(localStorage); this.session = null; location.hash = 'home'; });
+    this.root.querySelector('[data-action="abort"]')?.addEventListener('click', () => this.requestAbortWorkout());
     if (snapshot.phase !== 'completed' && !snapshot.paused) this.tickHandle = window.setInterval(() => this.renderWorkout(), 500);
   }
 

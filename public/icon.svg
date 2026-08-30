@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Home Workout">
-  <rect width="512" height="512" rx="112" fill="#17231d"/>
-  <path d="M112 260 256 140l144 120v124a28 28 0 0 1-28 28H140a28 28 0 0 1-28-28Z" fill="#e9f56f"/>
-  <path d="M167 286h36v-28h28v28h50v-28h28v28h36v28h-36v28h-28v-28h-50v28h-28v-28h-36Z" fill="#17231d"/>
+  <rect width="512" height="512" rx="112" fill="#18233a"/>
+  <path d="M112 260 256 140l144 120v124a28 28 0 0 1-28 28H140a28 28 0 0 1-28-28Z" fill="#ff6b4a"/>
+  <path d="M167 286h36v-28h28v28h50v-28h28v28h36v28h-36v28h-28v-28h-50v28h-28v-28h-36Z" fill="#18233a"/>
 </svg>

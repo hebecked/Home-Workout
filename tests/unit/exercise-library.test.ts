@@ -10,7 +10,7 @@ const requiredIds = [
   'glute-bridge', 'single-leg-glute-bridge', 'calf-raise', 'wall-sit',
   'push-up', 'incline-push-up', 'knee-push-up', 'pike-push-up',
   'pull-up', 'assisted-pull-up', 'chin-up', 'resistance-band-row',
-  'resistance-band-pull-apart', 'dead-bug', 'bird-dog', 'plank', 'side-plank',
+  'resistance-band-pull-apart', 'dead-bug', 'lying-leg-raise', 'bird-dog', 'plank', 'side-plank',
   'mountain-climber', 'hollow-hold', 'jumping-jack', 'step-jack', 'high-knees',
   'marching-in-place', 'burpee', 'squat-to-reach'
 ];
@@ -59,9 +59,9 @@ describe('30 Minute Full Body default workout', () => {
     expect(DEFAULT_WORKOUT.rounds).toBe(3);
     expect(DEFAULT_WORKOUT.restBetweenExercises).toBe(20);
     expect(DEFAULT_WORKOUT.restBetweenRounds).toBe(60);
-    expect(DEFAULT_WORKOUT.exercises).toHaveLength(7);
+    expect(DEFAULT_WORKOUT.exercises).toHaveLength(8);
     expect(DEFAULT_WORKOUT.exercises.map(({ exerciseId }) => exerciseId)).toEqual([
-      'squat', 'push-up', 'pull-up', 'reverse-lunge', 'glute-bridge', 'dead-bug', 'jumping-jack'
+      'squat', 'push-up', 'pull-up', 'reverse-lunge', 'glute-bridge', 'dead-bug', 'lying-leg-raise', 'jumping-jack'
     ]);
   });
 

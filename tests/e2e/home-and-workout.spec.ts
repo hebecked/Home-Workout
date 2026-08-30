@@ -6,7 +6,7 @@ test('home presents the default plan and all primary destinations', async ({ pag
   await expect(page.getByRole('heading', { level: 1 })).toContainText(/Home Workout/i);
   await expect(page.getByText(/30 Minute Full Body/i)).toBeVisible();
   await expect(page.getByText(/3\s+(rounds|Runden)/i)).toBeVisible();
-  await expect(page.getByText(/7\s+(exercises|Übungen)/i)).toBeVisible();
+  await expect(page.getByText(/8\s+(exercises|Übungen)/i)).toBeVisible();
   await expect(page.getByRole('button', { name: /start workout/i })).toBeVisible();
   await expect(page.getByRole('link', { name: /instructions|Anleitung/i })).toBeVisible();
   await expect(page.getByRole('link', { name: /create new plan|neuen Plan/i })).toBeVisible();

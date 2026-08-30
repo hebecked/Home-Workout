@@ -34,6 +34,7 @@ const seeds: Seed[] = [
   ['resistance-band-row', 'pull', 'Bandrudern', 'Resistance Band Row', 'beginner', 'repetitions', ['resistance-band-pull-apart'], ['assisted-pull-up']],
   ['resistance-band-pull-apart', 'pull', 'Band auseinanderziehen', 'Resistance Band Pull-Apart', 'beginner', 'repetitions', [], ['resistance-band-row']],
   ['dead-bug', 'core', 'Käfer', 'Dead Bug', 'beginner', 'repetitions', [], ['hollow-hold']],
+  ['lying-leg-raise', 'core', 'Beinheben im Liegen', 'Lying Leg Raises', 'beginner', 'repetitions', ['dead-bug'], ['hollow-hold']],
   ['bird-dog', 'core', 'Vierfüßler diagonal', 'Bird Dog', 'beginner', 'repetitions', ['dead-bug'], ['plank']],
   ['plank', 'core', 'Unterarmstütz', 'Plank', 'intermediate', 'duration', ['dead-bug'], ['side-plank', 'hollow-hold']],
   ['side-plank', 'core', 'Seitstütz', 'Side Plank', 'intermediate', 'duration', ['plank'], ['hollow-hold']],
@@ -58,8 +59,8 @@ export const EXERCISE_LIBRARY: ExerciseDefinition[] = seeds.map(([id, category, 
   difficulty, type,
   defaultTarget: type === 'duration' ? { seconds: 30 } : { min: 8, max: 12, unit: id.includes('lunge') || id === 'bird-dog' || id === 'dead-bug' ? 'per-side' : 'repetitions' },
   translations: {
-    de: { name: de, instructions: type === 'duration' ? 'Halte eine ruhige, kontrollierte Position und atme gleichmäßig.' : 'Bewege dich kontrolliert und halte den Rumpf stabil.' },
-    en: { name: en, instructions: type === 'duration' ? 'Hold a calm, controlled position and breathe steadily.' : 'Move with control and keep your core stable.' }
+    de: { name: de, instructions: id === 'lying-leg-raise' ? 'Lege dich auf den Rücken, presse den unteren Rücken in den Boden und hebe die gestreckten Beine kontrolliert an und ab.' : type === 'duration' ? 'Halte eine ruhige, kontrollierte Position und atme gleichmäßig.' : 'Bewege dich kontrolliert und halte den Rumpf stabil.' },
+    en: { name: en, instructions: id === 'lying-leg-raise' ? 'Lie on your back, press your lower back into the floor, and raise and lower straight legs with control.' : type === 'duration' ? 'Hold a calm, controlled position and breathe steadily.' : 'Move with control and keep your core stable.' }
   },
   illustration: `/assets/exercises/${id}.svg`,
   variants: { easier, harder }

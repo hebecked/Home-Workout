@@ -30,6 +30,7 @@ export const DEFAULT_WORKOUT: WorkoutPlan = {
     slot('reverse-lunge', { min: 8, max: 12, unit: 'per-side' }),
     slot('glute-bridge', { min: 12, max: 20, unit: 'repetitions' }),
     slot('dead-bug', { min: 6, max: 10, unit: 'per-side' }),
+    slot('lying-leg-raise', { min: 8, max: 12, unit: 'repetitions' }, ['dead-bug']),
     slot('jumping-jack', { seconds: 30 }, ['step-jack'])
   ]
 };
