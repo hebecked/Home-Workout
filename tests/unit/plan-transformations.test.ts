@@ -26,6 +26,13 @@ describe('immutable plan transformations', () => {
     expect(changed).not.toBe(original);
   });
 
+  it.each([-1, 0.5, 3])('rejects invalid add positions (%s)', (index) => {
+    const original = clonePlan();
+    const exercise = { ...structuredClone(original.exercises[0]!), id: 'new-slot' };
+
+    expect(() => addPlanExercise(original, exercise, index)).toThrow(RangeError);
+  });
+
   it('removes by slot id and refuses to create an empty workout', () => {
     const original = clonePlan();
     const changed = removePlanExercise(original, 'plan-exercise-squat');
@@ -66,6 +73,14 @@ describe('immutable plan transformations', () => {
     expect(duration.exercises[0]!.target).toStrictEqual({ min: 10, max: 15, unit: 'per-side' });
     expect(duration.exercises[1]!.target).toStrictEqual({ seconds: 45 });
     expect(original.exercises[0]!.target).toStrictEqual({ min: 8, max: 12, unit: 'repetitions' });
+  });
+
+  it('refuses to update a target for an unknown exercise slot', () => {
+    expect(() => updatePlanExerciseTarget(
+      clonePlan(),
+      'missing-slot',
+      { seconds: 30 }
+    )).toThrow(/not found/i);
   });
 
   it('allows either language to be hidden and preserves caller order', () => {

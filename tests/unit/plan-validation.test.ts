@@ -74,4 +74,125 @@ describe('validateWorkoutPlan', () => {
     expect(() => validateWorkoutPlan({ ...clonePlan(), surprise: true })).toThrow(PlanValidationError);
     expect(() => validateWorkoutPlan({ ...clonePlan(), rounds: '2' })).toThrow(PlanValidationError);
   });
+
+  it.each([
+    ['non-object language entries', 'languages.0', (plan: ReturnType<typeof clonePlan>) => {
+      Reflect.set(plan, 'languages', [null]);
+    }],
+    ['unexpected language metadata', 'languages.0', (plan: ReturnType<typeof clonePlan>) => {
+      Reflect.set(plan.languages[0]!, 'direction', 'ltr');
+    }],
+    ['unsafe language labels', 'languages.0.label', (plan: ReturnType<typeof clonePlan>) => {
+      plan.languages[0]!.label = '<b>French</b>';
+    }],
+    ['unknown plan-name translations', 'name', (plan: ReturnType<typeof clonePlan>) => {
+      plan.name.es = 'Plan';
+    }],
+    ['non-object exercise entries', 'exercises.0', (plan: ReturnType<typeof clonePlan>) => {
+      Reflect.set(plan.exercises, 0, null);
+    }],
+    ['unexpected exercise fields', 'exercises.0', (plan: ReturnType<typeof clonePlan>) => {
+      Reflect.set(plan.exercises[0]!, 'html', '<b>unsafe</b>');
+    }],
+    ['blank exercise slot ids', 'exercises.0.id', (plan: ReturnType<typeof clonePlan>) => {
+      plan.exercises[0]!.id = ' ';
+    }],
+    ['blank library exercise ids', 'exercises.0.exerciseId', (plan: ReturnType<typeof clonePlan>) => {
+      plan.exercises[0]!.exerciseId = '';
+    }],
+    ['unknown exercise types', 'exercises.0.type', (plan: ReturnType<typeof clonePlan>) => {
+      Reflect.set(plan.exercises[0]!, 'type', 'distance');
+    }],
+    ['non-object targets', 'exercises.0.target', (plan: ReturnType<typeof clonePlan>) => {
+      Reflect.set(plan.exercises[0]!, 'target', null);
+    }],
+    ['non-object translations', 'exercises.0.translations.fr', (plan: ReturnType<typeof clonePlan>) => {
+      Reflect.set(plan.exercises[0]!, 'translations', null);
+    }],
+    ['unknown exercise-translation languages', 'exercises.0.translations', (plan: ReturnType<typeof clonePlan>) => {
+      plan.exercises[0]!.translations.es = { name: 'Sentadilla', instructions: 'Baja.' };
+    }],
+    ['non-array alternative ids', 'exercises.0.alternativeExerciseIds', (plan: ReturnType<typeof clonePlan>) => {
+      Reflect.set(plan.exercises[0]!, 'alternativeExerciseIds', 'wall-sit');
+    }],
+    ['unsafe alternative ids', 'exercises.0.alternativeExerciseIds', (plan: ReturnType<typeof clonePlan>) => {
+      plan.exercises[0]!.alternativeExerciseIds = ['<script>'];
+    }]
+  ])('rejects structurally invalid nested data: %s', (_label, expectedPath, mutate) => {
+    const plan = clonePlan();
+    mutate(plan);
+
+    try {
+      validateWorkoutPlan(plan);
+      throw new Error('Expected validation to fail');
+    } catch (error) {
+      expect(error).toBeInstanceOf(PlanValidationError);
+      expect((error as PlanValidationError).issues.map(({ path }) => path)).toContain(expectedPath);
+    }
+  });
+
+  it('accepts inclusive numeric boundaries used by one-round and zero-rest plans', () => {
+    const plan = clonePlan();
+    plan.rounds = 1;
+    plan.restBetweenExercises = 0;
+    plan.restBetweenRounds = 0;
+    plan.exercises[0]!.target = { min: 1, max: 1, unit: 'repetitions' };
+    plan.exercises[1]!.target = { seconds: 1 };
+
+    expect(validateWorkoutPlan(plan)).toStrictEqual(plan);
+  });
+
+  it.each([
+    ['id', 'must be non-empty safe text', (plan: ReturnType<typeof clonePlan>) => { plan.id = ' '; }],
+    ['languages.0.label', 'must be non-empty safe text', (plan: ReturnType<typeof clonePlan>) => {
+      plan.languages[0]!.label = 'Français > French';
+    }],
+    ['name.fr', 'is required and must be safe text', (plan: ReturnType<typeof clonePlan>) => {
+      plan.name.fr = ' ';
+    }],
+    ['exercises.0.target', 'requires a valid repetition range', (plan: ReturnType<typeof clonePlan>) => {
+      plan.exercises[0]!.target = { min: 0, max: 1, unit: 'repetitions' };
+    }],
+    ['exercises.1.target', 'requires positive seconds', (plan: ReturnType<typeof clonePlan>) => {
+      plan.exercises[1]!.target = { seconds: Number.POSITIVE_INFINITY };
+    }],
+    ['exercises.0.translations.fr', 'requires safe name and instructions', (plan: ReturnType<typeof clonePlan>) => {
+      plan.exercises[0]!.translations.fr!.name = 'Squat < unsafe';
+    }],
+    ['exercises.0.alternativeExerciseIds', 'must be an array of exercise ids', (plan: ReturnType<typeof clonePlan>) => {
+      plan.exercises[0]!.alternativeExerciseIds = [' '];
+    }]
+  ])('returns an exact actionable issue for the isolated %s boundary', (path, message, mutate) => {
+    const plan = clonePlan();
+    mutate(plan);
+
+    try {
+      validateWorkoutPlan(plan);
+      throw new Error('Expected validation to fail');
+    } catch (error) {
+      expect(error).toBeInstanceOf(PlanValidationError);
+      const validationError = error as PlanValidationError;
+      expect(validationError.name).toBe('PlanValidationError');
+      expect(validationError.issues).toStrictEqual([{ path, message }]);
+      expect(validationError.message).toBe(`Invalid workout plan: ${path}: ${message}`);
+    }
+  });
+
+  it('reports the deterministic cascade caused by an invalid configured language code', () => {
+    const plan = clonePlan();
+    plan.languages[0]!.code = 'f';
+
+    try {
+      validateWorkoutPlan(plan);
+      throw new Error('Expected validation to fail');
+    } catch (error) {
+      expect((error as PlanValidationError).issues).toStrictEqual([
+        { path: 'languages.0.code', message: 'must be a BCP-47-like language code' },
+        { path: 'name', message: 'contains an unknown language' },
+        { path: 'displayLanguages', message: 'contains duplicate or unknown languages' },
+        { path: 'exercises.0.translations', message: 'contains an unknown language' },
+        { path: 'exercises.1.translations', message: 'contains an unknown language' }
+      ]);
+    }
+  });
 });

@@ -20,6 +20,15 @@ class MemoryStorage implements Storage {
   setItem(key: string, value: string): void { this.#values.set(key, value); }
 }
 
+class RecordingStorage extends MemoryStorage {
+  readonly gets: string[] = [];
+  readonly sets: string[] = [];
+  readonly removes: string[] = [];
+  override getItem(key: string): string | null { this.gets.push(key); return super.getItem(key); }
+  override removeItem(key: string): void { this.removes.push(key); super.removeItem(key); }
+  override setItem(key: string, value: string): void { this.sets.push(key); super.setItem(key, value); }
+}
+
 describe('local persistence', () => {
   let storage: MemoryStorage;
 
@@ -95,10 +104,97 @@ describe('local persistence', () => {
     expect(loadWorkoutSession(storage)).toBeNull();
   });
 
+  it('rejects valid JSON with the wrong top-level shape for saved plans', () => {
+    storage.setItem('home-workout:plans', JSON.stringify({ plan: makeMultilingualPlan() }));
+
+    expect(loadPlans(storage)).toStrictEqual([]);
+  });
+
+  it('rejects malformed session JSON and incomplete session objects', () => {
+    storage.setItem('home-workout:active-session', '{broken');
+    expect(loadWorkoutSession(storage)).toBeNull();
+
+    storage.setItem('home-workout:active-session', JSON.stringify({
+      persistenceVersion: 1,
+      planId: 'plan-fr-hi',
+      roundIndex: 0,
+      exerciseIndex: 0,
+      workoutStartedAtMs: 0
+    }));
+    expect(loadWorkoutSession(storage)).toBeNull();
+  });
+
   it('surfaces quota errors rather than claiming a save succeeded', () => {
     const failingStorage = new MemoryStorage();
-    failingStorage.setItem = () => { throw new DOMException('quota', 'QuotaExceededError'); };
+    const quotaError = new DOMException('quota', 'QuotaExceededError');
+    failingStorage.setItem = () => { throw quotaError; };
 
-    expect(() => savePlan(failingStorage, makeMultilingualPlan())).toThrow(/quota|save|storage/i);
+    try {
+      savePlan(failingStorage, makeMultilingualPlan());
+      throw new Error('Expected save to fail');
+    } catch (error) {
+      expect(error).toBeInstanceOf(Error);
+      expect((error as Error).message).toBe('Unable to save plan to local storage (quota may be full).');
+      expect((error as Error).cause).toBe(quotaError);
+    }
+  });
+
+  it('uses separate stable storage keys for plans and active sessions', () => {
+    const recording = new RecordingStorage();
+    const plan = makeMultilingualPlan();
+    const session = createWorkoutSession(plan, 0);
+
+    savePlan(recording, plan);
+    saveWorkoutSession(recording, session);
+    loadPlans(recording);
+    loadWorkoutSession(recording);
+    clearWorkoutSession(recording);
+
+    expect(recording.sets).toEqual([
+      'home-workout:plans',
+      'home-workout:active-session'
+    ]);
+    expect(recording.gets).toEqual([
+      'home-workout:plans',
+      'home-workout:plans',
+      'home-workout:active-session'
+    ]);
+    expect(recording.removes).toEqual(['home-workout:active-session']);
+  });
+
+  it.each([
+    ['persistenceVersion', 2],
+    ['planId', 42],
+    ['roundIndex', '0'],
+    ['exerciseIndex', '0'],
+    ['workoutStartedAtMs', '0'],
+    ['phase', 'unknown']
+  ])('rejects a persisted session with invalid %s', (key, invalidValue) => {
+    const session = createWorkoutSession(makeMultilingualPlan(), 0);
+    Reflect.set(session, key, invalidValue);
+    storage.setItem('home-workout:active-session', JSON.stringify(session));
+
+    expect(loadWorkoutSession(storage)).toBeNull();
+  });
+
+  it.each([
+    'repetitions',
+    'workoutPausedAtMs',
+    'workoutAccumulatedPausedMs',
+    'phaseTimer'
+  ])('rejects a persisted session missing required runtime field %s', (key) => {
+    const session = createWorkoutSession(makeMultilingualPlan(), 0);
+    Reflect.deleteProperty(session, key);
+    storage.setItem('home-workout:active-session', JSON.stringify(session));
+
+    expect(loadWorkoutSession(storage)).toBeNull();
+  });
+
+  it('rejects unknown persisted-session fields to keep the versioned shape exact', () => {
+    const session = createWorkoutSession(makeMultilingualPlan(), 0);
+    Reflect.set(session, 'unversionedField', true);
+    storage.setItem('home-workout:active-session', JSON.stringify(session));
+
+    expect(loadWorkoutSession(storage)).toBeNull();
   });
 });

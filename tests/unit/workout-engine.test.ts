@@ -76,6 +76,45 @@ describe('workout state machine', () => {
     });
   });
 
+  it('makes duplicate pause/resume safe and ignores navigation while paused', () => {
+    const plan = makeMultilingualPlan();
+    const running = createWorkoutSession(plan, 0);
+    const paused = dispatchWorkout(running, plan, { type: 'PAUSE' }, 1_000);
+
+    expect(dispatchWorkout(paused, plan, { type: 'PAUSE' }, 2_000)).toStrictEqual(paused);
+    expect(dispatchWorkout(paused, plan, { type: 'NEXT' }, 2_000)).toStrictEqual(paused);
+
+    const resumed = dispatchWorkout(paused, plan, { type: 'RESUME' }, 3_000);
+    expect(resumed.phaseTimer).toBeNull();
+    expect(resumed.workoutAccumulatedPausedMs).toBe(2_000);
+    expect(getWorkoutSnapshot(resumed, plan, 5_000).elapsedWorkoutMs).toBe(3_000);
+    expect(dispatchWorkout(resumed, plan, { type: 'RESUME' }, 4_000)).toStrictEqual(resumed);
+  });
+
+  it('never subtracts time when a restored clock moves backwards during resume', () => {
+    const plan = makeMultilingualPlan();
+    const running = createWorkoutSession(plan, 10_000);
+    const paused = dispatchWorkout(running, plan, { type: 'PAUSE' }, 15_000);
+    const resumed = dispatchWorkout(paused, plan, { type: 'RESUME' }, 14_000);
+
+    expect(resumed.workoutAccumulatedPausedMs).toBe(0);
+    expect(getWorkoutSnapshot(resumed, plan, 16_000).elapsedWorkoutMs).toBe(6_000);
+  });
+
+  it('supports zero configured rests without stalling the state machine', () => {
+    const plan = { ...makeMultilingualPlan(), restBetweenExercises: 0, restBetweenRounds: 0 };
+    let session = createWorkoutSession(plan, 0);
+
+    session = dispatchWorkout(session, plan, { type: 'NEXT' }, 1_000);
+    expect(getWorkoutSnapshot(session, plan, 1_000)).toMatchObject({ phase: 'exercise-rest', remainingMs: 1 });
+    session = dispatchWorkout(session, plan, { type: 'TICK' }, 1_001);
+    expect(getWorkoutSnapshot(session, plan, 1_001)).toMatchObject({ phase: 'exercise', exerciseIndex: 1 });
+    session = dispatchWorkout(session, plan, { type: 'TICK' }, 31_001);
+    expect(getWorkoutSnapshot(session, plan, 31_001)).toMatchObject({ phase: 'round-rest', remainingMs: 1 });
+    session = dispatchWorkout(session, plan, { type: 'TICK' }, 31_002);
+    expect(getWorkoutSnapshot(session, plan, 31_002)).toMatchObject({ phase: 'exercise', roundIndex: 1, exerciseIndex: 0 });
+  });
+
   it('uses timestamps to catch up after browser backgrounding across multiple phases', () => {
     const plan = makeMultilingualPlan();
     let session = createWorkoutSession(plan, 0);
@@ -100,6 +139,39 @@ describe('workout state machine', () => {
     expect(getWorkoutSnapshot(session, plan, 22_000)).toMatchObject({
       phase: 'exercise', roundIndex: 0, exerciseIndex: 0
     });
+  });
+
+  it('goes back across a round boundary and rest controls do not skip phases', () => {
+    const plan = makeMultilingualPlan();
+    let session = createWorkoutSession(plan, 0);
+    session = dispatchWorkout(session, plan, { type: 'NEXT' }, 1_000);
+
+    const rest = session;
+    expect(dispatchWorkout(rest, plan, { type: 'NEXT' }, 2_000)).toStrictEqual(rest);
+    expect(getWorkoutSnapshot(
+      dispatchWorkout(rest, plan, { type: 'PREVIOUS' }, 2_000),
+      plan,
+      2_000
+    )).toMatchObject({ phase: 'exercise', roundIndex: 0, exerciseIndex: 0 });
+
+    session = dispatchWorkout(rest, plan, { type: 'TICK' }, 121_000);
+    expect(getWorkoutSnapshot(session, plan, 121_000)).toMatchObject({ roundIndex: 1, exerciseIndex: 0 });
+    session = dispatchWorkout(session, plan, { type: 'PREVIOUS' }, 122_000);
+    expect(getWorkoutSnapshot(session, plan, 122_000)).toMatchObject({
+      phase: 'exercise', roundIndex: 0, exerciseIndex: 1, remainingMs: 30_000
+    });
+  });
+
+  it('ignores unknown actions defensively without corrupting state', () => {
+    const plan = makeMultilingualPlan();
+    const session = createWorkoutSession(plan, 0);
+
+    expect(dispatchWorkout(
+      session,
+      plan,
+      { type: 'UNKNOWN' } as never,
+      1_000
+    )).toStrictEqual(session);
   });
 
   it('rejects counter changes outside repetition exercises and ignores actions after completion', () => {
