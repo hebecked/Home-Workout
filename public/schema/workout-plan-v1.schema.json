@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/home-workout/workout-plan-v1.schema.json",
+  "title": "Home Workout Plan v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "id", "languages", "name", "displayLanguages", "rounds", "restBetweenExercises", "restBetweenRounds", "exercises"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "id": { "type": "string", "minLength": 1 },
+    "languages": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["code", "label"],
+        "properties": { "code": { "type": "string", "pattern": "^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$" }, "label": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "name": { "type": "object", "additionalProperties": { "type": "string", "minLength": 1 } },
+    "displayLanguages": { "type": "array", "minItems": 1, "maxItems": 2, "uniqueItems": true, "items": { "type": "string" } },
+    "rounds": { "type": "integer", "minimum": 1 },
+    "restBetweenExercises": { "type": "number", "minimum": 0 },
+    "restBetweenRounds": { "type": "number", "minimum": 0 },
+    "exercises": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["id", "exerciseId", "type", "target", "translations", "alternativeExerciseIds"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "exerciseId": { "type": "string", "minLength": 1 },
+          "type": { "enum": ["repetitions", "duration"] },
+          "target": { "type": "object" },
+          "translations": { "type": "object", "additionalProperties": { "type": "object", "required": ["name", "instructions"], "properties": { "name": { "type": "string" }, "instructions": { "type": "string" } } } },
+          "alternativeExerciseIds": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    }
+  }
+}

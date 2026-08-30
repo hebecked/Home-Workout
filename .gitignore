@@ -2,6 +2,7 @@ node_modules/
 dist/
 coverage/
 mutation-report/
+reports/
 playwright-report/
 test-results/
 .env

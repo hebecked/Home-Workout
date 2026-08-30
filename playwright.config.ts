@@ -1,5 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const useWindowsBrowserFallback = process.env.PLAYWRIGHT_WINDOWS_FALLBACK === '1';
+
 export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: true,
@@ -17,7 +19,7 @@ export default defineConfig({
   },
   projects: [
     { name: 'chromium-phone', use: { ...devices['Pixel 7'] } },
-    { name: 'firefox-desktop', use: { ...devices['Desktop Firefox'] } },
-    { name: 'webkit-tablet', use: { ...devices['iPad Pro 11'] } }
+    { name: 'firefox-desktop', use: { ...devices['Desktop Firefox'], browserName: useWindowsBrowserFallback ? 'chromium' : 'firefox' } },
+    { name: 'webkit-tablet', use: { ...devices['iPad Pro 11'], browserName: useWindowsBrowserFallback ? 'chromium' : 'webkit' } }
   ]
 });

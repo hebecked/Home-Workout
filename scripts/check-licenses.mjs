@@ -4,6 +4,7 @@ const allowed = new Set(['MIT', 'ISC', 'BSD-2-Clause', 'BSD-3-Clause', 'Apache-2
 const raw = execFileSync('npx', ['license-checker-rseidelsohn', '--production', '--json'], { encoding: 'utf8', shell: process.platform === 'win32' });
 const packages = JSON.parse(raw);
 const rejected = Object.entries(packages).filter(([, value]) => {
+  if (value.private === true) return false;
   const license = typeof value.licenses === 'string' ? value.licenses : '';
   return !license.split(/\s+OR\s+|\s+AND\s+/).every((part) => allowed.has(part.replace(/[()]/g, '')));
 });

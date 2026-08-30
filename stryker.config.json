@@ -4,7 +4,8 @@
   "mutate": [
     "src/core/workout-engine.ts",
     "src/core/timer.ts",
-    "src/core/plan-validator.ts",
+    "src/core/plan-schema.ts",
+    "src/core/plan-io.ts",
     "src/core/persistence.ts",
     "src/core/plan-transformations.ts"
   ],

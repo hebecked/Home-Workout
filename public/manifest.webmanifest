@@ -1,0 +1,13 @@
+{
+  "name": "Home Workout",
+  "short_name": "Workout",
+  "description": "Multilingual, offline home workouts.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f2f4ee",
+  "theme_color": "#17231d",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/maskable-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}
