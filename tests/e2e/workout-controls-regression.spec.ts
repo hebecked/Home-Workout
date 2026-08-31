@@ -2,6 +2,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 
 async function pressAcrossRenderTick(page: Page, control: Locator): Promise<void> {
   await expect(control).toBeVisible();
+  await control.scrollIntoViewIfNeeded();
   const box = await control.boundingBox();
   expect(box, 'control must have a rendered hit target').not.toBeNull();
   await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);

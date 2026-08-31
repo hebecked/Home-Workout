@@ -1,6 +1,6 @@
 import { DEFAULT_WORKOUT } from '../data/default-workout';
 import { EXERCISE_LIBRARY, EXERCISES_BY_ID } from '../data/exercises';
-import { exportPlanJson, importPlanJson } from '../core/plan-io';
+import { exportPlanJson, importPlanJson, importPlanUrlPayload } from '../core/plan-io';
 import { clearWorkoutSession, loadPlans, loadWorkoutSession, savePlan, saveWorkoutSession } from '../core/persistence';
 import { validateWorkoutPlan, type WorkoutPlan } from '../core/plan-schema';
 import { createWorkoutSession, dispatchWorkout, getWorkoutSnapshot, type WorkoutSession } from '../core/workout-engine';
@@ -38,8 +38,23 @@ export class HomeWorkoutApp {
     window.addEventListener('hashchange', () => this.render());
     this.session = loadWorkoutSession(localStorage);
     if (this.session) this.activePlan = this.findPlan(this.session.planId) ?? cloneDefault();
+    const linkedPlanLoaded = this.loadLinkedPlan();
     this.render();
-    if (this.session) this.showResumeDialog();
+    if (this.session && !linkedPlanLoaded) this.showResumeDialog();
+  }
+
+  private loadLinkedPlan(): boolean {
+    const payload = new URLSearchParams(location.search).get('plan');
+    if (payload === null) return false;
+    try {
+      this.importPreview = importPlanUrlPayload(payload);
+      this.notice = 'AI plan loaded · KI-Plan geladen';
+    } catch (error) {
+      this.importPreview = null;
+      this.notice = error instanceof Error ? error.message : 'Invalid workout link';
+    }
+    history.replaceState(null, '', `${location.pathname}#import`);
+    return true;
   }
 
   private route(): string { return location.hash.replace(/^#\/?/, '') || 'home'; }
@@ -205,21 +220,26 @@ export class HomeWorkoutApp {
 
     this.shell(`
       <section class="workout-screen ${isRest ? 'is-rest' : ''}">
-        <div class="workout-status"><span>Round ${snapshot.roundIndex + 1} / ${this.activePlan.rounds} · Runde ${snapshot.roundIndex + 1} / ${this.activePlan.rounds}</span><span data-workout-total>Total ${formatClock(snapshot.elapsedWorkoutMs)}</span></div>
-        <div class="phase-pill">${phaseLabel}${snapshot.paused ? ' · Paused · Pausiert' : ''}</div>
-        ${snapshot.phase === 'completed' ? `<div class="completion"><p class="eyebrow">DONE</p><h1>Workout complete</h1><p>You made time to move. That is enough for today.</p><button class="primary" data-action="finish">Back home</button></div>` : `
-          <div class="exercise-layout">
-            <div class="exercise-visual"><img src="${definition?.illustration ?? '/icon.svg'}" alt="${escapeHtml(imageName)}"></div>
-            <div class="exercise-copy">${isRest ? `<p class="rest-label">Breathe. The next movement starts when the timer reaches zero.</p>` : translations}</div>
-          </div>
-          <div class="target-block"><span>${isRest ? 'READY IN' : exercise.type === 'duration' ? 'TIME LEFT' : 'TARGET'}</span><strong ${isRest || exercise.type === 'duration' ? 'data-workout-countdown' : ''}>${isRest ? formatClock(snapshot.remainingMs ?? 0) : target}</strong></div>
-          ${exercise.type === 'repetitions' && !isRest && 'min' in exercise.target ? `<div class="rep-counter" aria-label="Repetition counter"><button data-action="reps-down" aria-label="Decrease repetitions">−</button><output>${snapshot.repetitions ?? 0}</output><button data-action="reps-up" aria-label="Increase repetitions">+</button><small>Count completed reps · Erledigte Wiederholungen</small></div>` : ''}
-          <div class="workout-controls">
-            <button data-action="previous" aria-label="Previous · Zurück">← <span>Previous</span></button>
-            <button class="pause" data-action="pause" aria-label="${snapshot.paused ? 'Resume · Fortsetzen' : 'Pause'}">${snapshot.paused ? '▶' : 'Ⅱ'}</button>
-            <button data-action="next" aria-label="Next · Weiter"><span>Next</span> →</button>
-          </div>
-          <button class="abort-workout" data-action="abort">Abort workout · Training beenden</button>`}
+        <div class="workout-content">
+          <div class="workout-status"><span>Round ${snapshot.roundIndex + 1} / ${this.activePlan.rounds} · Runde ${snapshot.roundIndex + 1} / ${this.activePlan.rounds}</span><span data-workout-total>Total ${formatClock(snapshot.elapsedWorkoutMs)}</span></div>
+          <div class="phase-pill">${phaseLabel}${snapshot.paused ? ' · Paused · Pausiert' : ''}</div>
+          ${snapshot.phase === 'completed' ? `<div class="completion"><p class="eyebrow">DONE</p><h1>Workout complete</h1><p>You made time to move. That is enough for today.</p><button class="primary" data-action="finish">Back home</button></div>` : `
+            <div class="exercise-layout">
+              <div class="exercise-visual"><img src="${definition?.illustration ?? '/icon.svg'}" alt="${escapeHtml(imageName)}"></div>
+              <div class="exercise-copy">${isRest ? `<p class="rest-label">Breathe. The next movement starts when the timer reaches zero.</p>` : translations}</div>
+            </div>
+            <div class="target-block"><span>${isRest ? 'READY IN' : exercise.type === 'duration' ? 'TIME LEFT' : 'TARGET'}</span><strong ${isRest || exercise.type === 'duration' ? 'data-workout-countdown' : ''}>${isRest ? formatClock(snapshot.remainingMs ?? 0) : target}</strong></div>
+            ${exercise.type === 'repetitions' && !isRest && 'min' in exercise.target ? `<div class="rep-counter" aria-label="Repetition counter"><button data-action="reps-down" aria-label="Decrease repetitions">−</button><output>${snapshot.repetitions ?? 0}</output><button data-action="reps-up" aria-label="Increase repetitions">+</button><small>Count completed reps · Erledigte Wiederholungen</small></div>` : ''}`}
+        </div>
+        ${snapshot.phase === 'completed' ? '' : `
+          <div class="workout-actions">
+            <div class="workout-controls">
+              <button data-action="previous" aria-label="Previous · Zurück">← <span>Previous</span></button>
+              <button class="pause" data-action="pause" aria-label="${snapshot.paused ? 'Resume · Fortsetzen' : 'Pause'}">${snapshot.paused ? '▶' : 'Ⅱ'}</button>
+              <button data-action="next" aria-label="Next · Weiter"><span>Next</span> →</button>
+            </div>
+            <button class="abort-workout" data-action="abort">Abort workout · Training beenden</button>
+          </div>`}
       </section>`);
 
     const act = (name: string, action: Parameters<typeof dispatchWorkout>[2]): void => {
@@ -365,10 +385,17 @@ export class HomeWorkoutApp {
   }
 
   private renderInstructions(): void {
+    const guideUrl = new URL('/ai-workout-guide.txt', location.origin).href;
     const items = [
       ['Start', 'Review the plan summary, then choose START WORKOUT.'], ['Reps', 'The optional − / + counter starts at zero for every exercise and workout. It counts completed reps for the current session; the target stays visible above it.'], ['Rounds', 'Complete each exercise once per round. Round progress is always visible.'], ['Timers', 'Duration exercises and rests advance automatically using timestamps, even after backgrounding. Use Next to skip a rest.'], ['Pause', 'Pause freezes workout, exercise and rest time together.'], ['Alternatives', 'Choose the easier option stored with an exercise whenever needed.'], ['Own plans', 'Create, reorder and adjust exercises in Plan Studio.'], ['Import / Export', 'Share versioned JSON files. Every import is validated before preview or start.'], ['Languages', 'Show one or two configured languages side by side; add any BCP-47 language manually.'], ['Offline', 'After the first successful load, the installed PWA, library, images and local plans work offline.']
     ];
-    this.shell(`<section class="page-heading"><p class="eyebrow">QUICK GUIDE</p><h1>Instructions · Anleitung</h1><p>Everything needed to move confidently, without a coach in the room.</p></section><section class="instruction-list">${items.map(([title, copy], index) => `<article><span>${String(index + 1).padStart(2, '0')}</span><div><h2>${title}</h2><p>${copy}</p></div></article>`).join('')}</section><aside class="safety"><strong>Safety note</strong><p>Train within your ability, stop if you feel pain, and seek qualified medical advice when needed. This app does not diagnose or treat medical conditions.</p></aside>`);
+    this.shell(`<section class="page-heading"><p class="eyebrow">QUICK GUIDE</p><h1>Instructions · Anleitung</h1><p>Everything needed to move confidently, without a coach in the room.</p></section>
+      <section class="ai-plan-guide"><p class="eyebrow">CREATE WITH AI · MIT KI ERSTELLEN</p><h2>Let an AI prepare your workout plan</h2><p>Wenn du deinen Trainingsplan von einer KI wie ChatGPT generieren möchtest, gib ihr den folgenden Leitfaden-Link zusammen mit einer Beschreibung deines gewünschten Trainingsplans.</p><div class="copy-field"><code>${escapeHtml(guideUrl)}</code><button class="primary" data-action="copy-ai-guide">Link kopieren</button></div><p>Die KI kann dir anschließend idealerweise einen direkten Link zur geprüften Planvorschau geben. Alternativ erstellt sie eine JSON-Konfigurationsdatei, die du unter „Upload / Import“ hochladen kannst.</p></section>
+      <section class="instruction-list">${items.map(([title, copy], index) => `<article><span>${String(index + 1).padStart(2, '0')}</span><div><h2>${title}</h2><p>${copy}</p></div></article>`).join('')}</section><aside class="safety"><strong>Safety note</strong><p>Train within your ability, stop if you feel pain, and seek qualified medical advice when needed. This app does not diagnose or treat medical conditions.</p></aside>`);
+    this.root.querySelector<HTMLButtonElement>('[data-action="copy-ai-guide"]')?.addEventListener('click', (event) => {
+      const button = event.currentTarget as HTMLButtonElement;
+      void navigator.clipboard.writeText(guideUrl).then(() => { button.textContent = 'Kopiert · Copied'; }).catch(() => { window.prompt('Link kopieren · Copy link', guideUrl); });
+    });
   }
 
   private showResumeDialog(): void {

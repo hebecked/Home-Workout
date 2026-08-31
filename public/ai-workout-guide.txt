@@ -1,0 +1,42 @@
+HOME WORKOUT – AI PLAN GUIDE (SCHEMA VERSION 1)
+
+Use this guide when a user asks you to create a workout plan for the Home Workout web app.
+The BASE_URL is the origin from which this text file was loaded.
+
+YOUR TASK
+1. Ask for or infer goal, experience level, available equipment, duration, days per week, limitations, and preferred languages.
+2. Create a safe, balanced plan matching the JSON schema at:
+   BASE_URL/schema/workout-plan-v1.schema.json
+3. Prefer exercise IDs from the supported library below so the app can show a matching illustration.
+4. Return either:
+   A) Preferred: a Markdown link labelled "Workout öffnen" with this URL:
+      BASE_URL/?plan=BASE64URL_UTF8_JSON#import
+      BASE64URL_UTF8_JSON means the complete compact JSON encoded as UTF-8 base64url without padding.
+   B) Fallback: the complete JSON in a code block and tell the user to save it as a .json file and upload it on the app's Upload / Import page.
+5. Never claim that the plan is medical advice. If the user reports pain, injury, pregnancy, cardiovascular concerns, or another relevant condition, recommend qualified professional guidance.
+
+SUPPORTED EXERCISE IDS
+legs: squat, sumo-squat, reverse-lunge, forward-lunge, split-squat, glute-bridge, single-leg-glute-bridge, calf-raise, wall-sit
+arms/push: push-up, incline-push-up, knee-push-up, pike-push-up, triceps-dip
+arms/pull: pull-up, assisted-pull-up, chin-up, resistance-band-row, resistance-band-pull-apart
+core: dead-bug, lying-leg-raise, bird-dog, plank, side-plank, hollow-hold, superman
+cardio/full body: jumping-jack, step-jack, high-knees, marching-in-place, mountain-climber, burpee, squat-to-reach
+
+PLAN RULES
+- schemaVersion must be 1.
+- id and every exercise slot id must be unique, non-empty safe text without < or >.
+- languages must contain at least one BCP-47-like code and label.
+- name must contain a non-empty value for every configured language.
+- displayLanguages must contain one or two configured language codes.
+- rounds must be a positive integer.
+- restBetweenExercises and restBetweenRounds are non-negative seconds.
+- exercises must contain at least one exercise.
+- type is "repetitions" or "duration".
+- A repetitions target is {"min": positive number, "max": number >= min, "unit": "repetitions" or "per-side"}.
+- A duration target is {"seconds": positive number}.
+- translations must contain {"name": string, "instructions": string} for every configured language.
+- alternativeExerciseIds is always an array of safe exercise IDs.
+- Use only the exact fields defined by the schema; unexpected fields are rejected.
+
+MINIMAL EXAMPLE
+{"schemaVersion":1,"id":"ai-beginner-full-body","languages":[{"code":"de","label":"Deutsch"},{"code":"en","label":"English"}],"name":{"de":"KI Ganzkörper Einstieg","en":"AI Beginner Full Body"},"displayLanguages":["de","en"],"rounds":2,"restBetweenExercises":25,"restBetweenRounds":60,"exercises":[{"id":"slot-squat","exerciseId":"squat","type":"repetitions","target":{"min":8,"max":12,"unit":"repetitions"},"translations":{"de":{"name":"Kniebeuge","instructions":"Kontrolliert absenken und über die ganze Fußsohle aufrichten."},"en":{"name":"Squat","instructions":"Lower with control and stand through the whole foot."}},"alternativeExerciseIds":["wall-sit"]},{"id":"slot-dead-bug","exerciseId":"dead-bug","type":"repetitions","target":{"min":6,"max":10,"unit":"per-side"},"translations":{"de":{"name":"Käfer","instructions":"Den unteren Rücken ruhig halten und diagonal strecken."},"en":{"name":"Dead Bug","instructions":"Keep the lower back steady and extend opposite limbs."}},"alternativeExerciseIds":["bird-dog"]}]}

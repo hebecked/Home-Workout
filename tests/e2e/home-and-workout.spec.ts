@@ -14,6 +14,27 @@ test('home presents the default plan and all primary destinations', async ({ pag
   await expect(page.getByRole('link', { name: /my plans|meine Pläne/i })).toBeVisible();
 });
 
+test('the app stays visibly light when the operating system prefers dark mode', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-phone', 'Chromium covers the color-scheme contract');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await page.goto('/');
+
+  const appearance = await page.locator('html').evaluate((element) => {
+    const style = getComputedStyle(element);
+    return {
+      colorScheme: style.colorScheme,
+      backgroundColor: style.backgroundColor,
+      color: style.color
+    };
+  });
+
+  expect(appearance).toStrictEqual({
+    colorScheme: 'light',
+    backgroundColor: 'rgb(247, 248, 251)',
+    color: 'rgb(31, 41, 55)'
+  });
+});
+
 test('phone workout journey shows bilingual exercise, controls, pause and rest', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium-phone', 'Representative smartphone journey');
   await page.clock.install({ time: new Date('2026-01-01T12:00:00Z') });
@@ -35,6 +56,25 @@ test('phone workout journey shows bilingual exercise, controls, pause and rest',
   await page.getByRole('button', { name: /resume|fortsetzen/i }).click();
   await page.getByRole('button', { name: /next|weiter/i }).click();
   await expect(page.getByText(/rest|pause/i)).toBeVisible();
+});
+
+test('workout actions remain anchored while exercise content scrolls independently', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-phone', 'Representative anchored mobile action bar check');
+  await page.goto('/');
+  await page.getByRole('button', { name: /start workout/i }).click();
+
+  const actionBar = page.locator('.workout-actions');
+  await expect(actionBar).toBeVisible();
+  await expect(page.getByRole('button', { name: /previous|zurück/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /pause/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /next|weiter/i })).toBeVisible();
+
+  const initialY = (await actionBar.boundingBox())?.y;
+  expect(initialY).toEqual(expect.any(Number));
+  await page.locator('.workout-content').evaluate((element) => { element.scrollTop = element.scrollHeight; });
+  const scrolledY = (await actionBar.boundingBox())?.y;
+  expect(scrolledY).toEqual(expect.any(Number));
+  expect(Math.abs(scrolledY! - initialY!)).toBeLessThanOrEqual(1);
 });
 
 test('touch controls meet the minimum 44 by 44 pixel target on tablet', async ({ page }, testInfo) => {

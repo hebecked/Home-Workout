@@ -72,6 +72,47 @@ test('invalid imports show a useful error and never offer start', async ({ page 
   await expect(page.getByRole('button', { name: /^start$|^starten$/i })).toHaveCount(0);
 });
 
+test('AI launch links are validated and open the import preview', async ({ page }) => {
+  const payload = Buffer.from(JSON.stringify(importedPlan), 'utf8').toString('base64url');
+  await page.goto(`/?plan=${payload}`);
+
+  await expect(page).toHaveURL(/#import$/);
+  expect(new URL(page.url()).search).toBe('');
+  await expect(page.getByText(/AI plan loaded|KI-Plan geladen/i)).toBeVisible();
+  await expect(page.getByRole('heading', { name: /preview|Vorschau/i })).toBeVisible();
+  await expect(page.getByText('Plan corto')).toBeVisible();
+  await expect(page.getByText('Sentadilla')).toBeVisible();
+  await expect(page.getByRole('button', { name: /^start$|^starten$/i })).toBeVisible();
+});
+
+test('an invalid AI launch link is rejected safely and removed from the address bar', async ({ page }) => {
+  const privateInput = 'private+launch-payload';
+  await page.goto(`/?plan=${encodeURIComponent(privateInput)}`);
+
+  await expect(page).toHaveURL(/#import$/);
+  expect(new URL(page.url()).search).toBe('');
+  await expect(page.getByRole('alert')).toHaveText(
+    'The workout link is invalid. Ask the AI for a JSON config file instead.'
+  );
+  await expect(page.getByRole('alert')).not.toContainText(privateInput);
+  await expect(page.getByRole('heading', { name: /preview|Vorschau/i })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /^start$|^starten$/i })).toHaveCount(0);
+});
+
+test('instructions expose the deployed-origin AI guide link', async ({ page }) => {
+  await page.goto('/#instructions');
+
+  await expect(page.getByRole('heading', { name: /Let an AI prepare/i })).toBeVisible();
+  await expect(page.locator('.copy-field code')).toHaveText('http://127.0.0.1:4173/ai-workout-guide.txt');
+  await expect(page.getByRole('button', { name: /link kopieren/i })).toBeVisible();
+
+  const guideResponse = await page.request.get('/ai-workout-guide.txt');
+  expect(guideResponse.status()).toBe(200);
+  await expect(guideResponse.text()).resolves.toContain(
+    'BASE_URL/?plan=BASE64URL_UTF8_JSON#import'
+  );
+});
+
 test('reload offers resume or start over and resume keeps progress', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium-phone', 'Representative persistence journey');
   await page.goto('/');

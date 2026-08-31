@@ -1,7 +1,7 @@
 /* global Response */
 
-const CACHE = 'home-workout-v6';
-const APP_SHELL = ['/manifest.webmanifest', '/icon.svg', '/maskable-icon.svg'];
+const CACHE = 'home-workout-v7';
+const APP_SHELL = ['/manifest.webmanifest', '/icon.svg', '/maskable-icon.svg', '/ai-workout-guide.txt'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {

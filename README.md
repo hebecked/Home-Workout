@@ -16,9 +16,10 @@ Home Workout makes a structured routine easy to follow without an account, backe
 - Pause/resume across every logical clock and reload-safe active sessions
 - One- or two-language exercise presentation; German and English are bundled
 - Visual plan editor, custom exercises, local save, JSON import/export, and strict validation
+- Validated AI-plan launch links plus a public machine-readable guide for ChatGPT and other assistants
 - 33 extensible exercises with original local SVG illustrations, shown directly on the home and workout screens
 - A clear, confirmed workout-abort action; the Home Workout brand uses the same safe return-to-home flow
-- Responsive layouts, keyboard focus, 44 px controls, dark mode, and reduced-motion support
+- Responsive layouts, keyboard focus, 44 px controls, a calm light-only theme, and reduced-motion support
 - Installable PWA with an offline app shell, library, images, and local plans
 
 ## Screenshots
@@ -66,18 +67,17 @@ npm run build
 npm run preview
 ```
 
-The output is a fully static `dist/` directory.
+The output contains the static client plus the Sites-compatible Worker entry point in `dist/`.
 
-## Cloudflare deployment
+## Deployment
 
-Authentication stays local and credentials must never be committed.
+The repository contains Sites deployment metadata. Build locally before saving and deploying a version.
 
 ```bash
-npx wrangler whoami
-npx wrangler pages deploy dist --project-name home-workout
+npm run build
 ```
 
-Deployment is independent of the Git remote.
+Do not commit deployment credentials or generated archives.
 
 ## Plan schema
 
@@ -90,6 +90,8 @@ German (`de`) and English (`en`) ship with the app. Plans may use any supported 
 ## Exercise library
 
 The library contains 33 stable records across legs, push, pull, core, cardio, and full body. Every record contains equipment, difficulty, type, target, DE/EN copy, variant IDs, and a local SVG. The default routine includes Reverse Lunges and Lying Leg Raises (Beinheben im Liegen). Run `node scripts/generate-exercise-assets.mjs` to regenerate illustrations.
+
+The researched next-stage plan catalogue and editing/illustration backlog are documented in [`docs/product-roadmap.md`](docs/product-roadmap.md).
 
 ## Dependency licensing
 
