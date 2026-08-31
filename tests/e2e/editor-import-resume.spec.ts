@@ -38,6 +38,32 @@ test('desktop editor creates, orders and saves a multilingual plan', async ({ pa
 
   await page.getByRole('link', { name: /my plans|meine Pläne/i }).click();
   await expect(page.getByText('Compact Strength')).toBeVisible();
+  await expect(page.getByRole('heading', { name: '30 Minute Full Body' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Gentle Start' })).toBeVisible();
+
+  const localCard = page.locator('.plan-card').filter({ hasText: 'Compact Strength' });
+  await localCard.getByRole('button', { name: /edit|bearbeiten/i }).click();
+  await expect(page.getByRole('heading', { name: /edit plan|Plan bearbeiten/i })).toBeVisible();
+  await page.getByLabel(/^Rounds$/i).fill('2');
+  await page.getByRole('button', { name: /save changes|Änderungen speichern/i }).click();
+  await page.getByRole('link', { name: /my plans|meine Pläne/i }).click();
+  await expect(page.locator('.plan-card').filter({ hasText: 'Compact Strength' })).toContainText(/2 rounds/i);
+  await expect(page.locator('.plan-card').filter({ hasText: '30 Minute Full Body' })).toContainText(/permanent bundled routine/i);
+});
+
+test('customizing a bundled routine creates a separate editable plan', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'firefox-desktop', 'Representative immutable-default journey');
+  await page.goto('/#plans');
+
+  const defaultCard = page.locator('.plan-card').filter({ hasText: '30 Minute Full Body' });
+  await defaultCard.getByRole('button', { name: /customize|anpassen/i }).click();
+  await expect(page.getByRole('heading', { name: /customize routine|Routine anpassen/i })).toBeVisible();
+  await page.getByRole('button', { name: /save locally|lokal speichern/i }).click();
+  await page.getByRole('link', { name: /my plans|meine Pläne/i }).click();
+
+  await expect(page.locator('.plan-card').filter({ hasText: '30 Minute Full Body · Custom' })).toContainText(/stored only on this device/i);
+  await expect(page.getByRole('heading', { name: /^30 Minute Full Body(?: · Custom)?$/ })).toHaveCount(2);
+  await expect(page.locator('.plan-card').filter({ hasText: '30 Minute Full Body' }).first()).toContainText(/permanent bundled routine/i);
 });
 
 test('tablet imports, previews, and starts a valid own plan', async ({ page }, testInfo) => {

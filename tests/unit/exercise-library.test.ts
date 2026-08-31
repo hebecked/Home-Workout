@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { EXERCISE_LIBRARY } from '../../src/data/exercises';
-import { DEFAULT_WORKOUT } from '../../src/data/default-workout';
+import { BUILT_IN_WORKOUTS, BUILT_IN_WORKOUTS_BY_ID, DEFAULT_WORKOUT, isBuiltInWorkout } from '../../src/data/default-workout';
 import { validateWorkoutPlan } from '../../src/core/plan-schema';
 
 const requiredIds = [
@@ -110,5 +110,36 @@ describe('30 Minute Full Body default workout', () => {
     ]));
     expect(byId['jumping-jack']?.alternativeExerciseIds).toContain('step-jack');
     expect(byId['jumping-jack']?.target).toStrictEqual({ seconds: 30 });
+  });
+});
+
+describe('permanent bundled routine library', () => {
+  it('ships six valid, uniquely identified routines for distinct goals', () => {
+    expect(BUILT_IN_WORKOUTS).toHaveLength(6);
+    expect(BUILT_IN_WORKOUTS.map(({ id }) => id)).toEqual([
+      '30-minute-full-body',
+      'gentle-start',
+      'full-body-strength',
+      'cardio-base',
+      'active-circuit',
+      'advanced-bodyweight'
+    ]);
+    expect(new Set(BUILT_IN_WORKOUTS.map(({ id }) => id)).size).toBe(BUILT_IN_WORKOUTS.length);
+    for (const plan of BUILT_IN_WORKOUTS) {
+      expect(validateWorkoutPlan(plan)).toStrictEqual(plan);
+      expect(BUILT_IN_WORKOUTS_BY_ID.get(plan.id)).toBe(plan);
+      expect(isBuiltInWorkout(plan.id)).toBe(true);
+      expect(plan.exercises.length).toBeGreaterThanOrEqual(6);
+    }
+    expect(isBuiltInWorkout('my-local-plan')).toBe(false);
+  });
+
+  it('gives every bundled exercise a unique slot id and an existing illustration', () => {
+    const libraryIds = new Set(EXERCISE_LIBRARY.map(({ id }) => id));
+    for (const plan of BUILT_IN_WORKOUTS) {
+      const slotIds = plan.exercises.map(({ id }) => id);
+      expect(new Set(slotIds).size).toBe(slotIds.length);
+      for (const exercise of plan.exercises) expect(libraryIds.has(exercise.exerciseId)).toBe(true);
+    }
   });
 });

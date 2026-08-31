@@ -4,14 +4,30 @@ test('home presents the default plan and all primary destinations', async ({ pag
   await page.goto('/');
 
   await expect(page.getByRole('heading', { level: 1 })).toContainText(/Home Workout/i);
-  await expect(page.getByText(/30 Minute Full Body/i)).toBeVisible();
+  await expect(page.getByRole('heading', { name: /30 Minute Full Body/i })).toBeVisible();
   await expect(page.getByText(/3\s+(rounds|Runden)/i)).toBeVisible();
   await expect(page.getByText(/8\s+(exercises|Übungen)/i)).toBeVisible();
+  await expect(page.getByLabel(/choose routine|Routine wählen/i)).toHaveValue('30-minute-full-body');
   await expect(page.getByRole('button', { name: /start workout/i })).toBeVisible();
   await expect(page.getByRole('link', { name: /instructions|Anleitung/i })).toBeVisible();
   await expect(page.getByRole('link', { name: /create new plan|neuen Plan/i })).toBeVisible();
   await expect(page.getByRole('link', { name: /upload|own plan|import/i })).toBeVisible();
   await expect(page.getByRole('link', { name: /my plans|meine Pläne/i })).toBeVisible();
+});
+
+test('permanent bundled routines can be selected without replacing the default', async ({ page }) => {
+  await page.goto('/');
+
+  const picker = page.getByLabel(/choose routine|Routine wählen/i);
+  await expect(picker.locator('option')).toHaveCount(6);
+  await picker.selectOption('gentle-start');
+  await expect(page.getByRole('heading', { name: 'Gentle Start', exact: true })).toBeVisible();
+  await expect(page.getByText(/2\s+(rounds|Runden)/i)).toBeVisible();
+  await expect(page.getByText(/6\s+(exercises|Übungen)/i)).toBeVisible();
+
+  await picker.selectOption('30-minute-full-body');
+  await expect(page.getByRole('heading', { name: /30 Minute Full Body/i })).toBeVisible();
+  await expect(page.getByText(/3\s+(rounds|Runden)/i)).toBeVisible();
 });
 
 test('the app stays visibly light when the operating system prefers dark mode', async ({ page }, testInfo) => {

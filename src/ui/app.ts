@@ -1,4 +1,9 @@
-import { DEFAULT_WORKOUT } from '../data/default-workout';
+import {
+  BUILT_IN_WORKOUTS,
+  BUILT_IN_WORKOUTS_BY_ID,
+  DEFAULT_WORKOUT,
+  isBuiltInWorkout
+} from '../data/default-workout';
 import { EXERCISE_LIBRARY, EXERCISES_BY_ID } from '../data/exercises';
 import { exportPlanJson, importPlanJson, importPlanUrlPayload } from '../core/plan-io';
 import { clearWorkoutSession, loadPlans, loadWorkoutSession, savePlan, saveWorkoutSession } from '../core/persistence';
@@ -12,6 +17,19 @@ const formatClock = (milliseconds: number): string => {
   return `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
 };
 const cloneDefault = (): WorkoutPlan => structuredClone(DEFAULT_WORKOUT);
+const createPlanId = (): string => `plan-${Date.now()}-${crypto.randomUUID()}`;
+const createEmptyDraft = (): WorkoutPlan => ({
+  ...cloneDefault(), id: createPlanId(), name: { de: 'Mein Trainingsplan', en: '' }, rounds: 1, exercises: []
+});
+const planTitle = (plan: WorkoutPlan): string => plan.name.en ?? Object.values(plan.name)[0] ?? 'Workout';
+const estimatedMinutes = (plan: WorkoutPlan): number => {
+  const exerciseSeconds = plan.exercises.reduce((total, exercise) => {
+    if ('seconds' in exercise.target) return total + exercise.target.seconds;
+    return total + exercise.target.max * (exercise.target.unit === 'per-side' ? 5 : 3);
+  }, 0);
+  const roundSeconds = exerciseSeconds + Math.max(0, plan.exercises.length - 1) * plan.restBetweenExercises;
+  return Math.max(5, Math.round((roundSeconds * plan.rounds + Math.max(0, plan.rounds - 1) * plan.restBetweenRounds) / 60));
+};
 const previewCategory = (category: string | undefined): { className: string; label: string } | null => {
   if (category === 'legs') return { className: 'legs', label: 'Legs · Beine' };
   if (category === 'push' || category === 'pull') return { className: 'arms', label: 'Arms · Oberkörper' };
@@ -23,9 +41,8 @@ const previewCategory = (category: string | undefined): { className: string; lab
 export class HomeWorkoutApp {
   private activePlan: WorkoutPlan = cloneDefault();
   private session: WorkoutSession | null = null;
-  private draft: WorkoutPlan = {
-    ...cloneDefault(), id: `plan-${Date.now()}`, name: { de: 'Mein Trainingsplan', en: '' }, rounds: 1, exercises: []
-  };
+  private draft: WorkoutPlan = createEmptyDraft();
+  private editorMode: 'create' | 'edit' | 'copy' = 'create';
   private tickHandle: number | null = null;
   private languageFormVisible = false;
   private exercisePickerVisible = false;
@@ -59,7 +76,34 @@ export class HomeWorkoutApp {
 
   private route(): string { return location.hash.replace(/^#\/?/, '') || 'home'; }
   private findPlan(id: string): WorkoutPlan | undefined {
-    return id === DEFAULT_WORKOUT.id ? cloneDefault() : loadPlans(localStorage).find((plan) => plan.id === id);
+    const bundled = BUILT_IN_WORKOUTS_BY_ID.get(id);
+    return bundled ? structuredClone(bundled) : loadPlans(localStorage).find((plan) => plan.id === id);
+  }
+
+  private openNewPlan(): void {
+    this.draft = createEmptyDraft();
+    this.editorMode = 'create';
+    this.notice = '';
+    this.languageFormVisible = false;
+    this.exercisePickerVisible = false;
+  }
+
+  private openPlanEditor(plan: WorkoutPlan, asCopy: boolean): void {
+    this.draft = structuredClone(plan);
+    this.editorMode = asCopy ? 'copy' : 'edit';
+    if (asCopy) {
+      this.draft.id = createPlanId();
+      this.draft.name = {
+        ...this.draft.name,
+        de: `${this.draft.name.de ?? planTitle(plan)} · Kopie`,
+        en: `${this.draft.name.en ?? planTitle(plan)} · Custom`
+      };
+    }
+    this.notice = asCopy ? 'Bundled routine copied. Your changes are saved separately. · Standardroutine kopiert.' : '';
+    this.languageFormVisible = false;
+    this.exercisePickerVisible = false;
+    if (this.route() === 'editor') this.render();
+    else location.hash = 'editor';
   }
 
   private shell(content: string): void {
@@ -76,6 +120,9 @@ export class HomeWorkoutApp {
       event.preventDefault();
       this.requestAbortWorkout();
     });
+    for (const link of this.root.querySelectorAll<HTMLAnchorElement>('[data-create-plan]')) {
+      link.addEventListener('click', () => this.openNewPlan());
+    }
   }
 
   private render(): void {
@@ -122,7 +169,12 @@ export class HomeWorkoutApp {
   }
 
   private renderHome(): void {
-    const title = this.activePlan.name.en ?? Object.values(this.activePlan.name)[0] ?? 'Workout';
+    const title = planTitle(this.activePlan);
+    const savedPlans = loadPlans(localStorage);
+    const routineOptions = [
+      `<optgroup label="Bundled routines · Standardroutinen">${BUILT_IN_WORKOUTS.map((plan) => `<option value="${escapeHtml(plan.id)}" ${plan.id === this.activePlan.id ? 'selected' : ''}>${escapeHtml(planTitle(plan))}</option>`).join('')}</optgroup>`,
+      savedPlans.length ? `<optgroup label="My plans · Meine Pläne">${savedPlans.map((plan) => `<option value="${escapeHtml(plan.id)}" ${plan.id === this.activePlan.id ? 'selected' : ''}>${escapeHtml(planTitle(plan))}</option>`).join('')}</optgroup>` : ''
+    ].join('');
     const previews = this.activePlan.exercises.map((exercise, index) => {
       const definition = EXERCISES_BY_ID.get(exercise.exerciseId);
       const englishName = exercise.translations.en?.name ?? Object.values(exercise.translations)[0]?.name ?? exercise.exerciseId;
@@ -142,7 +194,8 @@ export class HomeWorkoutApp {
           <p class="lede">A calm, multilingual workout companion. No account, no tracking, no noise.</p>
         </div>
         <article class="workout-card">
-          <div class="card-topline"><span>READY WHEN YOU ARE</span><span>≈ 30 min</span></div>
+          <div class="card-topline"><span>READY WHEN YOU ARE</span><span>≈ ${estimatedMinutes(this.activePlan)} min</span></div>
+          <label class="routine-picker">Choose routine · Routine wählen<select data-routine-picker>${routineOptions}</select></label>
           <h2>${escapeHtml(title)}</h2>
           <div class="plan-stats" aria-label="Workout summary">
             <span><strong>${this.activePlan.rounds}</strong> Rounds · Runden</span>
@@ -157,17 +210,23 @@ export class HomeWorkoutApp {
       </section>
       <nav class="action-grid" aria-label="Workout options">
         <a class="action-card" href="#instructions"><span class="action-number">01</span><strong>Instructions · Anleitung</strong><span>How the flow works</span></a>
-        <a class="action-card" href="#editor"><span class="action-number">02</span><strong>Create new plan · Neuen Plan</strong><span>Build your own routine</span></a>
+        <a class="action-card" href="#editor" data-create-plan><span class="action-number">02</span><strong>Create new plan · Neuen Plan</strong><span>Build your own routine</span></a>
         <a class="action-card" href="#import"><span class="action-number">03</span><strong>Upload / Start own plan · Import</strong><span>Import a validated JSON file</span></a>
         <a class="action-card" href="#plans"><span class="action-number">04</span><strong>My Plans · Meine Pläne</strong><span>Saved only on this device</span></a>
       </nav>
       <div class="github-placeholder">${APP_CONFIG.githubUrl ? `<a href="${escapeHtml(APP_CONFIG.githubUrl)}">GitHub</a>` : '<span>GitHub link · configurable after remote setup</span>'}</div>`);
     this.root.querySelector('[data-action="start"]')?.addEventListener('click', () => this.startWorkout(this.activePlan));
+    this.root.querySelector<HTMLSelectElement>('[data-routine-picker]')?.addEventListener('change', (event) => {
+      const plan = this.findPlan((event.currentTarget as HTMLSelectElement).value);
+      if (!plan) return;
+      this.activePlan = structuredClone(plan);
+      this.renderHome();
+    });
   }
 
   private startWorkout(plan: WorkoutPlan): void {
     this.activePlan = structuredClone(plan);
-    if (plan.id !== DEFAULT_WORKOUT.id) savePlan(localStorage, plan);
+    if (!isBuiltInWorkout(plan.id)) savePlan(localStorage, plan);
     this.session = createWorkoutSession(this.activePlan, Date.now());
     saveWorkoutSession(localStorage, this.session);
     location.hash = 'workout';
@@ -228,8 +287,7 @@ export class HomeWorkoutApp {
               <div class="exercise-visual"><img src="${definition?.illustration ?? '/icon.svg'}" alt="${escapeHtml(imageName)}"></div>
               <div class="exercise-copy">${isRest ? `<p class="rest-label">Breathe. The next movement starts when the timer reaches zero.</p>` : translations}</div>
             </div>
-            <div class="target-block"><span>${isRest ? 'READY IN' : exercise.type === 'duration' ? 'TIME LEFT' : 'TARGET'}</span><strong ${isRest || exercise.type === 'duration' ? 'data-workout-countdown' : ''}>${isRest ? formatClock(snapshot.remainingMs ?? 0) : target}</strong></div>
-            ${exercise.type === 'repetitions' && !isRest && 'min' in exercise.target ? `<div class="rep-counter" aria-label="Repetition counter"><button data-action="reps-down" aria-label="Decrease repetitions">−</button><output>${snapshot.repetitions ?? 0}</output><button data-action="reps-up" aria-label="Increase repetitions">+</button><small>Count completed reps · Erledigte Wiederholungen</small></div>` : ''}`}
+            <div class="target-block"><span>${isRest ? 'READY IN' : exercise.type === 'duration' ? 'TIME LEFT' : 'TARGET'}</span><strong ${isRest || exercise.type === 'duration' ? 'data-workout-countdown' : ''}>${isRest ? formatClock(snapshot.remainingMs ?? 0) : target}</strong></div>`}
         </div>
         ${snapshot.phase === 'completed' ? '' : `
           <div class="workout-actions">
@@ -252,17 +310,18 @@ export class HomeWorkoutApp {
     };
     act('previous', { type: 'PREVIOUS' }); act('next', { type: 'NEXT' });
     act('pause', { type: snapshot.paused ? 'RESUME' : 'PAUSE' });
-    if (exercise.type === 'repetitions') {
-      const current = snapshot.repetitions ?? 0;
-      act('reps-down', { type: 'SET_REPETITIONS', value: Math.max(0, current - 1) });
-      act('reps-up', { type: 'SET_REPETITIONS', value: current + 1 });
-    }
     this.root.querySelector('[data-action="finish"]')?.addEventListener('click', () => { clearWorkoutSession(localStorage); this.session = null; location.hash = 'home'; });
     this.root.querySelector('[data-action="abort"]')?.addEventListener('click', () => this.requestAbortWorkout());
     if (snapshot.phase !== 'completed' && !snapshot.paused) this.scheduleWorkoutTick();
   }
 
   private renderEditor(): void {
+    const editorTitle = this.editorMode === 'edit' ? 'Edit plan · Plan bearbeiten' : this.editorMode === 'copy' ? 'Customize routine · Routine anpassen' : 'Create new plan';
+    const editorIntro = this.editorMode === 'edit'
+      ? 'Changes update this local plan. Bundled routines remain untouched.'
+      : this.editorMode === 'copy'
+        ? 'This editable copy is independent from the permanent bundled routine.'
+        : 'Build a routine that speaks your language and fits your room.';
     const optionLabels: Record<string, string> = { 'sumo-squat': 'Wide stance exercise', 'split-squat': 'Split stance exercise', 'squat-to-reach': 'Reach sequence exercise' };
     const exerciseOptions = EXERCISE_LIBRARY.map((exercise) => `<option value="${exercise.id}" aria-label="${escapeHtml(optionLabels[exercise.id] ?? `${exercise.translations.en.name} · ${exercise.translations.de.name}`)}">${escapeHtml(exercise.translations.en.name)} · ${escapeHtml(exercise.translations.de.name)}</option>`).join('');
     const exerciseRows = this.draft.exercises.map((exercise, index) => {
@@ -271,7 +330,7 @@ export class HomeWorkoutApp {
     }).join('');
     const languageChecks = this.draft.languages.map((language) => `<label class="check"><input type="checkbox" data-display-language="${escapeHtml(language.code)}" ${this.draft.displayLanguages.includes(language.code) ? 'checked' : ''}> ${escapeHtml(language.label)}</label>`).join('');
     this.shell(`
-      <section class="page-heading"><p class="eyebrow">PLAN STUDIO</p><h1>Create new plan</h1><p>Build a routine that speaks your language and fits your room.</p></section>
+      <section class="page-heading"><p class="eyebrow">PLAN STUDIO</p><h1>${editorTitle}</h1><p>${editorIntro}</p></section>
       <form class="editor" data-editor>
         <section class="form-section"><h2>01 · Basics</h2><div class="field-grid">
           <label>Plan name German<input name="name-de" value="${escapeHtml(this.draft.name.de ?? '')}"></label>
@@ -289,7 +348,7 @@ export class HomeWorkoutApp {
           <ol class="exercise-list">${exerciseRows || '<li class="empty">No exercises yet. Add one from the library.</li>'}</ol>
           <details class="custom-exercise"><summary>Create a custom exercise</summary><div class="inline-form"><label>Exercise name<input name="custom-name"></label><label>Type<select name="custom-type"><option value="repetitions">Repetitions</option><option value="duration">Duration</option></select></label><button type="button" data-action="add-custom">Add custom exercise</button></div></details>
         </section>
-        <div class="editor-actions"><button type="button" class="primary" data-action="save-plan">Save locally · Lokal speichern</button><button type="button" data-action="start-plan">Start</button><button type="button" data-action="export-plan">Export JSON</button></div>
+        <div class="editor-actions"><button type="button" class="primary" data-action="save-plan">${this.editorMode === 'edit' ? 'Save changes · Änderungen speichern' : 'Save locally · Lokal speichern'}</button><button type="button" data-action="start-plan">Start</button><button type="button" data-action="export-plan">Export JSON</button></div>
         <p class="notice" role="status">${escapeHtml(this.notice)}</p>
       </form>`);
     this.bindEditor();
@@ -353,7 +412,12 @@ export class HomeWorkoutApp {
       const [item] = this.draft.exercises.splice(index, 1); this.draft.exercises.splice(destination, 0, item!); this.renderEditor();
     });
     const withPlan = (callback: (plan: WorkoutPlan) => void): void => { try { callback(this.normalizedDraft()); } catch (error) { this.notice = error instanceof Error ? error.message : 'Invalid plan'; this.renderEditor(); } };
-    this.root.querySelector('[data-action="save-plan"]')?.addEventListener('click', () => withPlan((plan) => { savePlan(localStorage, plan); this.notice = 'Saved · Gespeichert'; this.renderEditor(); }));
+    this.root.querySelector('[data-action="save-plan"]')?.addEventListener('click', () => withPlan((plan) => {
+      savePlan(localStorage, plan);
+      this.editorMode = 'edit';
+      this.notice = 'Saved · Gespeichert. Bundled routines were not changed.';
+      this.renderEditor();
+    }));
     this.root.querySelector('[data-action="start-plan"]')?.addEventListener('click', () => withPlan((plan) => this.startWorkout(plan)));
     this.root.querySelector('[data-action="export-plan"]')?.addEventListener('click', () => withPlan((plan) => {
       const blob = new Blob([exportPlanJson(plan)], { type: 'application/json' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `${plan.id}.json`; link.click(); URL.revokeObjectURL(link.href);
@@ -380,14 +444,28 @@ export class HomeWorkoutApp {
 
   private renderPlans(): void {
     const plans = loadPlans(localStorage);
-    this.shell(`<section class="page-heading"><p class="eyebrow">ON THIS DEVICE</p><h1>My Plans · Meine Pläne</h1><p>Your plans never leave this browser.</p></section><section class="saved-plans">${plans.length ? plans.map((plan) => `<article><div><span>${plan.rounds} rounds · ${plan.exercises.length} exercises</span><h2>${escapeHtml(plan.name.en ?? Object.values(plan.name)[0] ?? 'Workout')}</h2></div><button data-start-plan="${escapeHtml(plan.id)}">Start</button></article>`).join('') : '<div class="empty-state"><h2>No saved plans yet</h2><p>Create or import a plan to see it here.</p><a class="button-link" href="#editor">Create new plan</a></div>'}</section>`);
+    const card = (plan: WorkoutPlan, bundled: boolean): string => `<article class="plan-card">
+      <div><span>${plan.rounds} rounds · ${plan.exercises.length} exercises · ≈ ${estimatedMinutes(plan)} min</span><h2>${escapeHtml(planTitle(plan))}</h2><p>${bundled ? 'Permanent bundled routine · Dauerhafte Standardroutine' : 'Stored only on this device · Nur auf diesem Gerät'}</p></div>
+      <div class="plan-card-actions"><button class="primary" data-start-plan="${escapeHtml(plan.id)}">Start</button><button data-${bundled ? 'copy' : 'edit'}-plan="${escapeHtml(plan.id)}">${bundled ? 'Customize · Anpassen' : 'Edit · Bearbeiten'}</button></div>
+    </article>`;
+    this.shell(`<section class="page-heading"><p class="eyebrow">ROUTINE LIBRARY</p><h1>Plans · Trainingspläne</h1><p>Bundled routines always remain available. Your own plans are stored separately in this browser.</p></section>
+      <section class="saved-plans plan-section"><div class="section-heading"><div><p class="eyebrow">ALWAYS AVAILABLE</p><h2>Bundled routines · Standardroutinen</h2></div><span>${BUILT_IN_WORKOUTS.length} routines</span></div>${BUILT_IN_WORKOUTS.map((plan) => card(plan, true)).join('')}</section>
+      <section class="saved-plans plan-section"><div class="section-heading"><div><p class="eyebrow">ON THIS DEVICE</p><h2>My Plans · Meine Pläne</h2></div><a class="button-link" href="#editor" data-create-plan>Create new plan</a></div>${plans.length ? plans.map((plan) => card(plan, false)).join('') : '<div class="empty-state"><h2>No saved plans yet</h2><p>Create, customize or import a plan to see it here. The bundled routines above are never overwritten.</p><a class="button-link" href="#editor" data-create-plan>Create new plan</a></div>'}</section>`);
     for (const button of this.root.querySelectorAll<HTMLButtonElement>('[data-start-plan]')) button.addEventListener('click', () => { const plan = this.findPlan(button.dataset.startPlan ?? ''); if (plan) this.startWorkout(plan); });
+    for (const button of this.root.querySelectorAll<HTMLButtonElement>('[data-copy-plan]')) button.addEventListener('click', () => {
+      const plan = this.findPlan(button.dataset.copyPlan ?? '');
+      if (plan) this.openPlanEditor(plan, true);
+    });
+    for (const button of this.root.querySelectorAll<HTMLButtonElement>('[data-edit-plan]')) button.addEventListener('click', () => {
+      const plan = this.findPlan(button.dataset.editPlan ?? '');
+      if (plan && !isBuiltInWorkout(plan.id)) this.openPlanEditor(plan, false);
+    });
   }
 
   private renderInstructions(): void {
     const guideUrl = new URL('/ai-workout-guide.txt', location.origin).href;
     const items = [
-      ['Start', 'Review the plan summary, then choose START WORKOUT.'], ['Reps', 'The optional − / + counter starts at zero for every exercise and workout. It counts completed reps for the current session; the target stays visible above it.'], ['Rounds', 'Complete each exercise once per round. Round progress is always visible.'], ['Timers', 'Duration exercises and rests advance automatically using timestamps, even after backgrounding. Use Next to skip a rest.'], ['Pause', 'Pause freezes workout, exercise and rest time together.'], ['Alternatives', 'Choose the easier option stored with an exercise whenever needed.'], ['Own plans', 'Create, reorder and adjust exercises in Plan Studio.'], ['Import / Export', 'Share versioned JSON files. Every import is validated before preview or start.'], ['Languages', 'Show one or two configured languages side by side; add any BCP-47 language manually.'], ['Offline', 'After the first successful load, the installed PWA, library, images and local plans work offline.']
+      ['Start', 'Choose one of the permanent bundled routines or one of your own plans, review the summary, then choose START WORKOUT.'], ['Targets', 'Repetition targets stay visible without a manual tap counter. Duration exercises, rests and total workout time continue to run automatically.'], ['Rounds', 'Complete each exercise once per round. Round progress is always visible.'], ['Timers', 'Duration exercises and rests advance automatically using timestamps, even after backgrounding. Use Next to skip a rest.'], ['Pause', 'Pause freezes workout, exercise and rest time together.'], ['Alternatives', 'Choose the easier option stored with an exercise whenever needed.'], ['Own plans', 'Create, reorder and adjust exercises in Plan Studio. Edit a local plan directly or customize a separate copy of a bundled routine.'], ['Import / Export', 'Share versioned JSON files. Every import is validated before preview or start.'], ['Languages', 'Show one or two configured languages side by side; add any BCP-47 language manually.'], ['Offline', 'After the first successful load, the installed PWA, library, images and local plans work offline.']
     ];
     this.shell(`<section class="page-heading"><p class="eyebrow">QUICK GUIDE</p><h1>Instructions · Anleitung</h1><p>Everything needed to move confidently, without a coach in the room.</p></section>
       <section class="ai-plan-guide"><p class="eyebrow">CREATE WITH AI · MIT KI ERSTELLEN</p><h2>Let an AI prepare your workout plan</h2><p>Wenn du deinen Trainingsplan von einer KI wie ChatGPT generieren möchtest, gib ihr den folgenden Leitfaden-Link zusammen mit einer Beschreibung deines gewünschten Trainingsplans.</p><div class="copy-field"><code>${escapeHtml(guideUrl)}</code><button class="primary" data-action="copy-ai-guide">Link kopieren</button></div><p>Die KI kann dir anschließend idealerweise einen direkten Link zur geprüften Planvorschau geben. Alternativ erstellt sie eine JSON-Konfigurationsdatei, die du unter „Upload / Import“ hochladen kannst.</p></section>

@@ -34,20 +34,15 @@ test('workout controls remain reliable while the render timer is running', async
   await pressAcrossRenderTick(page, page.getByRole('button', { name: /resume|fortsetzen/i }));
   await expect(page.getByText(/paused|pausiert/i)).toHaveCount(0);
 
-  const counter = page.getByLabel(/repetition counter/i);
-  const output = counter.locator('output');
-  await expect(output).toHaveText('0');
-  await pressAcrossRenderTick(page, counter.getByRole('button', { name: /increase repetitions/i }));
-  await expect(output).toHaveText('1');
-  await pressAcrossRenderTick(page, counter.getByRole('button', { name: /decrease repetitions/i }));
-  await expect(output).toHaveText('0');
+  await expect(page.getByLabel(/repetition counter/i)).toHaveCount(0);
+  await expect(page.locator('[data-workout-total]')).toContainText(/Total\s+00:/i);
 
   await pressAcrossRenderTick(page, page.getByRole('button', { name: /previous|zurück/i }));
   await expect(page.getByText(/^Squat$/i)).toBeVisible();
 });
 
-test('Next skips an active rest and the next exercise counter is a zero-based session count', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'chromium-phone', 'Representative rest-skip and counter journey');
+test('Next skips an active rest and repetition targets do not render a tap counter', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-phone', 'Representative rest-skip and target journey');
   await page.clock.install({ time: new Date('2026-01-01T12:00:00Z') });
   await page.goto('/');
   await page.getByRole('button', { name: /start workout/i }).click();
@@ -60,11 +55,7 @@ test('Next skips an active rest and the next exercise counter is a zero-based se
   await expect(page.getByText(/^Push-up$/i)).toBeVisible();
   await expect(page.getByText(/rest|pause/i)).toHaveCount(0);
 
-  const counter = page.getByLabel(/repetition counter/i);
-  const output = counter.locator('output');
-  await expect(output).toHaveText('0');
-  await counter.getByRole('button', { name: /increase repetitions/i }).click();
-  await expect(output).toHaveText('1');
-  await counter.getByRole('button', { name: /decrease repetitions/i }).click();
-  await expect(output).toHaveText('0');
+  await expect(page.getByText(/6–15/)).toBeVisible();
+  await expect(page.getByLabel(/repetition counter/i)).toHaveCount(0);
+  await expect(page.locator('[data-workout-total]')).toBeVisible();
 });
