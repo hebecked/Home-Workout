@@ -52,6 +52,20 @@ const seeds: Seed[] = [
 
 const bandExercises = new Set(['resistance-band-row', 'resistance-band-pull-apart', 'assisted-pull-up']);
 const barExercises = new Set(['pull-up', 'chin-up']);
+const detailedInstructions: Partial<Record<string, Record<'de' | 'en', string>>> = {
+  'glute-bridge': {
+    de: 'Lege dich auf den Rücken, stelle die Füße hüftbreit auf und drücke über die Fersen das Becken nach oben, bis Knie, Hüfte und Schultern eine Linie bilden. Senke kontrolliert ab und vermeide ein Hohlkreuz.',
+    en: 'Lie on your back with your feet hip-width apart. Press through your heels and lift your hips until knees, hips and shoulders form a line. Lower with control and avoid arching your lower back.'
+  },
+  'dead-bug': {
+    de: 'Lege dich auf den Rücken, halte Hüfte und Knie bei etwa 90 Grad und strecke die Arme nach oben. Senke den gegenüberliegenden Arm und das gegenüberliegende Bein zum Boden, halte den unteren Rücken stabil und wechsle die Seite.',
+    en: 'Lie on your back with hips and knees at about 90 degrees and arms reaching up. Lower the opposite arm and leg toward the floor while keeping your lower back stable, then alternate sides.'
+  },
+  'lying-leg-raise': {
+    de: 'Lege dich mit gestreckten Beinen auf den Rücken. Spanne den Rumpf an, hebe beide Beine gemeinsam an und senke sie langsam bis knapp über den Boden, ohne ins Hohlkreuz zu fallen.',
+    en: 'Lie on your back with both legs straight. Brace your core, raise both legs together, then lower them slowly to just above the floor without arching your lower back.'
+  }
+};
 
 export const EXERCISE_LIBRARY: ExerciseDefinition[] = seeds.map(([id, category, de, en, difficulty, type, easier, harder]) => ({
   id, category,
@@ -59,8 +73,8 @@ export const EXERCISE_LIBRARY: ExerciseDefinition[] = seeds.map(([id, category, 
   difficulty, type,
   defaultTarget: type === 'duration' ? { seconds: 30 } : { min: 8, max: 12, unit: id.includes('lunge') || id === 'bird-dog' || id === 'dead-bug' ? 'per-side' : 'repetitions' },
   translations: {
-    de: { name: de, instructions: id === 'lying-leg-raise' ? 'Lege dich auf den Rücken, presse den unteren Rücken in den Boden und hebe die gestreckten Beine kontrolliert an und ab.' : type === 'duration' ? 'Halte eine ruhige, kontrollierte Position und atme gleichmäßig.' : 'Bewege dich kontrolliert und halte den Rumpf stabil.' },
-    en: { name: en, instructions: id === 'lying-leg-raise' ? 'Lie on your back, press your lower back into the floor, and raise and lower straight legs with control.' : type === 'duration' ? 'Hold a calm, controlled position and breathe steadily.' : 'Move with control and keep your core stable.' }
+    de: { name: de, instructions: detailedInstructions[id]?.de ?? (type === 'duration' ? 'Halte eine ruhige, kontrollierte Position und atme gleichmäßig.' : 'Bewege dich kontrolliert und halte den Rumpf stabil.') },
+    en: { name: en, instructions: detailedInstructions[id]?.en ?? (type === 'duration' ? 'Hold a calm, controlled position and breathe steadily.' : 'Move with control and keep your core stable.') }
   },
   illustration: `/assets/exercises/${id}.svg`,
   variants: { easier, harder }

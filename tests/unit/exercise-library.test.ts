@@ -61,8 +61,45 @@ describe('30 Minute Full Body default workout', () => {
     expect(DEFAULT_WORKOUT.restBetweenRounds).toBe(60);
     expect(DEFAULT_WORKOUT.exercises).toHaveLength(8);
     expect(DEFAULT_WORKOUT.exercises.map(({ exerciseId }) => exerciseId)).toEqual([
-      'squat', 'push-up', 'pull-up', 'reverse-lunge', 'glute-bridge', 'dead-bug', 'lying-leg-raise', 'jumping-jack'
+      'squat',
+      'push-up',
+      'reverse-lunge',
+      'pull-up',
+      'glute-bridge',
+      'dead-bug',
+      'jumping-jack',
+      'lying-leg-raise'
     ]);
+  });
+
+  it('alternates upper-body work with legs, core or cardio', () => {
+    const categoryById = new Map(EXERCISE_LIBRARY.map(({ id, category }) => [id, category]));
+    const categories = DEFAULT_WORKOUT.exercises.map(({ exerciseId }) => categoryById.get(exerciseId));
+    const isUpperBody = (category: string | undefined): boolean => category === 'push' || category === 'pull';
+
+    expect(categories).toEqual(['legs', 'push', 'legs', 'pull', 'legs', 'core', 'cardio', 'core']);
+    for (let index = 1; index < categories.length; index += 1) {
+      expect(
+        isUpperBody(categories[index - 1]) && isUpperBody(categories[index]),
+        `upper-body exercises at positions ${index} and ${index + 1} must be separated`
+      ).toBe(false);
+    }
+  });
+
+  it('ships Reverse Lunge and Lying Leg Raises with translated local artwork', () => {
+    const byId = new Map(EXERCISE_LIBRARY.map((exercise) => [exercise.id, exercise]));
+    const reverseLunge = byId.get('reverse-lunge');
+    const legRaise = byId.get('lying-leg-raise');
+
+    expect(DEFAULT_WORKOUT.exercises.map(({ exerciseId }) => exerciseId)).toEqual(
+      expect.arrayContaining(['reverse-lunge', 'lying-leg-raise'])
+    );
+    expect(legRaise?.translations.en?.name).toBe('Lying Leg Raises');
+    expect(legRaise?.translations.de?.name).toBe('Beinheben im Liegen');
+    for (const exercise of [reverseLunge, legRaise]) {
+      expect(exercise?.illustration).toMatch(/^\/assets\/exercises\/[a-z0-9-]+\.svg$/);
+      expect(existsSync(resolve(process.cwd(), 'public', exercise!.illustration.slice(1)))).toBe(true);
+    }
   });
 
   it('includes the specified easier alternatives and a 30 second jumping-jack target', () => {

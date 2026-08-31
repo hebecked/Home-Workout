@@ -2,6 +2,8 @@
 
 A calm, multilingual home-workout companion for phones, tablets, and desktop browsers. The app is static, account-free, tracking-free, and designed to keep working offline after the first load.
 
+The local exercise illustrations show both body position and movement direction. The three most easily confused floor movements—Glute Bridge, Dead Bug, and Lying Leg Raises—are documented in [Exercise sources](docs/exercise-sources.md).
+
 Source available under the PolyForm Perimeter License 1.0.0.
 
 ## Purpose

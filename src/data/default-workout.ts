@@ -26,11 +26,11 @@ export const DEFAULT_WORKOUT: WorkoutPlan = {
   exercises: [
     slot('squat', { min: 12, max: 15, unit: 'repetitions' }),
     slot('push-up', { min: 6, max: 15, unit: 'repetitions' }, ['incline-push-up', 'knee-push-up']),
-    slot('pull-up', { min: 5, max: 10, unit: 'repetitions' }, ['assisted-pull-up', 'resistance-band-row']),
     slot('reverse-lunge', { min: 8, max: 12, unit: 'per-side' }),
+    slot('pull-up', { min: 5, max: 10, unit: 'repetitions' }, ['assisted-pull-up', 'resistance-band-row']),
     slot('glute-bridge', { min: 12, max: 20, unit: 'repetitions' }),
     slot('dead-bug', { min: 6, max: 10, unit: 'per-side' }),
-    slot('lying-leg-raise', { min: 8, max: 12, unit: 'repetitions' }, ['dead-bug']),
-    slot('jumping-jack', { seconds: 30 }, ['step-jack'])
+    slot('jumping-jack', { seconds: 30 }, ['step-jack']),
+    slot('lying-leg-raise', { min: 8, max: 12, unit: 'repetitions' }, ['dead-bug'])
   ]
 };

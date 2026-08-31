@@ -57,7 +57,7 @@ export class HomeWorkoutApp {
   }
 
   private render(): void {
-    if (this.tickHandle !== null) { window.clearInterval(this.tickHandle); this.tickHandle = null; }
+    this.clearScheduledTick();
     const route = this.route();
     if (route === 'workout') this.renderWorkout();
     else if (route === 'editor') this.renderEditor();
@@ -65,6 +65,38 @@ export class HomeWorkoutApp {
     else if (route === 'plans') this.renderPlans();
     else if (route === 'instructions') this.renderInstructions();
     else this.renderHome();
+  }
+
+  private clearScheduledTick(): void {
+    if (this.tickHandle === null) return;
+    window.clearTimeout(this.tickHandle);
+    this.tickHandle = null;
+  }
+
+  private scheduleWorkoutTick(): void {
+    this.clearScheduledTick();
+    this.tickHandle = window.setTimeout(() => {
+      this.tickHandle = null;
+      if (!this.session) return;
+
+      const now = Date.now();
+      const previousPosition = `${this.session.phase}:${this.session.roundIndex}:${this.session.exerciseIndex}:${this.session.workoutPausedAtMs !== null}`;
+      this.session = dispatchWorkout(this.session, this.activePlan, { type: 'TICK' }, now);
+      saveWorkoutSession(localStorage, this.session);
+      const snapshot = getWorkoutSnapshot(this.session, this.activePlan, now);
+      const nextPosition = `${snapshot.phase}:${snapshot.roundIndex}:${snapshot.exerciseIndex}:${snapshot.paused}`;
+
+      if (previousPosition !== nextPosition) {
+        this.renderWorkout();
+        return;
+      }
+
+      const total = this.root.querySelector<HTMLElement>('[data-workout-total]');
+      const countdown = this.root.querySelector<HTMLElement>('[data-workout-countdown]');
+      if (total) total.textContent = `Total ${formatClock(snapshot.elapsedWorkoutMs)}`;
+      if (countdown && typeof snapshot.remainingMs === 'number') countdown.textContent = formatClock(snapshot.remainingMs);
+      if (snapshot.phase !== 'completed' && !snapshot.paused) this.scheduleWorkoutTick();
+    }, 500);
   }
 
   private renderHome(): void {
@@ -145,6 +177,7 @@ export class HomeWorkoutApp {
   }
 
   private renderWorkout(): void {
+    this.clearScheduledTick();
     if (!this.session) { location.hash = 'home'; return; }
     const now = Date.now();
     this.session = dispatchWorkout(this.session, this.activePlan, { type: 'TICK' }, now);
@@ -164,14 +197,14 @@ export class HomeWorkoutApp {
 
     this.shell(`
       <section class="workout-screen ${isRest ? 'is-rest' : ''}">
-        <div class="workout-status"><span>Round ${snapshot.roundIndex + 1} / ${this.activePlan.rounds} · Runde ${snapshot.roundIndex + 1} / ${this.activePlan.rounds}</span><span>Total ${formatClock(snapshot.elapsedWorkoutMs)}</span></div>
+        <div class="workout-status"><span>Round ${snapshot.roundIndex + 1} / ${this.activePlan.rounds} · Runde ${snapshot.roundIndex + 1} / ${this.activePlan.rounds}</span><span data-workout-total>Total ${formatClock(snapshot.elapsedWorkoutMs)}</span></div>
         <div class="phase-pill">${phaseLabel}${snapshot.paused ? ' · Paused · Pausiert' : ''}</div>
         ${snapshot.phase === 'completed' ? `<div class="completion"><p class="eyebrow">DONE</p><h1>Workout complete</h1><p>You made time to move. That is enough for today.</p><button class="primary" data-action="finish">Back home</button></div>` : `
           <div class="exercise-layout">
             <div class="exercise-visual"><img src="${definition?.illustration ?? '/icon.svg'}" alt="${escapeHtml(imageName)}"></div>
             <div class="exercise-copy">${isRest ? `<p class="rest-label">Breathe. The next movement starts when the timer reaches zero.</p>` : translations}</div>
           </div>
-          <div class="target-block"><span>${isRest ? 'READY IN' : exercise.type === 'duration' ? 'TIME LEFT' : 'TARGET'}</span><strong>${isRest ? formatClock(snapshot.remainingMs ?? 0) : target}</strong></div>
+          <div class="target-block"><span>${isRest ? 'READY IN' : exercise.type === 'duration' ? 'TIME LEFT' : 'TARGET'}</span><strong ${isRest || exercise.type === 'duration' ? 'data-workout-countdown' : ''}>${isRest ? formatClock(snapshot.remainingMs ?? 0) : target}</strong></div>
           ${exercise.type === 'repetitions' && !isRest && 'min' in exercise.target ? `<div class="rep-counter" aria-label="Repetition counter"><button data-action="reps-down" aria-label="Decrease repetitions">−</button><output>${snapshot.repetitions ?? exercise.target.min}</output><button data-action="reps-up" aria-label="Increase repetitions">+</button></div>` : ''}
           <div class="workout-controls">
             <button data-action="previous" aria-label="Previous · Zurück">← <span>Previous</span></button>
@@ -198,7 +231,7 @@ export class HomeWorkoutApp {
     }
     this.root.querySelector('[data-action="finish"]')?.addEventListener('click', () => { clearWorkoutSession(localStorage); this.session = null; location.hash = 'home'; });
     this.root.querySelector('[data-action="abort"]')?.addEventListener('click', () => this.requestAbortWorkout());
-    if (snapshot.phase !== 'completed' && !snapshot.paused) this.tickHandle = window.setInterval(() => this.renderWorkout(), 500);
+    if (snapshot.phase !== 'completed' && !snapshot.paused) this.scheduleWorkoutTick();
   }
 
   private renderEditor(): void {
