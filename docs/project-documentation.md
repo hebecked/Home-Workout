@@ -88,7 +88,7 @@ All 33 assets are covered by file, palette, and SVG contract tests. Movement-spe
 - `src/core/workout-engine.ts`: deterministic workout state transitions.
 - `src/core/timer.ts`: pause-aware timestamp timer calculations.
 - `public/service-worker.js`: offline app shell caching.
-- `server/index.js`: Sites-compatible static asset worker with SPA fallback and security headers.
+- Cloudflare Pages serves the generated static files from `dist/`; hash routing keeps direct application routes on the root document.
 
 ## Development and verification
 
@@ -105,7 +105,7 @@ npm run build
 
 Vitest covers validation, transformations, persistence, timers, the workout engine, the bundled catalogue, and illustration contracts. Playwright covers representative phone, desktop, and tablet journeys, including plan creation/editing, immutable bundled plans, import/AI links, workout controls, fixed action placement, abort/home behavior, reload restoration, and touch targets.
 
-The build produces a static client and `dist/server/index.js`. `.openai/hosting.json` binds the repository to its Sites project. Deployment credentials and generated archives must never be committed.
+The build produces a static client in `dist/`. `npm run deploy:cloudflare` publishes that directory to the existing Cloudflare Pages project `home-workout`. Deployment credentials and generated output must never be committed.
 
 ## Privacy, safety, and release constraints
 
@@ -113,6 +113,6 @@ The build produces a static client and `dist/server/index.js`. `.openai/hosting.
 - Plans and sessions stay in the current browser unless the user exports them.
 - Exercise guidance is general; users should stop if they feel pain and seek qualified advice when appropriate.
 - The source is PolyForm Perimeter 1.0.0 and must not be described as open source.
-- `COPYRIGHT_NOTICE.md` still needs the real copyright holder before public release.
+- `COPYRIGHT_NOTICE.md` still needs the real copyright holder; do not guess this legal identity from repository metadata.
 
 See `docs/product-roadmap.md` for the authoritative list of outstanding features.

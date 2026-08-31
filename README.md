@@ -70,17 +70,18 @@ npm run build
 npm run preview
 ```
 
-The output contains the static client plus the Sites-compatible Worker entry point in `dist/`.
+The output is a static PWA in `dist/`, ready for the existing Cloudflare Pages project.
 
-## Deployment
+## Cloudflare deployment
 
-The repository contains Sites deployment metadata. Build locally before saving and deploying a version.
+Production is hosted in the Cloudflare Pages project `home-workout` in the owner's Cloudflare account. The default Pages URL is `https://home-workout-65g.pages.dev`.
 
 ```bash
 npm run build
+npm run deploy:cloudflare
 ```
 
-Do not commit deployment credentials or generated archives.
+Wrangler uses the locally authenticated Cloudflare account. Do not commit OAuth credentials, `.wrangler/`, deployment output, or generated archives.
 
 ## Plan schema
 

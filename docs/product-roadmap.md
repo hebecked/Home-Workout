@@ -38,7 +38,7 @@ Evidence basis:
 
 ### High priority
 
-- Replace the placeholder copyright holder in `COPYRIGHT_NOTICE.md` before changing the hosted site from owner-only to public access.
+- Replace the placeholder copyright holder in `COPYRIGHT_NOTICE.md`; the legal holder must be supplied explicitly rather than inferred from account or repository metadata.
 - Add explicit delete/archive and duplicate actions for local plans, including a confirmation step and tests.
 - Add per-exercise target editing in Plan Studio. At present the editor changes plan metadata and ordering, while newly added library exercises use their safe defaults.
 - Add a visible alternative-exercise chooser during a workout; alternatives are already carried in the schema.

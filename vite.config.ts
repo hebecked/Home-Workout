@@ -1,8 +1,6 @@
-import { sites } from '@openai/sites-vite-plugin';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
-  plugins: [sites()],
   test: {
     environment: 'node',
     include: ['tests/unit/**/*.test.ts'],
