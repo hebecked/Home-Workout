@@ -5,14 +5,24 @@ const source = `squat sumo-squat reverse-lunge forward-lunge split-squat glute-b
 const directory = resolve('public/assets/exercises');
 mkdirSync(directory, { recursive: true });
 
+const colorGroups = {
+  legs: `squat sumo-squat reverse-lunge forward-lunge split-squat glute-bridge single-leg-glute-bridge calf-raise wall-sit`.split(' '),
+  arms: `push-up incline-push-up knee-push-up pike-push-up pull-up assisted-pull-up chin-up resistance-band-row resistance-band-pull-apart triceps-dip`.split(' '),
+  core: `dead-bug lying-leg-raise bird-dog plank side-plank mountain-climber hollow-hold superman`.split(' '),
+  cardio: `jumping-jack step-jack high-knees marching-in-place burpee squat-to-reach`.split(' ')
+};
+const hueByGroup = { legs: 208, arms: 28, core: 276, cardio: 4 };
+const hueByExercise = new Map(Object.entries(colorGroups).flatMap(([group, exerciseIds]) => exerciseIds.map((exerciseId) => [exerciseId, hueByGroup[group]])));
+
 for (const [index, id] of source.entries()) {
-  const hue = [16, 32, 208, 224, 266, 334][index % 6];
+  const hue = hueByExercise.get(id);
+  if (hue === undefined) throw new Error(`Missing exercise color group: ${id}`);
   const armY = 74 + (index % 4) * 6;
   const legOffset = 22 + (index % 3) * 7;
   const title = id.split('-').map((word) => word[0]?.toUpperCase() + word.slice(1)).join(' ');
   const specialFigures = {
     squat: `<path d="M160 138l-20 67M160 138l20 67M160 91l-30 62M160 91l30 62" fill="none" stroke="hsl(${hue} 42% 76%)" stroke-width="8" stroke-linecap="round"/><circle cx="160" cy="50" r="18" fill="none" stroke="#18233a" stroke-width="9"/><path d="M160 72v66M160 91l-48 29M160 91l48 29M160 138l-43 35-28 31M160 138l43 35 28 31" fill="none" stroke="#18233a" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/><path d="M230 105c8 14 9 28 3 41" fill="none" stroke="hsl(${hue} 55% 52%)" stroke-width="4.5" stroke-linecap="round" opacity=".72" marker-end="url(#motion-arrow)"/>`,
-    'push-up': `<path d="M215 102 139 123 63 146M177 113l23 72M130 126l28 61" fill="none" stroke="hsl(${hue} 42% 76%)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="235" cy="111" r="17" fill="none" stroke="#18233a" stroke-width="9"/><path d="M214 121 139 142 63 165M176 132l24 53M130 145l28 42" fill="none" stroke="#18233a" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/><path d="M258 126c5 12 3 24-5 35" fill="none" stroke="hsl(${hue} 55% 52%)" stroke-width="4.5" stroke-linecap="round" opacity=".72" marker-end="url(#motion-arrow)"/>`,
+    'push-up': `<path d="M215 102 139 123 63 146M139 123 58 165M177 113l23 72" fill="none" stroke="hsl(${hue} 42% 76%)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="235" cy="111" r="17" fill="none" stroke="#18233a" stroke-width="9"/><path d="M214 121 139 142 63 165M139 142 57 183M176 132l24 53" fill="none" stroke="#18233a" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/><path d="M258 126c5 12 3 24-5 35" fill="none" stroke="hsl(${hue} 55% 52%)" stroke-width="4.5" stroke-linecap="round" opacity=".72" marker-end="url(#motion-arrow)"/>`,
     'pull-up': `<path d="M66 38h188M92 38v28M228 38v28" fill="none" stroke="hsl(${hue} 65% 48%)" stroke-width="8" stroke-linecap="round"/><circle cx="160" cy="141" r="15" fill="none" stroke="hsl(${hue} 42% 76%)" stroke-width="7"/><path d="M160 158v48M160 163 94 64M160 163l66-99" fill="none" stroke="hsl(${hue} 42% 76%)" stroke-width="8" stroke-linecap="round"/><circle cx="160" cy="92" r="18" fill="none" stroke="#18233a" stroke-width="9"/><path d="M160 114v62M160 126 94 64M160 126l66-62M160 176l-31 34M160 176l31 34" fill="none" stroke="#18233a" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/><path d="M269 154c6-13 5-27-2-39" fill="none" stroke="hsl(${hue} 55% 52%)" stroke-width="4.5" stroke-linecap="round" opacity=".72" marker-end="url(#motion-arrow)"/>`,
     'reverse-lunge': `<path d="M154 136l-20 68M154 136l20 68" fill="none" stroke="hsl(${hue} 42% 76%)" stroke-width="8" stroke-linecap="round"/><circle cx="154" cy="49" r="18" fill="none" stroke="#18233a" stroke-width="9"/><path d="M154 71v66M154 88l-45 35M154 88l45 30M154 136l-48 38 54 27M154 136l64 28 42 38" fill="none" stroke="#18233a" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/><path d="M209 132c20 7 35 18 46 34" fill="none" stroke="hsl(${hue} 55% 52%)" stroke-width="4.5" stroke-linecap="round" opacity=".72" marker-end="url(#motion-arrow)"/>`,
     'glute-bridge': `<path d="M78 177l70 6 72-48 31 62" fill="none" stroke="hsl(${hue} 42% 76%)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="55" cy="174" r="16" fill="none" stroke="#18233a" stroke-width="9"/><path d="M77 177 154 119l66 16 31 62M91 180l-25 18M220 135l31 62" fill="none" stroke="#18233a" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/><path d="M140 158c-3-18 2-33 15-45" fill="none" stroke="hsl(${hue} 55% 52%)" stroke-width="4.5" stroke-linecap="round" opacity=".72" marker-end="url(#motion-arrow)"/>`,

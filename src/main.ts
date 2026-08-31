@@ -7,5 +7,5 @@ if (!root) throw new Error('App root is missing.');
 new HomeWorkoutApp(root).start();
 
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => { void navigator.serviceWorker.register('/service-worker.js'); });
+  window.addEventListener('load', () => { void navigator.serviceWorker.register('/service-worker.js', { updateViaCache: 'none' }); });
 }

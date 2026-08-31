@@ -59,6 +59,48 @@ describe('workout state machine', () => {
     expect(getWorkoutSnapshot(session, plan, 600_001).phase).toBe('exercise-rest');
   });
 
+  it('starts each repetition exercise session counter at zero and tracks manual changes', () => {
+    const plan = makeMultilingualPlan();
+    let session = createWorkoutSession(plan, 0);
+
+    expect(getWorkoutSnapshot(session, plan, 0)).toMatchObject({
+      phase: 'exercise', exerciseIndex: 0, repetitions: 0
+    });
+    session = dispatchWorkout(session, plan, { type: 'SET_REPETITIONS', value: 1 }, 1);
+    expect(getWorkoutSnapshot(session, plan, 1).repetitions).toBe(1);
+    session = dispatchWorkout(session, plan, { type: 'SET_REPETITIONS', value: 0 }, 2);
+    expect(getWorkoutSnapshot(session, plan, 2).repetitions).toBe(0);
+
+    session = dispatchWorkout(session, plan, { type: 'NEXT' }, 3);
+    session = dispatchWorkout(session, plan, { type: 'TICK' }, 20_003);
+    expect(getWorkoutSnapshot(session, plan, 20_003)).toMatchObject({
+      phase: 'exercise', exerciseIndex: 1, repetitions: null
+    });
+    session = dispatchWorkout(session, plan, { type: 'TICK' }, 110_003);
+    expect(getWorkoutSnapshot(session, plan, 110_003)).toMatchObject({
+      phase: 'exercise', roundIndex: 1, exerciseIndex: 0, repetitions: 0
+    });
+  });
+
+  it('lets Next skip exercise and round rests without waiting for their timers', () => {
+    const plan = makeMultilingualPlan();
+    let session = createWorkoutSession(plan, 0);
+
+    session = dispatchWorkout(session, plan, { type: 'NEXT' }, 1_000);
+    expect(getWorkoutSnapshot(session, plan, 1_000).phase).toBe('exercise-rest');
+    session = dispatchWorkout(session, plan, { type: 'NEXT' }, 1_001);
+    expect(getWorkoutSnapshot(session, plan, 1_001)).toMatchObject({
+      phase: 'exercise', roundIndex: 0, exerciseIndex: 1, remainingMs: 30_000
+    });
+
+    session = dispatchWorkout(session, plan, { type: 'TICK' }, 31_001);
+    expect(getWorkoutSnapshot(session, plan, 31_001).phase).toBe('round-rest');
+    session = dispatchWorkout(session, plan, { type: 'NEXT' }, 31_002);
+    expect(getWorkoutSnapshot(session, plan, 31_002)).toMatchObject({
+      phase: 'exercise', roundIndex: 1, exerciseIndex: 0, repetitions: 0
+    });
+  });
+
   it('pauses workout, duration exercise and rest clocks together', () => {
     const plan = makeMultilingualPlan();
     let session = createWorkoutSession(plan, 0);
@@ -141,13 +183,12 @@ describe('workout state machine', () => {
     });
   });
 
-  it('goes back across a round boundary and rest controls do not skip phases', () => {
+  it('goes back across a round boundary and Previous cancels the current rest', () => {
     const plan = makeMultilingualPlan();
     let session = createWorkoutSession(plan, 0);
     session = dispatchWorkout(session, plan, { type: 'NEXT' }, 1_000);
 
     const rest = session;
-    expect(dispatchWorkout(rest, plan, { type: 'NEXT' }, 2_000)).toStrictEqual(rest);
     expect(getWorkoutSnapshot(
       dispatchWorkout(rest, plan, { type: 'PREVIOUS' }, 2_000),
       plan,

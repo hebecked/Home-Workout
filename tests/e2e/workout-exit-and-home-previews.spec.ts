@@ -53,4 +53,17 @@ test('home shows multiple visible exercise previews backed by local SVG assets',
     await expect(preview).toHaveJSProperty('complete', true);
     expect(await preview.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(0);
   }
+
+  const previewSection = page.getByRole('region', { name: /inside this workout|deine Übungen/i });
+  for (const category of [
+    /^Legs\s*[·/]\s*Beine$/i,
+    /^Arms\s*[·/]\s*Oberkörper$/i,
+    /^Core\s*[·/]\s*Rumpf$/i,
+    /^Cardio\s*[·/]\s*Kondition$/i
+  ]) {
+    await expect(
+      previewSection.getByText(category).first(),
+      `the home preview explains category ${category.source}`
+    ).toBeVisible();
+  }
 });

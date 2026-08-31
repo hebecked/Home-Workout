@@ -40,7 +40,14 @@ const durationFor = (plan: WorkoutPlan, index: number): number | null => {
 
 const startExercise = (session: WorkoutSession, plan: WorkoutPlan, round: number, exercise: number, atMs: number): WorkoutSession => {
   const duration = durationFor(plan, exercise);
-  return { ...session, phase: 'exercise', roundIndex: round, exerciseIndex: exercise, repetitions: null, phaseTimer: duration === null ? null : createTimer(duration, atMs) };
+  return {
+    ...session,
+    phase: 'exercise',
+    roundIndex: round,
+    exerciseIndex: exercise,
+    repetitions: duration === null ? 0 : null,
+    phaseTimer: duration === null ? null : createTimer(duration, atMs)
+  };
 };
 
 const completeExercise = (session: WorkoutSession, plan: WorkoutPlan, atMs: number): WorkoutSession => {
@@ -111,8 +118,11 @@ export function dispatchWorkout(input: WorkoutSession, plan: WorkoutPlan, action
     return startExercise(session, plan, session.roundIndex, session.exerciseIndex, nowMs);
   }
   if (action.type === 'NEXT') {
-    if (session.phase !== 'exercise') return session;
-    return completeExercise(session, plan, nowMs);
+    if (session.phase === 'exercise') return completeExercise(session, plan, nowMs);
+    if (session.phase === 'exercise-rest') {
+      return startExercise(session, plan, session.roundIndex, session.exerciseIndex + 1, nowMs);
+    }
+    return startExercise(session, plan, session.roundIndex + 1, 0, nowMs);
   }
   return session;
 }

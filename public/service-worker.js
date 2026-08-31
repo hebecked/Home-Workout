@@ -1,14 +1,24 @@
-const CACHE = 'home-workout-v4';
-const APP_SHELL = ['/', '/index.html', '/manifest.webmanifest', '/icon.svg', '/maskable-icon.svg'];
+/* global Response */
+
+const CACHE = 'home-workout-v6';
+const APP_SHELL = ['/manifest.webmanifest', '/icon.svg', '/maskable-icon.svg'];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(APP_SHELL)));
-  self.skipWaiting();
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE);
+    await cache.addAll(APP_SHELL);
+    const offlinePage = await fetch('/index.html', { cache: 'reload' });
+    await cache.put('/index.html', offlinePage);
+    await self.skipWaiting();
+  })());
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key)))));
-  self.clients.claim();
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key)));
+    await self.clients.claim();
+  })());
 });
 
 self.addEventListener('fetch', (event) => {
@@ -18,12 +28,12 @@ self.addEventListener('fetch', (event) => {
       const copy = response.clone();
       caches.open(CACHE).then((cache) => cache.put('/index.html', copy));
       return response;
-    }).catch(() => caches.match('/index.html')));
+    }).catch(async () => (await caches.match('/index.html')) ?? Response.error()));
     return;
   }
   event.respondWith(caches.match(event.request).then((cached) => cached || fetch(event.request).then((response) => {
     const copy = response.clone();
     caches.open(CACHE).then((cache) => cache.put(event.request, copy));
     return response;
-  }).catch(() => caches.match('/index.html'))));
+  }).catch(() => new Response('', { status: 503, statusText: 'Offline' }))));
 });

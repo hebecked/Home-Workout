@@ -12,6 +12,13 @@ const formatClock = (milliseconds: number): string => {
   return `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
 };
 const cloneDefault = (): WorkoutPlan => structuredClone(DEFAULT_WORKOUT);
+const previewCategory = (category: string | undefined): { className: string; label: string } | null => {
+  if (category === 'legs') return { className: 'legs', label: 'Legs · Beine' };
+  if (category === 'push' || category === 'pull') return { className: 'arms', label: 'Arms · Oberkörper' };
+  if (category === 'core') return { className: 'core', label: 'Core · Rumpf' };
+  if (category === 'cardio' || category === 'full-body') return { className: 'cardio', label: 'Cardio · Kondition' };
+  return null;
+};
 
 export class HomeWorkoutApp {
   private activePlan: WorkoutPlan = cloneDefault();
@@ -105,10 +112,11 @@ export class HomeWorkoutApp {
       const definition = EXERCISES_BY_ID.get(exercise.exerciseId);
       const englishName = exercise.translations.en?.name ?? Object.values(exercise.translations)[0]?.name ?? exercise.exerciseId;
       const germanName = exercise.translations.de?.name;
+      const category = previewCategory(definition?.category);
       return `<article class="exercise-preview-card">
         <span class="preview-number">${String(index + 1).padStart(2, '0')}</span>
         <img src="${definition?.illustration ?? '/icon.svg'}" alt="${escapeHtml([englishName, germanName].filter(Boolean).join(' · '))}" loading="eager">
-        <div><strong>${escapeHtml(englishName)}</strong>${germanName ? `<span>${escapeHtml(germanName)}</span>` : ''}</div>
+        <div>${category ? `<span class="preview-category ${category.className}">${category.label}</span>` : ''}<strong>${escapeHtml(englishName)}</strong>${germanName ? `<span>${escapeHtml(germanName)}</span>` : ''}</div>
       </article>`;
     }).join('');
     this.shell(`
@@ -205,7 +213,7 @@ export class HomeWorkoutApp {
             <div class="exercise-copy">${isRest ? `<p class="rest-label">Breathe. The next movement starts when the timer reaches zero.</p>` : translations}</div>
           </div>
           <div class="target-block"><span>${isRest ? 'READY IN' : exercise.type === 'duration' ? 'TIME LEFT' : 'TARGET'}</span><strong ${isRest || exercise.type === 'duration' ? 'data-workout-countdown' : ''}>${isRest ? formatClock(snapshot.remainingMs ?? 0) : target}</strong></div>
-          ${exercise.type === 'repetitions' && !isRest && 'min' in exercise.target ? `<div class="rep-counter" aria-label="Repetition counter"><button data-action="reps-down" aria-label="Decrease repetitions">−</button><output>${snapshot.repetitions ?? exercise.target.min}</output><button data-action="reps-up" aria-label="Increase repetitions">+</button></div>` : ''}
+          ${exercise.type === 'repetitions' && !isRest && 'min' in exercise.target ? `<div class="rep-counter" aria-label="Repetition counter"><button data-action="reps-down" aria-label="Decrease repetitions">−</button><output>${snapshot.repetitions ?? 0}</output><button data-action="reps-up" aria-label="Increase repetitions">+</button><small>Count completed reps · Erledigte Wiederholungen</small></div>` : ''}
           <div class="workout-controls">
             <button data-action="previous" aria-label="Previous · Zurück">← <span>Previous</span></button>
             <button class="pause" data-action="pause" aria-label="${snapshot.paused ? 'Resume · Fortsetzen' : 'Pause'}">${snapshot.paused ? '▶' : 'Ⅱ'}</button>
@@ -225,7 +233,7 @@ export class HomeWorkoutApp {
     act('previous', { type: 'PREVIOUS' }); act('next', { type: 'NEXT' });
     act('pause', { type: snapshot.paused ? 'RESUME' : 'PAUSE' });
     if (exercise.type === 'repetitions') {
-      const current = snapshot.repetitions ?? ('min' in exercise.target ? exercise.target.min : 0);
+      const current = snapshot.repetitions ?? 0;
       act('reps-down', { type: 'SET_REPETITIONS', value: Math.max(0, current - 1) });
       act('reps-up', { type: 'SET_REPETITIONS', value: current + 1 });
     }
@@ -358,7 +366,7 @@ export class HomeWorkoutApp {
 
   private renderInstructions(): void {
     const items = [
-      ['Start', 'Review the plan summary, then choose START WORKOUT.'], ['Reps', 'Use the optional − / + counter as a personal aid; it never blocks progress.'], ['Rounds', 'Complete each exercise once per round. Round progress is always visible.'], ['Timers', 'Duration exercises and rests advance automatically using timestamps, even after backgrounding.'], ['Pause', 'Pause freezes workout, exercise and rest time together.'], ['Alternatives', 'Choose the easier option stored with an exercise whenever needed.'], ['Own plans', 'Create, reorder and adjust exercises in Plan Studio.'], ['Import / Export', 'Share versioned JSON files. Every import is validated before preview or start.'], ['Languages', 'Show one or two configured languages side by side; add any BCP-47 language manually.'], ['Offline', 'After the first successful load, the installed PWA, library, images and local plans work offline.']
+      ['Start', 'Review the plan summary, then choose START WORKOUT.'], ['Reps', 'The optional − / + counter starts at zero for every exercise and workout. It counts completed reps for the current session; the target stays visible above it.'], ['Rounds', 'Complete each exercise once per round. Round progress is always visible.'], ['Timers', 'Duration exercises and rests advance automatically using timestamps, even after backgrounding. Use Next to skip a rest.'], ['Pause', 'Pause freezes workout, exercise and rest time together.'], ['Alternatives', 'Choose the easier option stored with an exercise whenever needed.'], ['Own plans', 'Create, reorder and adjust exercises in Plan Studio.'], ['Import / Export', 'Share versioned JSON files. Every import is validated before preview or start.'], ['Languages', 'Show one or two configured languages side by side; add any BCP-47 language manually.'], ['Offline', 'After the first successful load, the installed PWA, library, images and local plans work offline.']
     ];
     this.shell(`<section class="page-heading"><p class="eyebrow">QUICK GUIDE</p><h1>Instructions · Anleitung</h1><p>Everything needed to move confidently, without a coach in the room.</p></section><section class="instruction-list">${items.map(([title, copy], index) => `<article><span>${String(index + 1).padStart(2, '0')}</span><div><h2>${title}</h2><p>${copy}</p></div></article>`).join('')}</section><aside class="safety"><strong>Safety note</strong><p>Train within your ability, stop if you feel pain, and seek qualified medical advice when needed. This app does not diagnose or treat medical conditions.</p></aside>`);
   }
