@@ -116,6 +116,7 @@ The build produces a static client in `dist/`. `npm run deploy:cloudflare` publi
 - Plans and sessions stay in the current browser unless the user exports them.
 - Exercise guidance is general; users should stop if they feel pain and seek qualified advice when appropriate.
 - The source is PolyForm Perimeter 1.0.0 and must not be described as open source.
-- `COPYRIGHT_NOTICE.md` still needs the real copyright holder; do not guess this legal identity from repository metadata.
+- The 2026 copyright holder is explicitly recorded as Dr. Dustin Hebecker in `COPYRIGHT_NOTICE.md`.
+- The reliable-source review is tracked per exercise in `docs/exercise-audit.md`; source assignment alone does not close the separate text and pose checks.
 
 See the root `BACKLOG.md` for the authoritative checklist of outstanding work and `docs/product-roadmap.md` for the fuller product context.

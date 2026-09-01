@@ -313,11 +313,13 @@ export class HomeWorkoutApp {
       : definition?.translations[code as 'de' | 'en']?.name ?? exercise.translations[code]?.name).filter(Boolean).join(' / ');
     const alternativeIds = [exercise.exerciseId, ...exercise.alternativeExerciseIds]
       .filter((id, index, ids) => ids.indexOf(id) === index && EXERCISES_BY_ID.has(id));
-    const alternatives = !isRest && alternativeIds.length > 1 ? `<div class="alternative-chooser" aria-label="Alternative exercise · Alternative Übung">
-      <span>Movement · Übung</span>
+    const alternatives = !isRest && alternativeIds.length > 1 ? `<div class="alternative-chooser" aria-label="Easier alternatives · Leichtere Alternativen">
+      <span>Easier alternatives · Leichtere Alternativen</span>
+      <p>Choose an easier version for this exercise, or keep the original. · Wähle eine leichtere Variante oder bleibe beim Original.</p>
       <div>${alternativeIds.map((id) => {
         const option = EXERCISES_BY_ID.get(id)!;
-        return `<button type="button" data-alternative="${escapeHtml(id)}" aria-pressed="${id === selectedExerciseId}">${escapeHtml(option.translations.en.name)} · ${escapeHtml(option.translations.de.name)}</button>`;
+        const original = id === exercise.exerciseId ? 'Original · ' : '';
+        return `<button type="button" data-alternative="${escapeHtml(id)}" aria-pressed="${id === selectedExerciseId}">${original}${escapeHtml(option.translations.en.name)} · ${escapeHtml(option.translations.de.name)}</button>`;
       }).join('')}</div>
     </div>` : '';
 
@@ -329,7 +331,7 @@ export class HomeWorkoutApp {
           ${snapshot.phase === 'completed' ? `<div class="completion"><p class="eyebrow">DONE</p><h1>Workout complete</h1><p>You made time to move. That is enough for today.</p><button class="primary" data-action="finish">Back home</button></div>` : `
             <div class="exercise-layout">
               <div class="exercise-visual"><img src="${definition?.illustration ?? '/icon.svg'}" alt="${escapeHtml(imageName)}"></div>
-              <div class="exercise-copy">${isRest ? `<p class="rest-label">Breathe. The next movement starts when the timer reaches zero.</p>` : translations}</div>
+              <div class="exercise-copy">${isRest ? `<p class="rest-label">Rest. Next starts automatically.</p>` : translations}</div>
             </div>
             ${alternatives}
             <div class="target-block"><span>${isRest ? 'READY IN' : exercise.type === 'duration' ? 'TIME LEFT' : 'TARGET'}</span><strong ${isRest || exercise.type === 'duration' ? 'data-workout-countdown' : ''}>${isRest ? formatClock(snapshot.remainingMs ?? 0) : target}</strong></div>`}
@@ -380,20 +382,24 @@ export class HomeWorkoutApp {
     const exerciseOptions = EXERCISE_LIBRARY.map((exercise) => `<option value="${exercise.id}" aria-label="${escapeHtml(optionLabels[exercise.id] ?? `${exercise.translations.en.name} · ${exercise.translations.de.name}`)}">${escapeHtml(exercise.translations.en.name)} · ${escapeHtml(exercise.translations.de.name)}</option>`).join('');
     const exerciseRows = this.draft.exercises.map((exercise, index) => {
       const name = exercise.translations.en?.name ?? Object.values(exercise.translations)[0]?.name ?? exercise.exerciseId;
+      const translationFields = this.draft.languages.map((language) => {
+        const copy = exercise.translations[language.code] ?? { name, instructions: '' };
+        return `<fieldset><legend>${escapeHtml(language.label)} (${escapeHtml(language.code)})</legend><label>Exercise name · Übungsname<input name="translation-${index}-${escapeHtml(language.code)}-name" value="${escapeHtml(copy.name)}" required></label><label>Instructions · Beschreibung<textarea name="translation-${index}-${escapeHtml(language.code)}-instructions" rows="3" required>${escapeHtml(copy.instructions)}</textarea></label></fieldset>`;
+      }).join('');
       const targetFields = exercise.type === 'duration' && 'seconds' in exercise.target
         ? `<label>Seconds · Sekunden<input name="target-${index}-seconds" type="number" min="1" max="7200" value="${exercise.target.seconds}"></label>`
         : 'min' in exercise.target
           ? `<label>Minimum<input name="target-${index}-min" type="number" min="1" max="1000" value="${exercise.target.min}"></label><label>Maximum<input name="target-${index}-max" type="number" min="1" max="1000" value="${exercise.target.max}"></label><label>Count · Zählweise<select name="target-${index}-unit"><option value="repetitions" ${exercise.target.unit === 'repetitions' ? 'selected' : ''}>Total repetitions · Gesamt</option><option value="per-side" ${exercise.target.unit === 'per-side' ? 'selected' : ''}>Per side · Pro Seite</option></select></label>`
           : '';
-      return `<li data-exercise-row="${index}"><span class="order">${String(index + 1).padStart(2, '0')}</span><div class="exercise-row-main"><strong>${escapeHtml(name)}</strong><div class="target-fields">${targetFields}</div></div><span class="row-actions"><button type="button" data-move="up" data-id="${escapeHtml(exercise.id)}" aria-label="Move ${escapeHtml(name)} up">↑</button><button type="button" data-move="down" data-id="${escapeHtml(exercise.id)}" aria-label="Move ${escapeHtml(name)} down">↓</button><button type="button" data-remove="${escapeHtml(exercise.id)}" aria-label="Remove ${escapeHtml(name)}">Remove</button></span></li>`;
+      return `<li data-exercise-row="${index}"><span class="order">${String(index + 1).padStart(2, '0')}</span><div class="exercise-row-main"><strong>${escapeHtml(name)}</strong><div class="target-fields">${targetFields}</div><details class="translation-editor"><summary>Edit translations · Übersetzungen bearbeiten</summary>${translationFields}</details></div><span class="row-actions"><button type="button" data-move="up" data-id="${escapeHtml(exercise.id)}" aria-label="Move ${escapeHtml(name)} up">↑</button><button type="button" data-move="down" data-id="${escapeHtml(exercise.id)}" aria-label="Move ${escapeHtml(name)} down">↓</button><button type="button" data-remove="${escapeHtml(exercise.id)}" aria-label="Remove ${escapeHtml(name)}">Remove</button></span></li>`;
     }).join('');
     const languageChecks = this.draft.languages.map((language) => `<label class="check"><input type="checkbox" data-display-language="${escapeHtml(language.code)}" ${this.draft.displayLanguages.includes(language.code) ? 'checked' : ''}> ${escapeHtml(language.label)}</label>`).join('');
+    const planNameFields = this.draft.languages.map((language) => `<label>Plan name · Planname (${escapeHtml(language.label)})<input name="name-${escapeHtml(language.code)}" value="${escapeHtml(this.draft.name[language.code] ?? '')}" required></label>`).join('');
     this.shell(`
       <section class="page-heading"><p class="eyebrow">PLAN STUDIO</p><h1>${editorTitle}</h1><p>${editorIntro}</p></section>
       <form class="editor" data-editor>
         <section class="form-section"><h2>01 · Basics</h2><div class="field-grid">
-          <label>Plan name German<input name="name-de" value="${escapeHtml(this.draft.name.de ?? '')}"></label>
-          <label>Plan name English<input name="name-en" value="${escapeHtml(this.draft.name.en ?? '')}" required></label>
+          ${planNameFields}
           <label>Rounds<input name="rounds" type="number" min="1" max="20" value="${this.draft.rounds}"></label>
           <label>Rest between exercises (seconds)<input name="rest-exercises" type="number" min="0" value="${this.draft.restBetweenExercises}"></label>
           <label>Rest between rounds (seconds)<input name="rest-rounds" type="number" min="0" value="${this.draft.restBetweenRounds}"></label>
@@ -417,17 +423,23 @@ export class HomeWorkoutApp {
     const form = this.root.querySelector<HTMLFormElement>('[data-editor]');
     if (!form) return;
     const data = new FormData(form);
-    this.draft.name.de = String(data.get('name-de') ?? '').trim() || 'Mein Trainingsplan';
-    this.draft.name.en = String(data.get('name-en') ?? '').trim();
+    for (const language of this.draft.languages) {
+      this.draft.name[language.code] = String(data.get(`name-${language.code}`) ?? '').trim();
+    }
     this.draft.rounds = Number(data.get('rounds')) || 1;
     this.draft.restBetweenExercises = Math.max(0, Number(data.get('rest-exercises')) || 0);
     this.draft.restBetweenRounds = Math.max(0, Number(data.get('rest-rounds')) || 0);
     this.draft.exercises = this.draft.exercises.map((exercise, index) => {
+      const translations = Object.fromEntries(this.draft.languages.map((language) => [language.code, {
+        name: String(data.get(`translation-${index}-${language.code}-name`) ?? exercise.translations[language.code]?.name ?? '').trim(),
+        instructions: String(data.get(`translation-${index}-${language.code}-instructions`) ?? exercise.translations[language.code]?.instructions ?? '').trim()
+      }]));
       if (exercise.type === 'duration') {
-        return { ...exercise, target: { seconds: Number(data.get(`target-${index}-seconds`)) || 0 } };
+        return { ...exercise, translations, target: { seconds: Number(data.get(`target-${index}-seconds`)) || 0 } };
       }
       return {
         ...exercise,
+        translations,
         target: {
           min: Number(data.get(`target-${index}-min`)) || 0,
           max: Number(data.get(`target-${index}-max`)) || 0,
@@ -555,14 +567,14 @@ export class HomeWorkoutApp {
   private renderInstructions(): void {
     const guideUrl = new URL('/ai-workout-guide.txt', location.origin).href;
     const items = [
-      ['Start', 'Choose one of the permanent bundled routines or one of your own plans, review the summary, then choose START WORKOUT.'], ['Targets', 'Repetition targets stay visible without a manual tap counter. Duration exercises, rests and total workout time continue to run automatically.'], ['Rounds', 'Complete each exercise once per round. Round progress is always visible.'], ['Timers', 'Duration exercises and rests advance automatically using timestamps, even after backgrounding. Use Next to skip a rest.'], ['Pause', 'Pause freezes workout, exercise and rest time together.'], ['Alternatives', 'Choose the easier option stored with an exercise whenever needed.'], ['Own plans', 'Create, reorder and adjust exercises in Plan Studio. Edit a local plan directly or customize a separate copy of a bundled routine.'], ['Import / Export', 'Share versioned JSON files. Every import is validated before preview or start.'], ['Languages', 'Show one or two configured languages side by side; add any BCP-47 language manually.'], ['Offline', 'After the first successful load, the installed PWA, library, images and local plans work offline.']
+      ['Start', 'Choose one of the permanent bundled routines or one of your own plans, review the summary, then choose START WORKOUT.'], ['Targets', 'Repetition targets stay visible without a manual tap counter. Duration exercises, rests and total workout time continue to run automatically.'], ['Rounds', 'Complete each exercise once per round. Round progress is always visible.'], ['Timers', 'Duration exercises and rests advance automatically using timestamps, even after backgrounding. Use Next to skip a rest.'], ['Pause', 'Pause freezes workout, exercise and rest time together.'], ['Alternatives', 'The selector is labelled “Easier alternatives”. Choose one when needed or keep the original movement.'], ['Own plans', 'Create, reorder and adjust exercises in Plan Studio. Edit a local plan directly or customize a separate copy of a bundled routine.'], ['Import / Export', 'Share versioned JSON files. Every import is validated before preview or start.'], ['Languages', 'Show one or two configured languages side by side. After adding a language, enter its plan name and each exercise name and instruction as free text.'], ['Install the app', 'Android Chrome: menu → Add to home screen → Install. iPhone/iPad Safari: Share → Add to Home Screen. Desktop Edge or Chrome: use the install icon in the address bar or the browser Apps menu.'], ['Offline', 'After the first successful load, the installed PWA, library, images and local plans work offline.']
     ];
     this.shell(`<section class="page-heading"><p class="eyebrow">QUICK GUIDE</p><h1>Instructions · Anleitung</h1><p>Everything needed to move confidently, without a coach in the room.</p></section>
-      <section class="ai-plan-guide"><p class="eyebrow">CREATE WITH AI · MIT KI ERSTELLEN</p><h2>Let an AI prepare your workout plan</h2><p>Wenn du deinen Trainingsplan von einer KI wie ChatGPT generieren möchtest, gib ihr den folgenden Leitfaden-Link zusammen mit einer Beschreibung deines gewünschten Trainingsplans.</p><div class="copy-field"><code>${escapeHtml(guideUrl)}</code><button class="primary" data-action="copy-ai-guide">Link kopieren</button></div><p>Die KI kann dir anschließend idealerweise einen direkten Link zur geprüften Planvorschau geben. Alternativ erstellt sie eine JSON-Konfigurationsdatei, die du unter „Upload / Import“ hochladen kannst.</p></section>
+      <section class="ai-plan-guide"><p class="eyebrow">CREATE WITH AI</p><h2>Let an AI prepare your workout plan</h2><p>Give an AI such as ChatGPT the guide link below together with a description of the workout plan you want.</p><div class="copy-field"><code>${escapeHtml(guideUrl)}</code><button class="primary" data-action="copy-ai-guide">Copy link</button></div><p>Ideally, the AI returns a direct link to the validated plan preview. Alternatively, it can create a JSON configuration file that you upload under “Upload / Import”.</p></section>
       <section class="instruction-list">${items.map(([title, copy], index) => `<article><span>${String(index + 1).padStart(2, '0')}</span><div><h2>${title}</h2><p>${copy}</p></div></article>`).join('')}</section><aside class="safety"><strong>Safety note</strong><p>Train within your ability, stop if you feel pain, and seek qualified medical advice when needed. This app does not diagnose or treat medical conditions.</p></aside>`);
     this.root.querySelector<HTMLButtonElement>('[data-action="copy-ai-guide"]')?.addEventListener('click', (event) => {
       const button = event.currentTarget as HTMLButtonElement;
-      void navigator.clipboard.writeText(guideUrl).then(() => { button.textContent = 'Kopiert · Copied'; }).catch(() => { window.prompt('Link kopieren · Copy link', guideUrl); });
+      void navigator.clipboard.writeText(guideUrl).then(() => { button.textContent = 'Copied'; }).catch(() => { window.prompt('Copy link', guideUrl); });
     });
   }
 

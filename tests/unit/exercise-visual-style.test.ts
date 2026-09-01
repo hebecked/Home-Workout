@@ -61,8 +61,12 @@ describe('exercise illustration visual system', () => {
     const byId = new Map(EXERCISE_LIBRARY.map((exercise) => [exercise.id, svgFor(exercise)]));
 
     expect(byId.get('squat')).toContain('M137 145L94 154L72 204');
-    expect(byId.get('pull-up')).toContain('<circle cx="160" cy="133"');
-    expect(byId.get('pull-up')).toContain('<circle cx="160" cy="75"');
+    expect(byId.get('pull-up')).toContain('<circle cx="90" cy="95"');
+    expect(byId.get('pull-up')).toContain('<circle cx="220" cy="55"');
+    expect(byId.get('pull-up')).toContain('M220 118L204 169');
+    expect(byId.get('assisted-pull-up')).toContain('stroke-dasharray="7 6"');
+    expect(byId.get('side-plank')).toContain('M242 98L188 132L126 181L103 204');
+    expect(byId.get('pike-push-up')).toContain('M204 174L254 84L298 204');
     for (const id of ['dead-bug', 'lying-leg-raise', 'glute-bridge']) {
       expect(byId.get(id), `${id} keeps the body at the floor`).toMatch(/cy="18[04]"/);
       expect(byId.get(id), `${id} includes the shared floor line`).toContain('M42 210H278');

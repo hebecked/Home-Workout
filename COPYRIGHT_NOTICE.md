@@ -1,7 +1,5 @@
 # Copyright notice
 
-Configure the copyright holder and year before a public release:
-
-`Copyright © [YEAR] [COPYRIGHT HOLDER]. All rights reserved.`
+Copyright © 2026 Dr. Dustin Hebecker. All rights reserved.
 
 The software is source available under the PolyForm Perimeter License 1.0.0.

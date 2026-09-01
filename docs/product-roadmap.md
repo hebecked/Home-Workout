@@ -40,21 +40,21 @@ Evidence basis:
 
 ### Owner decisions
 
-- Replace the placeholder copyright holder in `COPYRIGHT_NOTICE.md`; the legal holder must be supplied explicitly rather than inferred from account or repository metadata.
 - Choose a final Cloudflare hostname: attach a custom domain or create a new globally unique Pages project name. The generated `-65g` suffix cannot simply be edited on the existing `pages.dev` hostname.
 
 ### Illustration status
 
-- All 33 SVG files now contain movement-specific start and finish poses, a bounded motion arrow, the category palette, and file-level contract tests.
-- Squat visibly bends at hip and knees; Push-up keeps toes and hands grounded without an extra hip limb; Pull-up moves upward toward the bar; floor exercises keep their contact points on the floor.
+- All 33 SVG files contain movement-specific poses, a bounded motion arrow, the category palette, and file-level contract tests.
+- Pull-up, Assisted Pull-up, Side Plank, and Pike Push-up use separated start/finish compositions for clearer anatomy and direction.
+- All 33 exercises have movement-specific German and English instructions. The remaining independent source comparison is tracked row by row in `docs/exercise-audit.md`.
 - Source notes and the meaning of the translucent pose are recorded in `docs/exercise-sources.md`.
 
 ### Later enhancements
 
 - Optional plan history/migrations if the JSON schema moves beyond version 1.
 - Optional workout history and progression tracking, stored locally and opt-in only.
-- Additional languages and translated UI chrome.
-- Install prompts and richer offline/update feedback.
+- Optional consent-based automatic translation and translated UI chrome; manual free-text translations already work for every configured plan language.
+- A richer native install prompt and offline/update feedback; device-specific installation instructions are already visible on the guide page.
 - Accessibility review with screen-reader smoke tests in addition to the current semantic, focus, contrast, motion, and touch-target checks.
 
 The concise authoritative checklist is [`../BACKLOG.md`](../BACKLOG.md). Every unfinished task must be added there before work stops.

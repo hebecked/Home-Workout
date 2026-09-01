@@ -32,7 +32,13 @@ Home Workout makes a structured routine easy to follow without an account, backe
 
 ## Installation and development
 
-Requires Node.js 22 and npm.
+To install the published site as an app:
+
+- Android Chrome: open the site, choose the browser menu, then **Add to home screen → Install**.
+- iPhone/iPad Safari: choose **Share → Add to Home Screen**.
+- Desktop Edge or Chrome: use the install icon in the address bar or **Apps → Install this site as an app** in the browser menu.
+
+For local development, Node.js 22 and npm are required.
 
 ```bash
 npm ci
@@ -52,7 +58,7 @@ npm run coverage
 npm run e2e
 ```
 
-Vitest owns business logic and large input sets. Playwright uses a representative Chromium phone, Firefox desktop, and WebKit tablet matrix. CI requires at least 95% for lines, statements, functions, and branches.
+Vitest owns business logic and large input sets. Playwright uses a representative Chromium phone, Firefox desktop, and WebKit tablet matrix. On Windows it safely uses Chromium for all three device profiles by default because Windows Security may block Playwright's WebKit helper; set `PLAYWRIGHT_NATIVE_ENGINES=1` only in a prepared test environment. CI requires at least 95% for lines, statements, functions, and branches.
 
 ## Mutation testing
 
@@ -90,11 +96,11 @@ Plans use strict `schemaVersion: 1`. The machine-readable schema is at [`public/
 
 ## Languages
 
-German (`de`) and English (`en`) ship with the app. Plans may use any supported BCP-47-style code, a free-form display label, and manual plan/exercise translations. German is not a required base language. One or two configured languages can be displayed in caller-defined order.
+German (`de`) and English (`en`) ship with the app. Plans may use any supported BCP-47-style code and a free-form display label. After adding a language, the Plan Studio exposes editable plan names plus exercise names and instructions for that language. German is not a required base language. One or two configured languages can be displayed in caller-defined order.
 
 ## Exercise library
 
-The library contains 33 stable records across legs, push, pull, core, cardio, and full body. Every record contains equipment, difficulty, type, target, DE/EN copy, variant IDs, and a local SVG. The bundled routines use illustrations throughout; the balanced default includes Reverse Lunges and Lying Leg Raises (Beinheben im Liegen). Run `node scripts/generate-exercise-assets.mjs` to regenerate illustrations.
+The library contains 33 stable records across legs, push, pull, core, cardio, and full body. Every record contains equipment, difficulty, type, target, movement-specific DE/EN copy, variant IDs, and a local SVG. The bundled routines use illustrations throughout; the balanced default includes Reverse Lunges and Lying Leg Raises (Beinheben im Liegen). Run `node scripts/generate-exercise-assets.mjs` to regenerate illustrations. Source assignment and independent text/pose sign-off are tracked per exercise in [`docs/exercise-audit.md`](docs/exercise-audit.md).
 
 The implemented plan catalogue and architecture are documented in [`docs/project-documentation.md`](docs/project-documentation.md). All open work is durably tracked in [`BACKLOG.md`](BACKLOG.md), with fuller product context in [`docs/product-roadmap.md`](docs/product-roadmap.md).
 
@@ -108,7 +114,7 @@ Allowed production licenses are MIT, BSD-2-Clause, BSD-3-Clause, ISC, Apache-2.0
 
 ## License
 
-This project is source available under the [PolyForm Perimeter License 1.0.0](LICENSE). It is not described as open source. Configure [COPYRIGHT_NOTICE.md](COPYRIGHT_NOTICE.md) before a public release.
+This project is source available under the [PolyForm Perimeter License 1.0.0](LICENSE). It is not described as open source. Copyright © 2026 Dr. Dustin Hebecker; see [COPYRIGHT_NOTICE.md](COPYRIGHT_NOTICE.md).
 
 ## Contribution policy
 

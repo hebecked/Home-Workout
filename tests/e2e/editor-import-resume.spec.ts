@@ -28,15 +28,36 @@ test('desktop editor creates, orders and saves a multilingual plan', async ({ pa
   await page.getByRole('button', { name: /add language|Sprache hinzufügen/i }).click();
   await page.getByLabel(/language code|Sprachcode/i).fill('fr');
   await page.getByLabel(/language label|Sprachname/i).fill('Français');
+  await page.getByRole('button', { name: /^add$/i }).click();
+  await page.getByLabel(/plan name.*Français/i).fill('Force compacte');
   await page.getByRole('button', { name: /add exercise|Übung hinzufügen/i }).click();
   await page.getByRole('option', { name: /squat|Kniebeuge/i }).click();
   await page.getByRole('button', { name: /add selected|Auswahl hinzufügen/i }).click();
+
+  await page.getByText(/edit translations|Übersetzungen bearbeiten/i).click();
+  await page.getByLabel(/Exercise name.*Übungsname/i).last().fill('Squat français');
+  await page.getByLabel(/Instructions.*Beschreibung/i).last().fill('Pliez les genoux et gardez les pieds au sol.');
 
   await expect(page.getByText(/squat|Kniebeuge/i)).toBeVisible();
   await page.getByLabel('Minimum', { exact: true }).fill('14');
   await page.getByLabel('Maximum', { exact: true }).fill('18');
   await page.getByRole('button', { name: /save locally|lokal speichern/i }).click();
   await expect(page.getByText(/saved|gespeichert/i)).toBeVisible();
+
+  const savedPlansRaw = await page.evaluate(() => localStorage.getItem('home-workout:plans') ?? '[]');
+  const savedPlans = JSON.parse(savedPlansRaw) as Array<{
+    name: Record<string, string>;
+    exercises: Array<{ translations: Record<string, { name: string; instructions: string }> }>;
+  }>;
+  expect(savedPlans[0]).toEqual(expect.objectContaining({
+    name: expect.objectContaining({ fr: 'Force compacte' }),
+    exercises: [expect.objectContaining({
+      translations: expect.objectContaining({ fr: {
+        name: 'Squat français',
+        instructions: 'Pliez les genoux et gardez les pieds au sol.'
+      } })
+    })]
+  }));
 
   await page.getByRole('link', { name: /my plans|meine Pläne/i }).click();
   await expect(page.getByText('Compact Strength')).toBeVisible();
@@ -166,7 +187,9 @@ test('instructions expose the deployed-origin AI guide link', async ({ page }) =
 
   await expect(page.getByRole('heading', { name: /Let an AI prepare/i })).toBeVisible();
   await expect(page.locator('.copy-field code')).toHaveText(`${new URL(page.url()).origin}/ai-workout-guide.txt`);
-  await expect(page.getByRole('button', { name: /link kopieren/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Copy link$/i })).toBeVisible();
+  await expect(page.getByText(/Give an AI such as ChatGPT/i)).toBeVisible();
+  await expect(page.getByText(/Wenn du deinen Trainingsplan/i)).toHaveCount(0);
 
   const guideResponse = await page.request.get('/ai-workout-guide.txt');
   expect(guideResponse.status()).toBe(200);
@@ -185,11 +208,11 @@ test('reload offers resume or start over and resume keeps progress', async ({ pa
   const prompt = page.getByRole('dialog', { name: /resume workout|Workout fortsetzen/i });
   await expect(prompt).toBeVisible();
   await prompt.getByRole('button', { name: /resume|fortsetzen/i }).click();
-  await expect(page.getByText(/rest|pause/i)).toBeVisible();
+  await expect(page.locator('.phase-pill')).toHaveText(/rest|pause/i);
 
   await page.reload();
   await page.getByRole('dialog', { name: /resume workout|Workout fortsetzen/i })
     .getByRole('button', { name: /start over|neu starten/i }).click();
   await expect(page.getByText(/Runde 1\s*\/\s*3|Round 1\s*\/\s*3/i)).toBeVisible();
-  await expect(page.getByText(/rest|pause/i)).toHaveCount(0);
+  await expect(page.locator('.phase-pill')).not.toHaveText(/rest|pause/i);
 });

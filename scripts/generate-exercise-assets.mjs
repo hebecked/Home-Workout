@@ -77,21 +77,21 @@ const poses = {
     motion: 'M258 158C266 141 264 124 256 110'
   },
   'pike-push-up': {
-    ghost: '<circle cx="92" cy="169" r="15"/><path d="M108 161L161 94L235 204M161 94L73 204"/>',
-    active: '<circle cx="88" cy="187" r="15"/><path d="M104 178L161 94L235 204M161 94L73 204"/>',
-    motion: 'M48 142C43 161 48 180 61 191'
+    ghost: '<circle cx="49" cy="159" r="12"/><path d="M61 151L101 84L145 204M101 84L40 204"/>',
+    active: '<circle cx="191" cy="184" r="12"/><path d="M204 174L254 84L298 204M254 84L220 153L197 170L181 204"/>',
+    motion: 'M157 124C149 144 151 165 162 181'
   },
   'pull-up': {
-    equipment: '<path d="M62 35H258" stroke="#8b96aa" stroke-width="9"/>',
-    ghost: '<circle cx="160" cy="133" r="15"/><path d="M160 151V204M160 157L92 40M160 157L228 40"/>',
-    active: '<circle cx="160" cy="75" r="16"/><path d="M160 94V158M160 105L92 40M160 105L228 40M160 158L132 204M160 158L188 204"/>',
-    motion: 'M274 150C281 129 279 107 269 90'
+    equipment: '<path d="M34 40H286" stroke="#8b96aa" stroke-width="9"/>',
+    ghost: '<circle cx="90" cy="95" r="13"/><path d="M90 111V154M90 116L60 40M90 116L120 40M90 154L75 204M90 154L105 204"/>',
+    active: '<circle cx="220" cy="55" r="13"/><path d="M220 71V118M220 78L195 83L184 40M220 78L245 83L256 40M220 118L204 169M220 118L236 169"/>',
+    motion: 'M151 153C159 128 159 102 151 79'
   },
   'assisted-pull-up': {
-    equipment: '<path d="M62 35H258" stroke="#8b96aa" stroke-width="9"/><path d="M160 40V202" stroke="#8b96aa" stroke-width="5" stroke-dasharray="7 6"/>',
-    ghost: '<circle cx="160" cy="136" r="15"/><path d="M160 154V197M160 160L92 40M160 160L228 40"/>',
-    active: '<circle cx="160" cy="82" r="16"/><path d="M160 101V158M160 112L92 40M160 112L228 40M160 158L137 197M160 158L183 197"/>',
-    motion: 'M274 151C280 130 278 110 268 93'
+    equipment: '<path d="M34 40H286" stroke="#8b96aa" stroke-width="9"/><path d="M258 43C267 94 261 145 236 176C228 186 217 180 222 168C242 137 248 91 244 43" fill="none" stroke="#8b96aa" stroke-width="5" stroke-dasharray="7 6"/>',
+    ghost: '<circle cx="90" cy="95" r="13"/><path d="M90 111V154M90 116L60 40M90 116L120 40M90 154L75 204M90 154L105 204"/>',
+    active: '<circle cx="220" cy="55" r="13"/><path d="M220 71V118M220 78L195 83L184 40M220 78L245 83L256 40M220 118L202 169M220 118L240 145L225 171"/>',
+    motion: 'M151 153C159 128 159 102 151 79'
   },
   'chin-up': {
     equipment: '<path d="M62 35H258" stroke="#8b96aa" stroke-width="9"/>',
@@ -138,9 +138,9 @@ const poses = {
     motion: 'M269 151C274 137 273 123 267 112'
   },
   'side-plank': {
-    ghost: '<circle cx="231" cy="127" r="15"/><path d="M211 133L151 151L70 194M151 151L92 204M180 142L201 204"/>',
-    active: '<circle cx="230" cy="87" r="15"/><path d="M210 94L151 125L70 194M151 125L92 204M183 109L207 54M151 125L177 204"/>',
-    motion: 'M261 143C269 124 267 105 258 91'
+    ghost: '<circle cx="111" cy="178" r="12"/><path d="M97 182L64 192L27 204M89 185L79 204M64 192L48 204"/>',
+    active: '<circle cx="257" cy="88" r="13"/><path d="M242 98L188 132L126 181L103 204M188 138L135 188L116 204M230 105L215 160L226 204M230 105L238 58"/>',
+    motion: 'M156 171C166 150 168 127 160 106'
   },
   'mountain-climber': {
     ghost: '<circle cx="238" cy="103" r="15"/><path d="M219 109L151 127L65 185M151 127L71 204M184 118L202 204"/>',

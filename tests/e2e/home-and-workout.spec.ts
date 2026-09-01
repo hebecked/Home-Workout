@@ -72,12 +72,13 @@ test('phone workout journey shows bilingual exercise, controls, pause and rest',
   await expect(page.getByText(/paused|pausiert/i)).toBeVisible();
   await page.getByRole('button', { name: /resume|fortsetzen/i }).click();
   await page.getByRole('button', { name: /next|weiter/i }).click();
-  await expect(page.getByText(/rest|pause/i)).toBeVisible();
+  await expect(page.locator('.phase-pill')).toHaveText(/rest|pause/i);
   await expect(page.getByText(/Exercise 1\s*\/\s*8.*Übung 1\s*\/\s*8/i)).toBeVisible();
   await page.getByRole('button', { name: /next|weiter/i }).click();
   await expect(page.getByText(/Exercise 2\s*\/\s*8.*Übung 2\s*\/\s*8/i)).toBeVisible();
   const kneeOption = page.getByRole('button', { name: /Knee Push-up.*Knie-Liegestütz/i });
   await expect(kneeOption).toBeVisible();
+  await expect(page.getByText(/Easier alternatives.*Leichtere Alternativen/i)).toBeVisible();
   await kneeOption.click();
   await expect(kneeOption).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByRole('img', { name: /Knee Push-up|Knie-Liegestütz/i })).toBeVisible();

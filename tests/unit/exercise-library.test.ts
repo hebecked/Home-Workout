@@ -35,6 +35,8 @@ describe('built-in exercise library', () => {
       expect(exercise.translations.de?.instructions.trim()).toBeTruthy();
       expect(exercise.translations.en?.name.trim()).toBeTruthy();
       expect(exercise.translations.en?.instructions.trim()).toBeTruthy();
+      expect(exercise.translations.de?.instructions).not.toBe('Bewege dich kontrolliert und halte den Rumpf stabil.');
+      expect(exercise.translations.en?.instructions).not.toBe('Move with control and keep your core stable.');
       expect(exercise.illustration).toMatch(/^\/assets\/exercises\/[a-z0-9-]+\.svg$/);
       expect(existsSync(resolve(process.cwd(), 'public', exercise.illustration.slice(1)))).toBe(true);
       expect(Array.isArray(exercise.variants.easier)).toBe(true);

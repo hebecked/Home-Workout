@@ -115,9 +115,15 @@ select[size] { min-height: 180px; }
 .rest-label { font-size: clamp(1.3rem, 3vw, 2.5rem); max-width: 22ch; }
 .alternative-chooser { display: grid; gap: .65rem; padding: 1rem 0; border-top: 1px solid var(--line); }
 .alternative-chooser > span { color: var(--muted); font-size: .7rem; text-transform: uppercase; letter-spacing: .12em; font-weight: 800; }
+.alternative-chooser > p { margin: 0; color: var(--muted); font-size: .82rem; line-height: 1.45; }
 .alternative-chooser > div { display: flex; flex-wrap: wrap; gap: .55rem; }
 .alternative-chooser button { min-height: 44px; padding: .6rem .8rem; font-size: .78rem; }
 .alternative-chooser button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.translation-editor { margin-top: .9rem; border-top: 1px solid var(--line); padding-top: .75rem; }
+.translation-editor summary { cursor: pointer; font-weight: 750; }
+.translation-editor fieldset { margin: .75rem 0 0; padding: .8rem; border: 1px solid var(--line); border-radius: 12px; }
+.translation-editor legend { padding: 0 .35rem; color: var(--muted); font-size: .78rem; font-weight: 750; }
+.translation-editor textarea { resize: vertical; min-height: 5.5rem; }
 .target-block { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 1rem 0; display: flex; justify-content: space-between; align-items: center; }
 .target-block strong { font-size: clamp(1.8rem, 4vw, 3.5rem); letter-spacing: -.04em; }
 .workout-actions { position: relative; z-index: 20; padding: .75rem clamp(1rem, 5vw, 5rem) calc(.75rem + env(safe-area-inset-bottom)); background: rgb(255 255 255 / 96%); border-top: 1px solid var(--line); box-shadow: 0 -12px 32px rgb(31 41 55 / 8%); backdrop-filter: blur(14px); }

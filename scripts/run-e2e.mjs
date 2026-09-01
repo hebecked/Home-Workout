@@ -6,7 +6,7 @@ const port = process.env.E2E_PORT ?? '4173';
 const origin = `http://127.0.0.1:${port}`;
 const viteCli = resolve('node_modules/vite/bin/vite.js');
 const playwrightCli = resolve('node_modules/@playwright/test/cli.js');
-const preview = spawn(process.execPath, [viteCli, 'preview', '--host', '127.0.0.1', '--port', port], {
+const preview = spawn(process.execPath, [viteCli, 'preview', '--host', '127.0.0.1', '--port', port, '--strictPort'], {
   stdio: 'inherit',
   windowsHide: true
 });

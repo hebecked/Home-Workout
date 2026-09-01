@@ -21,7 +21,7 @@ test('workout controls remain reliable while the render timer is running', async
 
   await expect(page.getByText(/^Squat$/i)).toBeVisible();
   await pressAcrossRenderTick(page, page.getByRole('button', { name: /next|weiter/i }));
-  await expect(page.getByText(/rest|pause/i)).toBeVisible();
+  await expect(page.locator('.phase-pill')).toHaveText(/rest|pause/i);
 
   // Move the timestamp beyond the configured 20-second rest, then allow one
   // render tick to settle the state machine onto the next exercise.
@@ -48,7 +48,7 @@ test('Next skips an active rest and repetition targets do not render a tap count
   await page.getByRole('button', { name: /start workout/i }).click();
 
   await page.getByRole('button', { name: /next|weiter/i }).click();
-  await expect(page.getByText(/rest|pause/i)).toBeVisible();
+  await expect(page.locator('.phase-pill')).toHaveText(/rest|pause/i);
   await expect(page.getByText(/00:20/)).toBeVisible();
 
   await page.getByRole('button', { name: /next|weiter/i }).click();

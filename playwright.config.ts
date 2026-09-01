@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const useWindowsBrowserFallback = process.env.PLAYWRIGHT_WINDOWS_FALLBACK === '1';
+const useWindowsBrowserFallback = process.env.PLAYWRIGHT_WINDOWS_FALLBACK === '1'
+  || (process.platform === 'win32' && process.env.PLAYWRIGHT_NATIVE_ENGINES !== '1');
 const e2ePort = Number(process.env.E2E_PORT ?? 4173);
 const useExternalPreview = process.env.E2E_EXTERNAL_SERVER === '1';
 
@@ -16,7 +17,7 @@ export default defineConfig({
   },
   ...(useExternalPreview ? {} : {
     webServer: {
-      command: `node ./node_modules/vite/bin/vite.js preview --host 0.0.0.0 --port ${e2ePort}`,
+      command: `node ./node_modules/vite/bin/vite.js preview --host 0.0.0.0 --port ${e2ePort} --strictPort`,
       port: e2ePort,
       reuseExistingServer: false
     }
