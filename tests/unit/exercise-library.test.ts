@@ -55,6 +55,32 @@ describe('built-in exercise library', () => {
       for (const id of alternatives) expect(ids.has(id)).toBe(true);
     }
   });
+
+  it('records equipment and per-side targets that match the actual setup', () => {
+    const byId = new Map(EXERCISE_LIBRARY.map((exercise) => [exercise.id, exercise]));
+
+    expect(byId.get('assisted-pull-up')?.equipment).toEqual(['pull-up bar', 'resistance band']);
+    expect(byId.get('wall-sit')?.equipment).toContain('wall or stable support');
+    expect(byId.get('hamstring-stretch')?.equipment).toContain('wall or stable support');
+    expect(byId.get('split-squat')?.defaultTarget).toMatchObject({ unit: 'per-side' });
+    expect(byId.get('single-leg-glute-bridge')?.defaultTarget).toMatchObject({ unit: 'per-side' });
+  });
+
+  it('keeps source-audited safety and timing cues in both languages', () => {
+    const byId = new Map(EXERCISE_LIBRARY.map((exercise) => [exercise.id, exercise]));
+    const sidePlank = byId.get('side-plank');
+    const burpee = byId.get('burpee');
+    const dip = byId.get('triceps-dip');
+
+    expect(sidePlank?.translations.de?.instructions).toMatch(/Hälfte.*Seite/i);
+    expect(sidePlank?.translations.en?.instructions).toMatch(/side.*halfway/i);
+    expect(burpee?.translations.de?.instructions).toMatch(/Liegestütz/);
+    expect(burpee?.translations.en?.instructions).toMatch(/push-up/i);
+    expect(burpee?.translations.de?.instructions).toMatch(/springe/);
+    expect(burpee?.translations.en?.instructions).toMatch(/jump/i);
+    expect(dip?.translations.de?.instructions).toMatch(/schmerzfreien Schulterbereich/i);
+    expect(dip?.translations.en?.instructions).toMatch(/pain-free shoulder range/i);
+  });
 });
 
 describe('30 Minute Full Body default workout', () => {

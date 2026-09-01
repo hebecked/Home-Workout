@@ -1,5 +1,7 @@
 # Exercise illustration sources
 
+The canonical 51-exercise audit is complete and recorded in [`exercise-audit.md`](exercise-audit.md). Every bundled definition has an exercise-specific reliable reference plus separate DE/EN text and pose sign-off. The grouped notes below explain the common visual rules and the most important source families; they do not replace the per-exercise checklist.
+
 The built-in illustrations are original local SVGs, not copied diagrams. The 51 assets use either same-scale overlaid movement positions or one unambiguous static pose. Their pose system and movement cues use the following references:
 
 - **Glute Bridge:** supine start, bent knees and feet on the floor; hips lift while shoulders and feet stay grounded. Source: [American Council on Exercise — Glute Bridge](https://www.acefitness.org/resources/everyone/exercise-library/49/glute-bridge/).
@@ -18,8 +20,8 @@ The built-in illustrations are original local SVGs, not copied diagrams. The 51 
 - **Shoulder, upper-back, and chest stretches:** cross-body shoulder support and hands-behind-head chest opening follow [Mayo Clinic — Upper body stretches](https://www.mayoclinic.org/healthy-lifestyle/adult-health/multimedia/shoulder-stretches/vid-20084699).
 - **Yoga-derived mobility:** Child's Pose and Cat-Cow follow [Mayo Clinic — Child's pose](https://www.mayoclinic.org/healthy-lifestyle/stress-management/multimedia/childs-pose/vid-20453580) and [Mayo Clinic — Mindful movements](https://sharedfiles.mayoclinic.org/bedside/ope/GNT-20421908.html); Cobra and Bridge use [South Tees Hospitals NHS](https://www.southtees.nhs.uk/services/back-pain/backtracks/kneeling-exercises/) and [Oxford University Hospitals NHS (PDF)](https://www.ouh.nhs.uk/media/spdfysmr/33852ppfps.pdf).
 - **Push-up:** the body remains a straight supported line while the arms lower and raise the upper body; hands and toes remain the floor contacts in the standard variation. Source: [ACE — Muscular Strength and Endurance Testing (PDF)](https://www.acefitness.org/groupfitnessresources/pdfs/GFI_Assessments.pdf).
-- **Other bodyweight, band, core, and integrated poses:** exercise identity, equipment, target body area, and reference form were checked against the [ACE Exercise Library](https://www.acefitness.org/resources/everyone/exercise-library/) and its [no-equipment catalogue](https://www.acefitness.org/resources/everyone/exercise-library/equipment/no-equipment/).
+- **Other bodyweight, band, core, and integrated poses:** the direct movement-specific references are listed in the canonical audit rather than relying on a generic exercise catalogue.
 
-For moving exercises, the colored translucent figure is overlaid at the same body scale as the dark working position; it never indicates travel across the room. A small arrow shows the relevant joint or body direction. Static holds and stretches use only one dark figure and no direction arrow.
+For moving exercises, the colored translucent figure is overlaid at the same body scale as the dark working position; it never indicates travel across the room. A small arrow shows the relevant joint or body direction. Static holds and stretches prefer one dark figure; an overlay is used only when a small setup or joint-position change is essential to understanding the pose.
 
-The operational per-exercise review is tracked in [`exercise-audit.md`](exercise-audit.md). A general catalogue reference is not considered enough to close that audit: every row needs an exercise-specific source plus separate text and pose sign-off.
+The operational per-exercise review is tracked in [`exercise-audit.md`](exercise-audit.md). Its completeness and separate text/pose sign-off are enforced by an automated unit test.

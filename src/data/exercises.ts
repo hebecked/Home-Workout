@@ -68,9 +68,10 @@ const seeds: Seed[] = [
   ['yoga-bridge', 'stretch', 'Yoga-Brücke', 'Yoga Bridge Hold', 'beginner', 'duration', ['glute-bridge'], []]
 ];
 
-const bandExercises = new Set(['resistance-band-row', 'resistance-band-pull-apart', 'assisted-pull-up']);
+const bandExercises = new Set(['resistance-band-row', 'resistance-band-pull-apart']);
 const barExercises = new Set(['pull-up', 'chin-up']);
-const supportExercises = new Set(['leg-swing', 'calf-stretch', 'quadriceps-stretch']);
+const supportExercises = new Set(['wall-sit', 'leg-swing', 'calf-stretch', 'hamstring-stretch', 'quadriceps-stretch']);
+const perSideExercises = new Set(['reverse-lunge', 'forward-lunge', 'split-squat', 'single-leg-glute-bridge', 'bird-dog', 'dead-bug']);
 const detailedInstructions: Record<string, Record<'de' | 'en', string>> = {
   squat: {
     de: 'Stelle die Füße etwa schulterbreit auf. Schiebe die Hüfte nach hinten, beuge Hüfte und Knie und senke dich mit gehobener Brust ab. Drücke die Füße in den Boden und richte dich wieder auf; die Knie folgen der Richtung der Zehen.',
@@ -169,8 +170,8 @@ const detailedInstructions: Record<string, Record<'de' | 'en', string>> = {
     en: 'Support yourself on forearms and toes with elbows under shoulders. Keep head, trunk, hips, and heels in one straight line, brace abdomen and glutes, and breathe steadily.'
   },
   'side-plank': {
-    de: 'Lege dich auf die Seite, stütze den Ellenbogen direkt unter der Schulter auf und strecke die Beine mit gestapelten Füßen. Hebe die Hüfte, bis Kopf, Schultern, Hüfte und Füße eine Linie bilden, und halte den Rumpf fest.',
-    en: 'Lie on your side with your elbow directly under your shoulder and legs extended with feet stacked. Lift your hips until head, shoulders, hips, and feet form a straight line, then hold your trunk firm.'
+    de: 'Lege dich auf die Seite, stütze den Unterarm mit dem Ellenbogen direkt unter der Schulter auf und strecke die Beine mit gestapelten Füßen. Hebe die Hüfte, bis Kopf, Schultern, Hüfte und Füße eine Linie bilden, und halte den Rumpf fest. Wechsle nach der Hälfte der Zeit die Seite.',
+    en: 'Lie on your side and support yourself on your forearm with the elbow directly under your shoulder; extend your legs with feet stacked. Lift your hips until head, shoulders, hips, and feet form a straight line, then hold your trunk firm. Change sides halfway through.'
   },
   'mountain-climber': {
     de: 'Beginne im hohen Stütz mit Händen unter den Schultern und geradem Körper. Führe abwechselnd ein Knie kontrolliert Richtung Brust und setze den Fuß wieder zurück, ohne die Hüfte stark anzuheben oder abzusenken.',
@@ -201,8 +202,8 @@ const detailedInstructions: Record<string, Record<'de' | 'en', string>> = {
     en: 'Stand in a staggered stance with soft knees and relaxed fists guarding your face. Alternate straight punches, allowing a small shoulder and hip turn, and return each hand immediately to guard. Do not lock your elbows.'
   },
   burpee: {
-    de: 'Beuge Hüfte und Knie, setze die Hände auf den Boden und bringe beide Füße zurück in den hohen Stütz. Führe die Füße wieder nach vorn und richte dich auf oder springe hoch; halte im Stütz den Rumpf stabil.',
-    en: 'Bend hips and knees, place your hands on the floor, and move both feet back into a high plank. Bring the feet forward, then stand or jump up; keep your trunk stable in the plank.'
+    de: 'Beuge Hüfte und Knie, setze die Hände auf den Boden und springe oder steige mit beiden Füßen in den hohen Stütz. Senke Brust und Hüfte gemeinsam wie bei einem Liegestütz und drücke dich zurück hoch. Bringe die Füße wieder nach vorn, richte dich auf und springe mit gestreckten Armen; lande weich und kontrolliert.',
+    en: 'Bend your hips and knees, place your hands on the floor, and jump or step both feet back into a high plank. Lower your chest and hips together as in a push-up, then press back up. Bring your feet forward, stand, and jump with arms extended; land softly and with control.'
   },
   'squat-to-reach': {
     de: 'Senke dich in eine Kniebeuge, indem du Hüfte und Knie beugst. Drücke dich zum Stand hoch und strecke beide Arme über den Kopf; senke die Arme und beginne die nächste Kniebeuge.',
@@ -213,8 +214,8 @@ const detailedInstructions: Record<string, Record<'de' | 'en', string>> = {
     en: 'Lie face down and brace your abdomen. Lift arms, chest, and legs only as far as comfortable, keep neck and spine neutral, then lower with control.'
   },
   'triceps-dip': {
-    de: 'Setze die Hände an die Kante eines stabilen Stuhls, rutsche mit der Hüfte davor und stelle die Füße sicher auf. Beuge die Ellenbogen nach hinten, senke den Körper nah am Stuhl und drücke dich wieder hoch; halte die Schultern tief.',
-    en: 'Place your hands on the edge of a stable chair, move your hips just in front, and plant your feet securely. Bend your elbows back, lower close to the chair, and press up while keeping shoulders down.'
+    de: 'Setze die Hände an die Kante eines stabilen niedrigen Stuhls, rutsche mit der Hüfte davor und stelle die Füße sicher auf. Beuge die Ellenbogen nach hinten, senke den Körper nah am Stuhl und drücke dich wieder hoch; halte die Schultern tief. Arbeite nur im schmerzfreien Schulterbereich und wähle bei Beschwerden die leichtere Alternative.',
+    en: 'Place your hands on the edge of a stable low chair, move your hips just in front, and plant your feet securely. Bend your elbows back, lower close to the chair, and press up while keeping shoulders down. Work only through a pain-free shoulder range and choose the easier alternative if you feel discomfort.'
   },
   'heel-dig': {
     de: 'Stehe aufrecht und setze abwechselnd eine Ferse vor dir auf, die Zehen zeigen nach oben. Beuge das Standbein leicht und schwinge die Arme locker mit. Bleibe am Platz und erhöhe das Tempo nur so weit, wie die Bewegung kontrolliert bleibt.',
@@ -280,9 +281,19 @@ const detailedInstructions: Record<string, Record<'de' | 'en', string>> = {
 
 export const EXERCISE_LIBRARY: ExerciseDefinition[] = seeds.map(([id, category, de, en, difficulty, type, easier, harder]) => ({
   id, category,
-  equipment: bandExercises.has(id) ? ['resistance band'] : barExercises.has(id) ? ['pull-up bar'] : supportExercises.has(id) ? ['wall or stable support'] : id === 'triceps-dip' || id === 'incline-push-up' ? ['chair'] : ['none'],
+  equipment: id === 'assisted-pull-up'
+    ? ['pull-up bar', 'resistance band']
+    : bandExercises.has(id)
+      ? ['resistance band']
+      : barExercises.has(id)
+        ? ['pull-up bar']
+        : supportExercises.has(id)
+          ? ['wall or stable support']
+          : id === 'triceps-dip' || id === 'incline-push-up'
+            ? ['chair or stable raised support']
+            : ['none'],
   difficulty, type,
-  defaultTarget: type === 'duration' ? { seconds: 30 } : { min: 8, max: 12, unit: id.includes('lunge') || id === 'bird-dog' || id === 'dead-bug' ? 'per-side' : 'repetitions' },
+  defaultTarget: type === 'duration' ? { seconds: 30 } : { min: 8, max: 12, unit: perSideExercises.has(id) ? 'per-side' : 'repetitions' },
   translations: {
     de: { name: de, instructions: detailedInstructions[id]!.de },
     en: { name: en, instructions: detailedInstructions[id]!.en }
