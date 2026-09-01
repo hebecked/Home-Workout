@@ -31,7 +31,7 @@ test('desktop editor creates, orders and saves a multilingual plan', async ({ pa
   await page.getByRole('button', { name: /^add$/i }).click();
   await page.getByLabel(/plan name.*Français/i).fill('Force compacte');
   await page.getByRole('button', { name: /add exercise|Übung hinzufügen/i }).click();
-  await page.getByRole('option', { name: /squat|Kniebeuge/i }).click();
+  await page.getByRole('option', { name: /^Squat · Kniebeuge$/i }).click();
   await page.getByRole('button', { name: /add selected|Auswahl hinzufügen/i }).click();
 
   await page.getByText(/edit translations|Übersetzungen bearbeiten/i).click();
