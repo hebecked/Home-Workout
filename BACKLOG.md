@@ -6,11 +6,11 @@ This file is the durable hand-off for work that must not exist only in an AI con
 
 ## Priority 0 — movement safety and correctness
 
-- [ ] **Audit all 33 exercise instructions and illustrations one by one against reliable sources.** Record the source, the text review, the pose review, and the reviewer status in `docs/exercise-audit.md`; an exercise is not complete until both its DE/EN instructions and its start/finish pose are checked.
-- [x] Correct the **Pull-up** illustration: show a clear standing/reaching start reference and a second pose lifting upward, without any body part disappearing below the floor.
-- [x] Correct the **Assisted Pull-up** illustration: show the assistance method and an anatomically clear upward movement from a supported start.
-- [x] Replace the **Side Plank** illustration with an anatomically clear forearm-supported straight line from head through hips to stacked feet; avoid ambiguous overlapping limbs.
-- [x] Redesign the **Pike Push-up** illustration so the inverted-V start, bent-elbow lowering phase, hand/foot floor contact, and head movement are immediately understandable.
+- [ ] **Audit every bundled exercise instruction and illustration one by one against reliable sources.** Record the source, the text review, the pose review, and the reviewer status in `docs/exercise-audit.md`; an exercise is not complete until both its DE/EN instructions and its pose are checked.
+- [x] Correct **Pull-up, Assisted Pull-up, and Chin-up** with same-scale overlaid poses that show vertical travel rather than two people moving sideways.
+- [x] Replace the **Side Plank** illustration with one anatomically clear static forearm-supported pose; no second figure is needed for a hold.
+- [x] Redesign the **Pike Push-up** illustration with same-scale overlaid start/lowering poses, fixed hands and feet, and no implied sideways movement.
+- [x] Add sourced DE/EN entries and original local SVGs for **Shadowboxing**, **Sumo Squat Hold**, four dynamic warm-ups, and four post-workout stretches.
 - [x] Replace every generic exercise sentence with a concise, movement-specific DE/EN setup, action, and key form cue. The complete per-exercise source/pose audit remains open above.
 
 ## Priority 1 — multilingual editing and comprehension
@@ -34,6 +34,8 @@ This file is the durable hand-off for work that must not exist only in an AI con
 
 ## Later product work
 
+- [ ] Implement the phase-aware schema-v2 design in `docs/phased-workout-proposal.md`: warm-up, one or more training blocks, and cool-down/stretching, each with its own rounds and rest rules. Use **rounds / Runden** for repetitions of an exercise sequence and reserve **repetitions / Wiederholungen** for one movement.
+- [ ] Add phase-aware editor controls, import/export migration, progress UI, and validators only after schema-v1 plans can be migrated losslessly.
 - [ ] Add opt-in local workout history and progression views. No analytics or server-side profile is planned.
 - [ ] Add explicit schema migrations before introducing workout-plan schema version 2.
 - [ ] Add more bundled UI translations beyond German and English.
@@ -47,6 +49,6 @@ This file is the durable hand-off for work that must not exist only in an AI con
 - [x] Allow a stored easier alternative to be selected visibly during a workout.
 - [x] Edit repetition ranges, per-side counting, and duration targets in Plan Studio.
 - [x] Duplicate and delete local plans with confirmation; bundled plans remain immutable.
-- [x] Replace every generic placeholder pose with one of 33 movement-specific, local SVG illustrations.
+- [x] Replace the original generic placeholder set with 33 movement-specific local SVGs; the current sourced library now contains 43.
 - [x] Correct Squat, Push-up, Pull-up, Glute Bridge, Dead Bug, and Lying Leg Raises for movement direction and floor contact.
 - [x] Prevent browser tests from silently reusing a stale preview server.

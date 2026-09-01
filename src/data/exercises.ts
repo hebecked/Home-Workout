@@ -2,7 +2,7 @@ import type { ExerciseTarget, Translation } from '../core/plan-schema';
 
 export interface ExerciseDefinition {
   id: string;
-  category: 'legs' | 'push' | 'pull' | 'core' | 'cardio' | 'full-body';
+  category: 'legs' | 'push' | 'pull' | 'core' | 'cardio' | 'full-body' | 'warm-up' | 'stretch';
   equipment: string[];
   difficulty: 'beginner' | 'intermediate' | 'advanced';
   type: 'repetitions' | 'duration';
@@ -24,6 +24,7 @@ const seeds: Seed[] = [
   ['single-leg-glute-bridge', 'legs', 'Einbeiniges Beckenheben', 'Single Leg Glute Bridge', 'intermediate', 'repetitions', ['glute-bridge'], []],
   ['calf-raise', 'legs', 'Wadenheben', 'Calf Raise', 'beginner', 'repetitions', [], []],
   ['wall-sit', 'legs', 'Wandsitz', 'Wall Sit', 'beginner', 'duration', ['squat'], ['split-squat']],
+  ['sumo-squat-hold', 'legs', 'Sumo-Kniebeugen-Halten', 'Sumo Squat Hold', 'beginner', 'duration', ['wall-sit'], ['sumo-squat']],
   ['push-up', 'push', 'Liegestütz', 'Push-up', 'intermediate', 'repetitions', ['incline-push-up', 'knee-push-up'], ['pike-push-up']],
   ['incline-push-up', 'push', 'Erhöhter Liegestütz', 'Incline Push-up', 'beginner', 'repetitions', ['knee-push-up'], ['push-up']],
   ['knee-push-up', 'push', 'Knie-Liegestütz', 'Knee Push-up', 'beginner', 'repetitions', ['incline-push-up'], ['push-up']],
@@ -44,14 +45,24 @@ const seeds: Seed[] = [
   ['step-jack', 'cardio', 'Seitlicher Step Jack', 'Step Jack', 'beginner', 'duration', ['marching-in-place'], ['jumping-jack']],
   ['high-knees', 'cardio', 'Kniehebelauf', 'High Knees', 'intermediate', 'duration', ['marching-in-place'], ['burpee']],
   ['marching-in-place', 'cardio', 'Marschieren am Platz', 'Marching in Place', 'beginner', 'duration', [], ['high-knees']],
+  ['shadow-boxing', 'cardio', 'Schattenboxen', 'Shadowboxing', 'beginner', 'duration', ['marching-in-place'], ['high-knees']],
   ['burpee', 'full-body', 'Burpee', 'Burpee', 'advanced', 'repetitions', ['squat-to-reach'], []],
   ['squat-to-reach', 'full-body', 'Kniebeuge mit Strecken', 'Squat to Reach', 'beginner', 'repetitions', ['squat'], ['burpee']],
   ['superman', 'core', 'Superman', 'Superman', 'beginner', 'duration', ['bird-dog'], ['hollow-hold']],
-  ['triceps-dip', 'push', 'Trizeps-Dip', 'Triceps Dip', 'intermediate', 'repetitions', ['incline-push-up'], ['pike-push-up']]
+  ['triceps-dip', 'push', 'Trizeps-Dip', 'Triceps Dip', 'intermediate', 'repetitions', ['incline-push-up'], ['pike-push-up']],
+  ['heel-dig', 'warm-up', 'Fersen-Tippen', 'Heel Digs', 'beginner', 'duration', ['marching-in-place'], ['high-knees']],
+  ['shoulder-roll', 'warm-up', 'Schulterkreisen', 'Shoulder Rolls', 'beginner', 'duration', [], []],
+  ['arm-circle', 'warm-up', 'Armkreisen', 'Arm Circles', 'beginner', 'duration', ['shoulder-roll'], []],
+  ['leg-swing', 'warm-up', 'Beinschwingen', 'Leg Swings', 'beginner', 'duration', ['marching-in-place'], []],
+  ['calf-stretch', 'stretch', 'Waden-Dehnung', 'Calf Stretch', 'beginner', 'duration', [], []],
+  ['hamstring-stretch', 'stretch', 'Oberschenkelrückseiten-Dehnung', 'Hamstring Stretch', 'beginner', 'duration', [], []],
+  ['quadriceps-stretch', 'stretch', 'Oberschenkelvorderseiten-Dehnung', 'Quadriceps Stretch', 'beginner', 'duration', [], []],
+  ['hip-flexor-stretch', 'stretch', 'Hüftbeuger-Dehnung', 'Hip Flexor Stretch', 'beginner', 'duration', [], []]
 ];
 
 const bandExercises = new Set(['resistance-band-row', 'resistance-band-pull-apart', 'assisted-pull-up']);
 const barExercises = new Set(['pull-up', 'chin-up']);
+const supportExercises = new Set(['leg-swing', 'calf-stretch', 'quadriceps-stretch']);
 const detailedInstructions: Record<string, Record<'de' | 'en', string>> = {
   squat: {
     de: 'Stelle die Füße etwa schulterbreit auf. Schiebe die Hüfte nach hinten, beuge Hüfte und Knie und senke dich mit gehobener Brust ab. Drücke die Füße in den Boden und richte dich wieder auf; die Knie folgen der Richtung der Zehen.',
@@ -88,6 +99,10 @@ const detailedInstructions: Record<string, Record<'de' | 'en', string>> = {
   'wall-sit': {
     de: 'Lehne Rücken und Becken an eine Wand und stelle die Füße etwas vor. Rutsche abwärts, bis Hüfte und Knie bequem gebeugt sind, halte die Knie über den Füßen und drücke den Rücken gegen die Wand.',
     en: 'Place your back and hips against a wall with your feet slightly forward. Slide down until hips and knees are comfortably bent, keep knees over feet, and press your back into the wall.'
+  },
+  'sumo-squat-hold': {
+    de: 'Stelle die Füße deutlich breiter als schulterbreit auf und drehe die Zehen leicht nach außen. Schiebe die Hüfte nach hinten und unten, bis die Oberschenkel bequem Richtung waagerecht kommen, und halte. Die Knie folgen den Zehen; Brust und Rücken bleiben aufrecht.',
+    en: 'Stand wider than shoulder width with toes turned slightly out. Send your hips back and down until your thighs move comfortably toward parallel, then hold. Keep knees tracking over toes and your chest and back upright.'
   },
   'push-up': {
     de: 'Stütze dich auf Hände und Zehen, die Hände etwas weiter als schulterbreit, und bilde eine Linie von Kopf bis Fersen. Beuge die Ellenbogen und senke Brust und Becken gemeinsam; drücke dich ohne durchhängende Hüfte wieder hoch.',
@@ -169,6 +184,10 @@ const detailedInstructions: Record<string, Record<'de' | 'en', string>> = {
     de: 'Stehe aufrecht und marschiere am Platz. Hebe abwechselnd ein Knie in eine angenehme Höhe, setze den Fuß kontrolliert ab und schwinge den gegenüberliegenden Arm mit.',
     en: 'Stand tall and march in place. Lift alternate knees to a comfortable height, place each foot down with control, and swing the opposite arm.'
   },
+  'shadow-boxing': {
+    de: 'Stehe versetzt mit weichen Knien und den Fäusten locker vor dem Gesicht. Boxe abwechselnd gerade nach vorn, drehe dabei Schulter und Hüfte leicht mit und ziehe jede Hand sofort zur Deckung zurück. Strecke die Ellenbogen nicht hart durch.',
+    en: 'Stand in a staggered stance with soft knees and relaxed fists guarding your face. Alternate straight punches, allowing a small shoulder and hip turn, and return each hand immediately to guard. Do not lock your elbows.'
+  },
   burpee: {
     de: 'Beuge Hüfte und Knie, setze die Hände auf den Boden und bringe beide Füße zurück in den hohen Stütz. Führe die Füße wieder nach vorn und richte dich auf oder springe hoch; halte im Stütz den Rumpf stabil.',
     en: 'Bend hips and knees, place your hands on the floor, and move both feet back into a high plank. Bring the feet forward, then stand or jump up; keep your trunk stable in the plank.'
@@ -184,12 +203,44 @@ const detailedInstructions: Record<string, Record<'de' | 'en', string>> = {
   'triceps-dip': {
     de: 'Setze die Hände an die Kante eines stabilen Stuhls, rutsche mit der Hüfte davor und stelle die Füße sicher auf. Beuge die Ellenbogen nach hinten, senke den Körper nah am Stuhl und drücke dich wieder hoch; halte die Schultern tief.',
     en: 'Place your hands on the edge of a stable chair, move your hips just in front, and plant your feet securely. Bend your elbows back, lower close to the chair, and press up while keeping shoulders down.'
+  },
+  'heel-dig': {
+    de: 'Stehe aufrecht und setze abwechselnd eine Ferse vor dir auf, die Zehen zeigen nach oben. Beuge das Standbein leicht und schwinge die Arme locker mit. Bleibe am Platz und erhöhe das Tempo nur so weit, wie die Bewegung kontrolliert bleibt.',
+    en: 'Stand tall and alternate placing one heel on the floor in front of you with toes pointing up. Slightly bend the supporting leg and swing your arms naturally. Stay in place and increase pace only while the movement remains controlled.'
+  },
+  'shoulder-roll': {
+    de: 'Stehe aufrecht und lasse die Arme locker hängen. Rolle beide Schultern langsam nach vorn, oben, hinten und unten. Wechsle nach der Hälfte der Zeit die Richtung und halte den Nacken entspannt.',
+    en: 'Stand tall with your arms relaxed. Slowly roll both shoulders forward, up, back, and down. Reverse the direction halfway through and keep your neck relaxed.'
+  },
+  'arm-circle': {
+    de: 'Stehe stabil und strecke beide Arme seitlich auf Schulterhöhe. Zeichne kleine kontrollierte Kreise, die allmählich etwas größer werden. Wechsle nach der Hälfte der Zeit die Richtung und halte die Schultern tief.',
+    en: 'Stand steadily and extend both arms sideways at shoulder height. Make small controlled circles that gradually become slightly larger. Reverse direction halfway through and keep your shoulders down.'
+  },
+  'leg-swing': {
+    de: 'Halte dich leicht an einer Wand oder einem stabilen Gegenstand fest. Schwinge ein Bein kontrolliert vor und zurück, ohne den Oberkörper zu verdrehen oder Schwung zu erzwingen. Wechsle nach der Hälfte der Zeit die Seite.',
+    en: 'Use light support from a wall or sturdy object. Swing one leg forward and backward with control without twisting your torso or forcing the range. Change sides halfway through.'
+  },
+  'calf-stretch': {
+    de: 'Stütze die Hände an einer Wand ab und stelle einen Fuß hinter den anderen. Beuge das vordere Knie, halte das hintere Bein gestreckt und die hintere Ferse am Boden. Schiebe die Hüfte sanft vor, halte ohne Wippen und wechsle nach der Hälfte die Seite.',
+    en: 'Place your hands on a wall and step one foot behind the other. Bend the front knee while keeping the back leg straight and its heel on the floor. Gently move your hips forward, hold without bouncing, and change sides halfway through.'
+  },
+  'hamstring-stretch': {
+    de: 'Lege dich nahe einer Wand auf den Rücken und stütze eine Ferse mit leicht gebeugtem Knie an der Wand ab. Strecke das Knie nur so weit, bis du einen sanften Zug an der Oberschenkelrückseite spürst. Halte und wechsle nach der Hälfte die Seite.',
+    en: 'Lie on your back near a wall and rest one heel against it with the knee slightly bent. Straighten the knee only until you feel a gentle pull along the back of the thigh. Hold and change sides halfway through.'
+  },
+  'quadriceps-stretch': {
+    de: 'Stehe neben einer Wand und halte dich leicht fest. Greife einen Knöchel und führe die Ferse sanft Richtung Gesäß; die Knie bleiben nah beieinander und der Bauch ist leicht angespannt. Halte ohne ins Hohlkreuz zu fallen und wechsle nach der Hälfte die Seite.',
+    en: 'Stand beside a wall and use light support. Hold one ankle and gently draw the heel toward your buttocks, keeping knees close and abdomen lightly braced. Hold without arching your back and change sides halfway through.'
+  },
+  'hip-flexor-stretch': {
+    de: 'Knie auf einem gepolsterten Knie und stelle den anderen Fuß vorn auf. Halte Rücken und Becken aufrecht und verlagere das Gewicht sanft nach vorn, bis du einen Zug an der Vorderseite der knienden Hüfte spürst. Halte und wechsle nach der Hälfte die Seite.',
+    en: 'Kneel on one padded knee with the other foot in front. Keep your back and pelvis upright and gently shift weight forward until you feel a stretch at the front of the kneeling hip. Hold and change sides halfway through.'
   }
 };
 
 export const EXERCISE_LIBRARY: ExerciseDefinition[] = seeds.map(([id, category, de, en, difficulty, type, easier, harder]) => ({
   id, category,
-  equipment: bandExercises.has(id) ? ['resistance band'] : barExercises.has(id) ? ['pull-up bar'] : id === 'triceps-dip' || id === 'incline-push-up' ? ['chair'] : ['none'],
+  equipment: bandExercises.has(id) ? ['resistance band'] : barExercises.has(id) ? ['pull-up bar'] : supportExercises.has(id) ? ['wall or stable support'] : id === 'triceps-dip' || id === 'incline-push-up' ? ['chair'] : ['none'],
   difficulty, type,
   defaultTarget: type === 'duration' ? { seconds: 30 } : { min: 8, max: 12, unit: id.includes('lunge') || id === 'bird-dog' || id === 'dead-bug' ? 'per-side' : 'repetitions' },
   translations: {

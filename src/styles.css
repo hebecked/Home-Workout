@@ -61,6 +61,8 @@ h1 { font-size: clamp(3rem, 8vw, 7rem); line-height: .88; letter-spacing: -.075e
 .exercise-preview-card > div .preview-category.arms { color: #d98836; }
 .exercise-preview-card > div .preview-category.core { color: #a779dc; }
 .exercise-preview-card > div .preview-category.cardio { color: #e05f55; }
+.exercise-preview-card > div .preview-category.warm-up { color: #b47d12; }
+.exercise-preview-card > div .preview-category.stretch { color: #218b78; }
 .preview-number { position: absolute; top: .75rem; left: .75rem; z-index: 1; padding: .35rem .5rem; background: var(--ink); color: #fffaf3; font-size: .7rem; font-weight: 850; letter-spacing: .08em; }
 .action-grid { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 .action-card { min-height: 170px; padding: 1.5rem; text-decoration: none; display: flex; flex-direction: column; gap: .5rem; border-right: 1px solid var(--line); }

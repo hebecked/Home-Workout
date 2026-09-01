@@ -35,6 +35,8 @@ const previewCategory = (category: string | undefined): { className: string; lab
   if (category === 'push' || category === 'pull') return { className: 'arms', label: 'Arms · Oberkörper' };
   if (category === 'core') return { className: 'core', label: 'Core · Rumpf' };
   if (category === 'cardio' || category === 'full-body') return { className: 'cardio', label: 'Cardio · Kondition' };
+  if (category === 'warm-up') return { className: 'warm-up', label: 'Warm-up · Aufwärmen' };
+  if (category === 'stretch') return { className: 'stretch', label: 'Stretch · Dehnen' };
   return null;
 };
 

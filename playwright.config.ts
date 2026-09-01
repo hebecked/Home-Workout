@@ -3,7 +3,8 @@ import { defineConfig, devices } from '@playwright/test';
 const useWindowsBrowserFallback = process.env.PLAYWRIGHT_WINDOWS_FALLBACK === '1'
   || (process.platform === 'win32' && process.env.PLAYWRIGHT_NATIVE_ENGINES !== '1');
 const e2ePort = Number(process.env.E2E_PORT ?? 4173);
-const useExternalPreview = process.env.E2E_EXTERNAL_SERVER === '1';
+const e2eBaseUrl = process.env.E2E_BASE_URL ?? `http://127.0.0.1:${e2ePort}`;
+const useExternalPreview = process.env.E2E_EXTERNAL_SERVER === '1' || process.env.E2E_BASE_URL !== undefined;
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -12,7 +13,7 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   reporter: [['html', { open: 'never' }], ['list']],
   use: {
-    baseURL: `http://127.0.0.1:${e2ePort}`,
+    baseURL: e2eBaseUrl,
     trace: 'on-first-retry'
   },
   ...(useExternalPreview ? {} : {

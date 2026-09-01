@@ -7,12 +7,14 @@ import { validateWorkoutPlan } from '../../src/core/plan-schema';
 
 const requiredIds = [
   'squat', 'sumo-squat', 'reverse-lunge', 'forward-lunge', 'split-squat',
-  'glute-bridge', 'single-leg-glute-bridge', 'calf-raise', 'wall-sit',
+  'glute-bridge', 'single-leg-glute-bridge', 'calf-raise', 'wall-sit', 'sumo-squat-hold',
   'push-up', 'incline-push-up', 'knee-push-up', 'pike-push-up',
   'pull-up', 'assisted-pull-up', 'chin-up', 'resistance-band-row',
   'resistance-band-pull-apart', 'dead-bug', 'lying-leg-raise', 'bird-dog', 'plank', 'side-plank',
   'mountain-climber', 'hollow-hold', 'jumping-jack', 'step-jack', 'high-knees',
-  'marching-in-place', 'burpee', 'squat-to-reach'
+  'marching-in-place', 'shadow-boxing', 'burpee', 'squat-to-reach',
+  'heel-dig', 'shoulder-roll', 'arm-circle', 'leg-swing',
+  'calf-stretch', 'hamstring-stretch', 'quadriceps-stretch', 'hip-flexor-stretch'
 ];
 
 describe('built-in exercise library', () => {
@@ -26,7 +28,7 @@ describe('built-in exercise library', () => {
   it('provides complete metadata, DE/EN copy and local illustrations for every exercise', () => {
     for (const exercise of EXERCISE_LIBRARY) {
       expect(exercise.id).toMatch(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
-      expect(exercise.category).toMatch(/^(legs|push|pull|core|cardio|full-body)$/);
+      expect(exercise.category).toMatch(/^(legs|push|pull|core|cardio|full-body|warm-up|stretch)$/);
       expect(exercise.equipment.length).toBeGreaterThan(0);
       expect(exercise.difficulty).toMatch(/^(beginner|intermediate|advanced)$/);
       expect(exercise.type).toMatch(/^(repetitions|duration)$/);

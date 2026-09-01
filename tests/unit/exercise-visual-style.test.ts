@@ -9,7 +9,9 @@ const categoryHue: Record<ExerciseDefinition['category'], number> = {
   pull: 28,
   core: 276,
   cardio: 4,
-  'full-body': 4
+  'full-body': 4,
+  'warm-up': 42,
+  stretch: 160
 };
 
 function svgFor(exercise: ExerciseDefinition): string {
@@ -20,8 +22,8 @@ function svgFor(exercise: ExerciseDefinition): string {
 }
 
 describe('exercise illustration visual system', () => {
-  it('uses one consistent background and accent hue for all 33 exercise categories', () => {
-    expect(EXERCISE_LIBRARY).toHaveLength(33);
+  it('uses one consistent background and accent hue for all 43 exercise categories', () => {
+    expect(EXERCISE_LIBRARY).toHaveLength(43);
 
     for (const exercise of EXERCISE_LIBRARY) {
       const hue = categoryHue[exercise.category];
@@ -61,15 +63,30 @@ describe('exercise illustration visual system', () => {
     const byId = new Map(EXERCISE_LIBRARY.map((exercise) => [exercise.id, svgFor(exercise)]));
 
     expect(byId.get('squat')).toContain('M137 145L94 154L72 204');
-    expect(byId.get('pull-up')).toContain('<circle cx="90" cy="95"');
-    expect(byId.get('pull-up')).toContain('<circle cx="220" cy="55"');
-    expect(byId.get('pull-up')).toContain('M220 118L204 169');
+    expect(byId.get('pull-up')).toContain('<circle cx="160" cy="95"');
+    expect(byId.get('pull-up')).toContain('<circle cx="160" cy="55"');
+    expect(byId.get('pull-up')).toContain('M160 118L144 169');
     expect(byId.get('assisted-pull-up')).toContain('stroke-dasharray="7 6"');
-    expect(byId.get('side-plank')).toContain('M242 98L188 132L126 181L103 204');
-    expect(byId.get('pike-push-up')).toContain('M204 174L254 84L298 204');
+    expect(byId.get('chin-up')).toContain('<circle cx="160" cy="95"');
+    expect(byId.get('chin-up')).toContain('<circle cx="160" cy="55"');
+    expect(byId.get('side-plank')).toContain('M228 128L216 142L157 169L84 204');
+    expect(byId.get('side-plank')).not.toContain('data-pose="start"');
+    expect(byId.get('pike-push-up')).toContain('L185 84L260 204');
+    expect(byId.get('pike-push-up')).not.toContain('cx="191"');
     for (const id of ['dead-bug', 'lying-leg-raise', 'glute-bridge']) {
       expect(byId.get(id), `${id} keeps the body at the floor`).toMatch(/cy="18[04]"/);
       expect(byId.get(id), `${id} includes the shared floor line`).toContain('M42 210H278');
     }
+  });
+
+  it('keeps vertical and lowering movements overlaid instead of separating figures sideways', () => {
+    const byId = new Map(EXERCISE_LIBRARY.map((exercise) => [exercise.id, svgFor(exercise)]));
+    for (const id of ['pull-up', 'chin-up']) {
+      const heads = [...byId.get(id)!.matchAll(/<circle cx="(\d+)" cy="(?:95|55)" r="13"\/>/g)];
+      expect(heads, `${id} has same-centre start and finish heads`).toHaveLength(2);
+      expect(new Set(heads.map((match) => match[1]))).toStrictEqual(new Set(['160']));
+    }
+    const pike = byId.get('pike-push-up')!;
+    expect(pike.match(/L185 84L260 204/g), 'pike start and finish share hip and feet').toHaveLength(2);
   });
 });

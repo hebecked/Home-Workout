@@ -9,8 +9,8 @@ Last updated: 2026-09-01
 - Separate local storage for user-created and imported plans.
 - Direct editing of local plans while preserving their stable plan ID.
 - Safe customization of a bundled routine as a new local copy; the bundled source remains unchanged.
-- Complete movement-specific local SVG coverage for all 33 exercise-library entries with category colors: legs blue, arms orange, core purple, cardio/full body red.
-- Small motion arrows, distinct start/finish poses, and corrected floor contact for the easily confused movements.
+- Complete movement-specific local SVG coverage for all 43 exercise-library entries with category colors: legs blue, arms orange, core purple, cardio/full body red, warm-up gold, and stretching teal.
+- Small motion arrows, same-scale overlaid movement poses, single-pose static holds, and corrected floor contact for easily confused movements.
 - AI plan guide, strict direct-link validation, import preview, and JSON-file fallback.
 - Stable workout controls, reload-safe timing, skippable rests, and a confirmed abort flow.
 - The optional repetition tap counter is intentionally disabled in the UI. Repetition targets remain visible, and duration/rest/total timers remain active.
@@ -44,14 +44,15 @@ Evidence basis:
 
 ### Illustration status
 
-- All 33 SVG files contain movement-specific poses, a bounded motion arrow, the category palette, and file-level contract tests.
-- Pull-up, Assisted Pull-up, Side Plank, and Pike Push-up use separated start/finish compositions for clearer anatomy and direction.
-- All 33 exercises have movement-specific German and English instructions. The remaining independent source comparison is tracked row by row in `docs/exercise-audit.md`.
+- All 43 SVG files contain a movement-specific pose, the category palette, and file-level contract tests. Moving exercises use a bounded motion arrow; static holds and stretches intentionally do not.
+- Pull-up, Assisted Pull-up, Chin-up, and Pike Push-up use same-scale overlaid positions so no sideways travel is implied. Side Plank uses one static figure.
+- All 43 exercises have movement-specific German and English instructions. The remaining independent source comparison is tracked row by row in `docs/exercise-audit.md`.
 - Source notes and the meaning of the translucent pose are recorded in `docs/exercise-sources.md`.
 
 ### Later enhancements
 
 - Optional plan history/migrations if the JSON schema moves beyond version 1.
+- Phase-aware schema version 2 with warm-up, multiple training phases, cool-down, per-phase rounds, and independent rest rules; see `docs/phased-workout-proposal.md`.
 - Optional workout history and progression tracking, stored locally and opt-in only.
 - Optional consent-based automatic translation and translated UI chrome; manual free-text translations already work for every configured plan language.
 - A richer native install prompt and offline/update feedback; device-specific installation instructions are already visible on the guide page.

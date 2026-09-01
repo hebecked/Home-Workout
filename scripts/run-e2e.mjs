@@ -3,17 +3,18 @@ import { resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 
 const port = process.env.E2E_PORT ?? '4173';
-const origin = `http://127.0.0.1:${port}`;
+const externalOrigin = process.env.E2E_BASE_URL;
+const origin = externalOrigin ?? `http://127.0.0.1:${port}`;
 const viteCli = resolve('node_modules/vite/bin/vite.js');
 const playwrightCli = resolve('node_modules/@playwright/test/cli.js');
-const preview = spawn(process.execPath, [viteCli, 'preview', '--host', '127.0.0.1', '--port', port, '--strictPort'], {
+const preview = externalOrigin ? null : spawn(process.execPath, [viteCli, 'preview', '--host', '127.0.0.1', '--port', port, '--strictPort'], {
   stdio: 'inherit',
   windowsHide: true
 });
 
 const waitForPreview = async () => {
   for (let attempt = 0; attempt < 50; attempt += 1) {
-    if (preview.exitCode !== null) throw new Error(`Preview exited with code ${preview.exitCode}.`);
+    if (preview !== null && preview.exitCode !== null) throw new Error(`Preview exited with code ${preview.exitCode}.`);
     try {
       const response = await fetch(origin);
       if (response.ok) return;
@@ -26,7 +27,7 @@ const waitForPreview = async () => {
 };
 
 const stopPreview = async () => {
-  if (preview.exitCode !== null) return;
+  if (preview === null || preview.exitCode !== null) return;
   preview.kill('SIGTERM');
   await Promise.race([
     new Promise((resolveExit) => preview.once('exit', resolveExit)),

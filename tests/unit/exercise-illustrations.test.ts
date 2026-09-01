@@ -10,8 +10,16 @@ function numericAttribute(element: string | undefined, attribute: string): numbe
 }
 
 describe('exercise illustrations', () => {
-  it('gives every library exercise dedicated start/finish poses and a subtle motion indicator', () => {
-    expect(EXERCISE_LIBRARY).toHaveLength(33);
+  it('gives all 43 exercises a local pose and movement indicators only where movement is shown', () => {
+    expect(EXERCISE_LIBRARY).toHaveLength(43);
+    const singlePoseIds = new Set([
+      'side-plank', 'sumo-squat-hold', 'shoulder-roll', 'arm-circle',
+      'calf-stretch', 'hamstring-stretch', 'quadriceps-stretch', 'hip-flexor-stretch'
+    ]);
+    const staticIds = new Set([
+      'side-plank', 'sumo-squat-hold',
+      'calf-stretch', 'hamstring-stretch', 'quadriceps-stretch', 'hip-flexor-stretch'
+    ]);
 
     for (const exercise of EXERCISE_LIBRARY) {
       const exerciseId = exercise.id;
@@ -26,8 +34,12 @@ describe('exercise illustrations', () => {
       expect.soft(svg, `${exerciseId} declares the SVG namespace`).toMatch(/^<svg\b[^>]*xmlns=["']http:\/\/www\.w3\.org\/2000\/svg["']/i);
       expect.soft(svg, `${exerciseId} has a viewBox`).toMatch(/^<svg\b[^>]*viewBox=["'][^"']+["']/i);
       expect.soft(svg, `${exerciseId} closes its SVG root`).toMatch(/<\/svg>$/i);
-      expect.soft(svg, `${exerciseId} has a start pose`).toContain('data-pose="start"');
       expect.soft(svg, `${exerciseId} has a finish pose`).toContain('data-pose="finish"');
+      if (singlePoseIds.has(exerciseId)) {
+        expect.soft(svg, `${exerciseId} intentionally uses one same-scale figure`).not.toContain('data-pose="start"');
+      } else {
+        expect.soft(svg, `${exerciseId} has an overlaid start pose`).toContain('data-pose="start"');
+      }
 
       const marker = svg.match(/<marker\b[^>]*id=["']motion-arrow["'][^>]*>/i)?.[0];
       expect.soft(marker, `${exerciseId} defines #motion-arrow`).toBeDefined();
@@ -39,6 +51,10 @@ describe('exercise illustrations', () => {
       const movement = svg.match(
         /<(?:path|line|polyline)\b[^>]*marker-end=["']url\(#motion-arrow\)["'][^>]*>/i
       )?.[0];
+      if (staticIds.has(exerciseId)) {
+        expect.soft(movement, `${exerciseId} is a static hold without a false direction arrow`).toBeUndefined();
+        continue;
+      }
       expect.soft(movement, `${exerciseId} uses #motion-arrow on a movement path`).toBeDefined();
       expect.soft(numericAttribute(movement, 'stroke-width'), `${exerciseId} movement stroke-width`).toBeGreaterThan(0);
       expect.soft(numericAttribute(movement, 'stroke-width'), `${exerciseId} movement stroke-width`).toBeLessThanOrEqual(5);

@@ -5,12 +5,14 @@ const directory = resolve('public/assets/exercises');
 mkdirSync(directory, { recursive: true });
 
 const groups = {
-  legs: `squat sumo-squat reverse-lunge forward-lunge split-squat glute-bridge single-leg-glute-bridge calf-raise wall-sit`.split(' '),
+  legs: `squat sumo-squat reverse-lunge forward-lunge split-squat glute-bridge single-leg-glute-bridge calf-raise wall-sit sumo-squat-hold`.split(' '),
   arms: `push-up incline-push-up knee-push-up pike-push-up pull-up assisted-pull-up chin-up resistance-band-row resistance-band-pull-apart triceps-dip`.split(' '),
   core: `dead-bug lying-leg-raise bird-dog plank side-plank mountain-climber hollow-hold superman`.split(' '),
-  cardio: `jumping-jack step-jack high-knees marching-in-place burpee squat-to-reach`.split(' ')
+  cardio: `jumping-jack step-jack high-knees marching-in-place shadow-boxing burpee squat-to-reach`.split(' '),
+  warmup: `heel-dig shoulder-roll arm-circle leg-swing`.split(' '),
+  stretch: `calf-stretch hamstring-stretch quadriceps-stretch hip-flexor-stretch`.split(' ')
 };
-const hueByGroup = { legs: 208, arms: 28, core: 276, cardio: 4 };
+const hueByGroup = { legs: 208, arms: 28, core: 276, cardio: 4, warmup: 42, stretch: 160 };
 const hueByExercise = new Map(Object.entries(groups).flatMap(([group, ids]) => ids.map((id) => [id, hueByGroup[group]])));
 
 const poses = {
@@ -60,6 +62,11 @@ const poses = {
     active: '<circle cx="103" cy="76" r="16"/><path d="M103 95V149M103 112L139 132M103 149L170 149L218 204M170 149L170 204"/>',
     motion: 'M236 83C242 107 233 130 216 145'
   },
+  'sumo-squat-hold': {
+    ghost: '',
+    active: '<circle cx="160" cy="74" r="16"/><path d="M160 93V145M160 108L107 130M160 108L213 130M160 145L103 157L65 204M160 145L217 157L255 204"/>',
+    motion: ''
+  },
   'push-up': {
     ghost: '<circle cx="238" cy="143" r="15"/><path d="M219 148L151 161L75 188L50 204M211 150L184 177L193 204"/>',
     active: '<circle cx="238" cy="103" r="15"/><path d="M219 109L151 124L75 171L50 204M211 111L183 150L198 204"/>',
@@ -77,27 +84,27 @@ const poses = {
     motion: 'M258 158C266 141 264 124 256 110'
   },
   'pike-push-up': {
-    ghost: '<circle cx="49" cy="159" r="12"/><path d="M61 151L101 84L145 204M101 84L40 204"/>',
-    active: '<circle cx="191" cy="184" r="12"/><path d="M204 174L254 84L298 204M254 84L220 153L197 170L181 204"/>',
-    motion: 'M157 124C149 144 151 165 162 181'
+    ghost: '<circle cx="94" cy="143" r="12"/><path d="M109 135L185 84L260 204M109 135L60 204"/>',
+    active: '<circle cx="78" cy="180" r="12"/><path d="M92 171L185 84L260 204M92 171L118 188L60 204"/>',
+    motion: 'M48 145C40 160 42 176 54 187'
   },
   'pull-up': {
     equipment: '<path d="M34 40H286" stroke="#8b96aa" stroke-width="9"/>',
-    ghost: '<circle cx="90" cy="95" r="13"/><path d="M90 111V154M90 116L60 40M90 116L120 40M90 154L75 204M90 154L105 204"/>',
-    active: '<circle cx="220" cy="55" r="13"/><path d="M220 71V118M220 78L195 83L184 40M220 78L245 83L256 40M220 118L204 169M220 118L236 169"/>',
-    motion: 'M151 153C159 128 159 102 151 79'
+    ghost: '<circle cx="160" cy="95" r="13"/><path d="M160 111V154M160 116L130 40M160 116L190 40M160 154L145 204M160 154L175 204"/>',
+    active: '<circle cx="160" cy="55" r="13"/><path d="M160 71V118M160 78L135 83L120 40M160 78L185 83L200 40M160 118L144 169M160 118L176 169"/>',
+    motion: 'M259 153C267 128 267 102 259 79'
   },
   'assisted-pull-up': {
-    equipment: '<path d="M34 40H286" stroke="#8b96aa" stroke-width="9"/><path d="M258 43C267 94 261 145 236 176C228 186 217 180 222 168C242 137 248 91 244 43" fill="none" stroke="#8b96aa" stroke-width="5" stroke-dasharray="7 6"/>',
-    ghost: '<circle cx="90" cy="95" r="13"/><path d="M90 111V154M90 116L60 40M90 116L120 40M90 154L75 204M90 154L105 204"/>',
-    active: '<circle cx="220" cy="55" r="13"/><path d="M220 71V118M220 78L195 83L184 40M220 78L245 83L256 40M220 118L202 169M220 118L240 145L225 171"/>',
-    motion: 'M151 153C159 128 159 102 151 79'
+    equipment: '<path d="M34 40H286" stroke="#8b96aa" stroke-width="9"/><path d="M211 43C220 97 214 151 183 188C173 200 161 192 167 179C192 145 199 94 195 43" fill="none" stroke="#8b96aa" stroke-width="5" stroke-dasharray="7 6"/>',
+    ghost: '<circle cx="150" cy="95" r="13"/><path d="M150 111V154M150 116L120 40M150 116L180 40M150 154L135 204M150 154L165 204"/>',
+    active: '<circle cx="150" cy="55" r="13"/><path d="M150 71V118M150 78L125 83L110 40M150 78L175 83L190 40M150 118L134 169M150 118L174 145L162 178"/>',
+    motion: 'M258 153C266 128 266 102 258 79'
   },
   'chin-up': {
-    equipment: '<path d="M62 35H258" stroke="#8b96aa" stroke-width="9"/>',
-    ghost: '<circle cx="160" cy="137" r="15"/><path d="M160 155V204M160 160L108 40M160 160L212 40"/>',
-    active: '<circle cx="160" cy="69" r="16"/><path d="M160 88V153M160 101L108 40M160 101L212 40M160 153L133 204M160 153L187 204"/>',
-    motion: 'M270 148C277 124 273 101 261 84'
+    equipment: '<path d="M50 40H270" stroke="#8b96aa" stroke-width="9"/>',
+    ghost: '<circle cx="160" cy="95" r="13"/><path d="M160 111V154M160 116L140 40M160 116L180 40M160 154L145 204M160 154L175 204"/>',
+    active: '<circle cx="160" cy="55" r="13"/><path d="M160 71V118M160 78L137 84L130 40M160 78L183 84L190 40M160 118L144 169M160 118L176 169"/>',
+    motion: 'M259 153C267 128 267 102 259 79'
   },
   'resistance-band-row': {
     equipment: '<path d="M55 48V205" stroke="#8b96aa" stroke-width="8"/><path d="M55 105L132 123M55 105L132 133" stroke="#8b96aa" stroke-width="4"/>',
@@ -138,9 +145,9 @@ const poses = {
     motion: 'M269 151C274 137 273 123 267 112'
   },
   'side-plank': {
-    ghost: '<circle cx="111" cy="178" r="12"/><path d="M97 182L64 192L27 204M89 185L79 204M64 192L48 204"/>',
-    active: '<circle cx="257" cy="88" r="13"/><path d="M242 98L188 132L126 181L103 204M188 138L135 188L116 204M230 105L215 160L226 204M230 105L238 58"/>',
-    motion: 'M156 171C166 150 168 127 160 106'
+    ghost: '',
+    active: '<circle cx="244" cy="116" r="13"/><path d="M228 128L216 142L157 169L84 204M216 142L187 190L151 204M216 142L239 91"/>',
+    motion: ''
   },
   'mountain-climber': {
     ghost: '<circle cx="238" cy="103" r="15"/><path d="M219 109L151 127L65 185M151 127L71 204M184 118L202 204"/>',
@@ -177,6 +184,11 @@ const poses = {
     active: '<circle cx="160" cy="48" r="16"/><path d="M160 67V140M160 88L127 108M160 88L193 108M160 140L126 158L104 190M160 140L185 204"/>',
     motion: 'M105 202C94 185 95 169 106 156'
   },
+  'shadow-boxing': {
+    ghost: '<circle cx="145" cy="53" r="15"/><path d="M145 71L151 140M148 88L121 98L134 73M148 88L176 101L160 76M151 140L119 204M151 140L198 196"/>',
+    active: '<circle cx="145" cy="53" r="15"/><path d="M145 71L151 140M148 88L121 98L134 73M148 88L213 91M151 140L119 204M151 140L198 196"/>',
+    motion: 'M180 71C199 69 218 75 231 88'
+  },
   burpee: {
     ghost: '<circle cx="160" cy="48" r="16"/><path d="M160 67V137M160 88L126 119M160 88L194 119M160 137L138 204M160 137L182 204"/>',
     active: '<circle cx="226" cy="151" r="15"/><path d="M207 156L151 168L91 183M151 168L69 204M151 168L222 204M207 156L235 204"/>',
@@ -186,6 +198,50 @@ const poses = {
     ghost: '<circle cx="154" cy="78" r="16"/><path d="M154 97L145 146M151 111L113 131M151 111L191 130M145 146L99 160L72 204M145 146L195 160L226 204"/>',
     active: '<circle cx="160" cy="45" r="16"/><path d="M160 64V137M160 84L116 35M160 84L204 35M160 137L140 204M160 137L180 204"/>',
     motion: 'M238 143C253 119 250 93 235 73'
+  },
+  'heel-dig': {
+    ghost: '<circle cx="157" cy="48" r="16"/><path d="M157 67V140M157 88L126 116M157 88L188 116M157 140L137 204M157 140L178 204"/>',
+    active: '<circle cx="157" cy="48" r="16"/><path d="M157 67V140M157 88L126 109M157 88L190 105M157 140L137 204M157 140L219 188L252 188"/>',
+    motion: 'M190 199C210 203 229 199 243 189'
+  },
+  'shoulder-roll': {
+    ghost: '',
+    active: '<circle cx="160" cy="48" r="16"/><path d="M160 67V145M160 89L125 119M160 89L195 119M160 145L136 204M160 145L184 204"/>',
+    motion: 'M112 101C101 86 108 69 126 67C140 65 147 74 146 86'
+  },
+  'arm-circle': {
+    ghost: '',
+    active: '<circle cx="160" cy="48" r="16"/><path d="M160 67V145M160 89L78 89M160 89L242 89M160 145L136 204M160 145L184 204"/>',
+    motion: 'M246 62C267 68 276 87 268 105C261 121 244 127 229 119'
+  },
+  'leg-swing': {
+    equipment: '<path d="M58 45V210" stroke="#8b96aa" stroke-width="8"/>',
+    ghost: '<circle cx="148" cy="48" r="16"/><path d="M148 67V140M148 88L62 105M148 88L184 116M148 140L123 204M148 140L204 174"/>',
+    active: '<circle cx="148" cy="48" r="16"/><path d="M148 67V140M148 88L62 105M148 88L184 116M148 140L123 204M148 140L225 112"/>',
+    motion: 'M224 178C247 164 251 139 237 120'
+  },
+  'calf-stretch': {
+    equipment: '<path d="M55 42V210" stroke="#8b96aa" stroke-width="8"/>',
+    ghost: '',
+    active: '<circle cx="155" cy="63" r="16"/><path d="M148 82L125 140M139 99L61 112M125 140L92 204M125 140L224 204"/>',
+    motion: ''
+  },
+  'hamstring-stretch': {
+    equipment: '<path d="M250 32V210" stroke="#8b96aa" stroke-width="8"/>',
+    ghost: '',
+    active: '<circle cx="62" cy="184" r="15"/><path d="M82 185H143M101 184L78 204M143 185L233 185M143 185L218 91L250 70"/>',
+    motion: ''
+  },
+  'quadriceps-stretch': {
+    equipment: '<path d="M55 42V210" stroke="#8b96aa" stroke-width="8"/>',
+    ghost: '',
+    active: '<circle cx="150" cy="48" r="16"/><path d="M150 67V140M150 88L62 103M150 88L191 112M150 140L132 204M150 140L197 160L188 118M191 112L188 118"/>',
+    motion: ''
+  },
+  'hip-flexor-stretch': {
+    ghost: '',
+    active: '<circle cx="156" cy="55" r="16"/><path d="M156 74L162 139M159 94L126 122M159 94L194 120M162 139L111 159L82 204M162 139L213 204L252 204"/>',
+    motion: ''
   }
 };
 
@@ -195,7 +251,9 @@ for (const id of ids) {
   if (hue === undefined) throw new Error(`Missing exercise color group: ${id}`);
   const pose = poses[id];
   const title = id.split('-').map((word) => word[0]?.toUpperCase() + word.slice(1)).join(' ');
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240" role="img" aria-labelledby="title"><title id="title">${title}</title><defs><marker id="motion-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4.5" markerHeight="4.5" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="hsl(${hue} 55% 52%)" opacity=".55"/></marker></defs><rect width="320" height="240" rx="28" fill="hsl(${hue} 42% 93%)"/>${pose.equipment ?? ''}<g data-pose="start" fill="none" stroke="hsl(${hue} 42% 76%)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">${pose.ghost}</g><g data-pose="finish" fill="none" stroke="#18233a" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">${pose.active}</g><path d="${pose.motion}" fill="none" stroke="hsl(${hue} 55% 52%)" stroke-width="4" stroke-linecap="round" opacity=".72" marker-end="url(#motion-arrow)"/><path d="M42 210H278" stroke="hsl(${hue} 65% 48%)" stroke-width="7" stroke-linecap="round"/></svg>`;
+  const startPose = pose.ghost ? `<g data-pose="start" fill="none" stroke="hsl(${hue} 42% 76%)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">${pose.ghost}</g>` : '';
+  const motion = pose.motion ? `<path d="${pose.motion}" fill="none" stroke="hsl(${hue} 55% 52%)" stroke-width="4" stroke-linecap="round" opacity=".72" marker-end="url(#motion-arrow)"/>` : '';
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240" role="img" aria-labelledby="title"><title id="title">${title}</title><defs><marker id="motion-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4.5" markerHeight="4.5" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="hsl(${hue} 55% 52%)" opacity=".55"/></marker></defs><rect width="320" height="240" rx="28" fill="hsl(${hue} 42% 93%)"/>${pose.equipment ?? ''}${startPose}<g data-pose="finish" fill="none" stroke="#18233a" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">${pose.active}</g>${motion}<path d="M42 210H278" stroke="hsl(${hue} 65% 48%)" stroke-width="7" stroke-linecap="round"/></svg>`;
   writeFileSync(resolve(directory, `${id}.svg`), svg);
 }
 
