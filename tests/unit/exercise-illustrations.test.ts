@@ -1,8 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_WORKOUT } from '../../src/data/default-workout';
-import { EXERCISES_BY_ID } from '../../src/data/exercises';
+import { EXERCISE_LIBRARY } from '../../src/data/exercises';
 
 function numericAttribute(element: string | undefined, attribute: string): number | undefined {
   if (!element) return undefined;
@@ -10,16 +9,12 @@ function numericAttribute(element: string | undefined, attribute: string): numbe
   return match ? Number(match[1]) : undefined;
 }
 
-describe('default-workout exercise illustrations', () => {
-  it('gives all eight local SVGs a subtle, consistently bounded motion indicator', () => {
-    const exerciseIds = DEFAULT_WORKOUT.exercises.map(({ exerciseId }) => exerciseId);
-    expect(exerciseIds).toHaveLength(8);
-    expect(new Set(exerciseIds).size).toBe(8);
+describe('exercise illustrations', () => {
+  it('gives every library exercise dedicated start/finish poses and a subtle motion indicator', () => {
+    expect(EXERCISE_LIBRARY).toHaveLength(33);
 
-    for (const exerciseId of exerciseIds) {
-      const exercise = EXERCISES_BY_ID.get(exerciseId);
-      expect.soft(exercise, `library entry for ${exerciseId}`).toBeDefined();
-      if (!exercise) continue;
+    for (const exercise of EXERCISE_LIBRARY) {
+      const exerciseId = exercise.id;
       expect.soft(exercise.illustration).toMatch(/^\/assets\/exercises\/[a-z0-9-]+\.svg$/);
 
       const absolutePath = resolve(process.cwd(), 'public', exercise.illustration.slice(1));
@@ -31,6 +26,8 @@ describe('default-workout exercise illustrations', () => {
       expect.soft(svg, `${exerciseId} declares the SVG namespace`).toMatch(/^<svg\b[^>]*xmlns=["']http:\/\/www\.w3\.org\/2000\/svg["']/i);
       expect.soft(svg, `${exerciseId} has a viewBox`).toMatch(/^<svg\b[^>]*viewBox=["'][^"']+["']/i);
       expect.soft(svg, `${exerciseId} closes its SVG root`).toMatch(/<\/svg>$/i);
+      expect.soft(svg, `${exerciseId} has a start pose`).toContain('data-pose="start"');
+      expect.soft(svg, `${exerciseId} has a finish pose`).toContain('data-pose="finish"');
 
       const marker = svg.match(/<marker\b[^>]*id=["']motion-arrow["'][^>]*>/i)?.[0];
       expect.soft(marker, `${exerciseId} defines #motion-arrow`).toBeDefined();

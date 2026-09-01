@@ -1,6 +1,6 @@
 # Product status and roadmap
 
-Last updated: 2026-08-31
+Last updated: 2026-09-01
 
 ## Implemented in the current release
 
@@ -9,11 +9,13 @@ Last updated: 2026-08-31
 - Separate local storage for user-created and imported plans.
 - Direct editing of local plans while preserving their stable plan ID.
 - Safe customization of a bundled routine as a new local copy; the bundled source remains unchanged.
-- Complete local SVG coverage for all 33 exercise-library entries with category colors: legs blue, arms orange, core purple, cardio/full body red.
-- Small motion arrows and dedicated poses for the balanced routine's easily confused movements.
+- Complete movement-specific local SVG coverage for all 33 exercise-library entries with category colors: legs blue, arms orange, core purple, cardio/full body red.
+- Small motion arrows, distinct start/finish poses, and corrected floor contact for the easily confused movements.
 - AI plan guide, strict direct-link validation, import preview, and JSON-file fallback.
 - Stable workout controls, reload-safe timing, skippable rests, and a confirmed abort flow.
 - The optional repetition tap counter is intentionally disabled in the UI. Repetition targets remain visible, and duration/rest/total timers remain active.
+- Per-round `Exercise X / Y · Übung X / Y` progress and a visible alternative-exercise chooser during workouts.
+- Per-exercise target editing plus duplicate and confirmed-delete actions for local plans.
 
 ## Bundled plan catalogue
 
@@ -36,18 +38,16 @@ Evidence basis:
 
 ## Remaining work
 
-### High priority
+### Owner decisions
 
 - Replace the placeholder copyright holder in `COPYRIGHT_NOTICE.md`; the legal holder must be supplied explicitly rather than inferred from account or repository metadata.
-- Add explicit delete/archive and duplicate actions for local plans, including a confirmation step and tests.
-- Add per-exercise target editing in Plan Studio. At present the editor changes plan metadata and ordering, while newly added library exercises use their safe defaults.
-- Add a visible alternative-exercise chooser during a workout; alternatives are already carried in the schema.
+- Choose a final Cloudflare hostname: attach a custom domain or create a new globally unique Pages project name. The generated `-65g` suffix cannot simply be edited on the existing `pages.dev` hostname.
 
-### Illustration review
+### Illustration status
 
-- The 33 SVG files, category palette, and file-level contract tests are complete.
-- Dedicated researched poses exist for Squat, Push-up, Pull-up, Reverse Lunge, Glute Bridge, Dead Bug, Lying Leg Raises, and Jumping Jack.
-- The other library entries currently use the consistent generated figure system. They should receive dedicated start/end poses in small reviewed batches, with phone-size screenshots and movement-specific source notes.
+- All 33 SVG files now contain movement-specific start and finish poses, a bounded motion arrow, the category palette, and file-level contract tests.
+- Squat visibly bends at hip and knees; Push-up keeps toes and hands grounded without an extra hip limb; Pull-up moves upward toward the bar; floor exercises keep their contact points on the floor.
+- Source notes and the meaning of the translucent pose are recorded in `docs/exercise-sources.md`.
 
 ### Later enhancements
 
@@ -56,3 +56,5 @@ Evidence basis:
 - Additional languages and translated UI chrome.
 - Install prompts and richer offline/update feedback.
 - Accessibility review with screen-reader smoke tests in addition to the current semantic, focus, contrast, motion, and touch-target checks.
+
+The concise authoritative checklist is [`../BACKLOG.md`](../BACKLOG.md). Every unfinished task must be added there before work stops.

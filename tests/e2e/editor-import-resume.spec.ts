@@ -33,6 +33,8 @@ test('desktop editor creates, orders and saves a multilingual plan', async ({ pa
   await page.getByRole('button', { name: /add selected|Auswahl hinzufügen/i }).click();
 
   await expect(page.getByText(/squat|Kniebeuge/i)).toBeVisible();
+  await page.getByLabel('Minimum', { exact: true }).fill('14');
+  await page.getByLabel('Maximum', { exact: true }).fill('18');
   await page.getByRole('button', { name: /save locally|lokal speichern/i }).click();
   await expect(page.getByText(/saved|gespeichert/i)).toBeVisible();
 
@@ -44,11 +46,24 @@ test('desktop editor creates, orders and saves a multilingual plan', async ({ pa
   const localCard = page.locator('.plan-card').filter({ hasText: 'Compact Strength' });
   await localCard.getByRole('button', { name: /edit|bearbeiten/i }).click();
   await expect(page.getByRole('heading', { name: /edit plan|Plan bearbeiten/i })).toBeVisible();
+  await expect(page.getByLabel('Minimum', { exact: true })).toHaveValue('14');
+  await expect(page.getByLabel('Maximum', { exact: true })).toHaveValue('18');
   await page.getByLabel(/^Rounds$/i).fill('2');
   await page.getByRole('button', { name: /save changes|Änderungen speichern/i }).click();
   await page.getByRole('link', { name: /my plans|meine Pläne/i }).click();
   await expect(page.locator('.plan-card').filter({ hasText: 'Compact Strength' })).toContainText(/2 rounds/i);
   await expect(page.locator('.plan-card').filter({ hasText: '30 Minute Full Body' })).toContainText(/permanent bundled routine/i);
+
+  const updatedCard = page.locator('.plan-card').filter({ hasText: 'Compact Strength' }).first();
+  await updatedCard.getByRole('button', { name: /duplicate|duplizieren/i }).click();
+  const copyCard = page.locator('.plan-card').filter({ hasText: 'Compact Strength · Copy' });
+  await expect(copyCard).toBeVisible();
+  await copyCard.getByRole('button', { name: /delete|löschen/i }).click();
+  const deleteDialog = page.getByRole('dialog', { name: /Delete Compact Strength · Copy/i });
+  await expect(deleteDialog).toBeVisible();
+  await deleteDialog.getByRole('button', { name: /delete plan|Plan löschen/i }).click();
+  await expect(copyCard).toHaveCount(0);
+  await expect(page.getByText(/Plan deleted|Plan gelöscht/i)).toBeVisible();
 });
 
 test('customizing a bundled routine creates a separate editable plan', async ({ page }, testInfo) => {
@@ -64,6 +79,27 @@ test('customizing a bundled routine creates a separate editable plan', async ({ 
   await expect(page.locator('.plan-card').filter({ hasText: '30 Minute Full Body · Custom' })).toContainText(/stored only on this device/i);
   await expect(page.getByRole('heading', { name: /^30 Minute Full Body(?: · Custom)?$/ })).toHaveCount(2);
   await expect(page.locator('.plan-card').filter({ hasText: '30 Minute Full Body' }).first()).toContainText(/permanent bundled routine/i);
+});
+
+test('duplicating a non-DE/EN local plan preserves its configured languages', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'firefox-desktop', 'Representative generic-language duplication journey');
+  await page.goto('/');
+  await page.evaluate((plan) => localStorage.setItem('home-workout:plans', JSON.stringify([plan])), importedPlan);
+  await page.goto('/#plans');
+
+  const sourceCard = page.locator('.plan-card').filter({ hasText: 'Plan corto' });
+  await sourceCard.getByRole('button', { name: /duplicate|duplizieren/i }).click();
+  await expect(page.locator('.plan-card').filter({ hasText: 'Plan corto · Copy' })).toBeVisible();
+
+  const storedRaw = await page.evaluate(() => localStorage.getItem('home-workout:plans') ?? '[]');
+  const stored = JSON.parse(storedRaw) as unknown;
+  expect(stored).toStrictEqual([
+    importedPlan,
+    expect.objectContaining({
+      languages: [{ code: 'es', label: 'Español' }],
+      name: { es: 'Plan corto · Copy' }
+    })
+  ]);
 });
 
 test('tablet imports, previews, and starts a valid own plan', async ({ page }, testInfo) => {
@@ -129,7 +165,7 @@ test('instructions expose the deployed-origin AI guide link', async ({ page }) =
   await page.goto('/#instructions');
 
   await expect(page.getByRole('heading', { name: /Let an AI prepare/i })).toBeVisible();
-  await expect(page.locator('.copy-field code')).toHaveText('http://127.0.0.1:4173/ai-workout-guide.txt');
+  await expect(page.locator('.copy-field code')).toHaveText(`${new URL(page.url()).origin}/ai-workout-guide.txt`);
   await expect(page.getByRole('button', { name: /link kopieren/i })).toBeVisible();
 
   const guideResponse = await page.request.get('/ai-workout-guide.txt');

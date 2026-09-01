@@ -1,6 +1,6 @@
 # Project documentation
 
-Last updated: 2026-08-31
+Last updated: 2026-09-01
 
 ## Product overview
 
@@ -11,7 +11,7 @@ The default experience is deliberately simple:
 1. Select a permanent bundled routine or a local plan.
 2. Review its exercises and illustrations.
 3. Start the workout.
-4. Use Previous, Pause/Resume, Next, or the confirmed Abort action.
+4. Follow `Exercise X / Y` within the current round, optionally select a stored easier movement, and use Previous, Pause/Resume, Next, or the confirmed Abort action.
 5. Duration exercises and rests count down automatically; total workout time continues independently.
 
 The manual repetition counter is disabled because it caused unwanted scroll repositioning and offered limited value. Repetition target ranges are still shown. The session model retains its versioned repetition field for backward-compatible restoration of already stored sessions, but the current interface does not expose increment/decrement controls.
@@ -53,7 +53,10 @@ Plan Studio supports:
 - selecting from the 33-entry exercise library;
 - custom exercise names;
 - exercise ordering and removal;
+- repetition range, per-side, and duration target editing;
 - local save, start, and JSON export.
+
+The plan library adds explicit duplicate and confirmed-delete actions for local plans. These actions are never shown for bundled routines.
 
 Imported JSON and AI links go through the same strict version-1 validator before preview, save, or start. Unknown properties, unsafe text, invalid languages, impossible targets, unsupported schema versions, and oversized/invalid URL payloads are rejected.
 
@@ -75,7 +78,7 @@ Direct links never start a workout immediately. The app validates the payload, r
 - core: purple;
 - cardio/full body: red.
 
-All 33 assets are covered by file, palette, and SVG contract tests. Movement-specific source notes for Glute Bridge, Dead Bug, and Lying Leg Raises are in `docs/exercise-sources.md`. Remaining pose-specific refinement is tracked in `docs/product-roadmap.md`.
+All 33 assets have distinct start/finish poses and are covered by file, palette, and SVG contract tests. Movement and floor-contact sources are recorded in `docs/exercise-sources.md`.
 
 ## Code map
 
@@ -115,4 +118,4 @@ The build produces a static client in `dist/`. `npm run deploy:cloudflare` publi
 - The source is PolyForm Perimeter 1.0.0 and must not be described as open source.
 - `COPYRIGHT_NOTICE.md` still needs the real copyright holder; do not guess this legal identity from repository metadata.
 
-See `docs/product-roadmap.md` for the authoritative list of outstanding features.
+See the root `BACKLOG.md` for the authoritative checklist of outstanding work and `docs/product-roadmap.md` for the fuller product context.

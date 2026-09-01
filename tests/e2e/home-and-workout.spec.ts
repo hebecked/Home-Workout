@@ -58,9 +58,10 @@ test('phone workout journey shows bilingual exercise, controls, pause and rest',
   await page.getByRole('button', { name: /start workout/i }).click();
 
   await expect(page.getByText(/Runde 1\s*\/\s*3|Round 1\s*\/\s*3/i)).toBeVisible();
+  await expect(page.getByText(/Exercise 1\s*\/\s*8.*Übung 1\s*\/\s*8/i)).toBeVisible();
   await expect(page.getByRole('img', { name: /squat|Kniebeuge/i })).toBeVisible();
-  await expect(page.getByText(/Kniebeuge/i)).toBeVisible();
-  await expect(page.getByText(/^Squat$/i)).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Kniebeuge', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Squat', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: /previous|zurück/i })).toBeVisible();
   await expect(page.getByRole('button', { name: /pause/i })).toBeVisible();
   await expect(page.getByRole('button', { name: /next|weiter/i })).toBeVisible();
@@ -72,6 +73,14 @@ test('phone workout journey shows bilingual exercise, controls, pause and rest',
   await page.getByRole('button', { name: /resume|fortsetzen/i }).click();
   await page.getByRole('button', { name: /next|weiter/i }).click();
   await expect(page.getByText(/rest|pause/i)).toBeVisible();
+  await expect(page.getByText(/Exercise 1\s*\/\s*8.*Übung 1\s*\/\s*8/i)).toBeVisible();
+  await page.getByRole('button', { name: /next|weiter/i }).click();
+  await expect(page.getByText(/Exercise 2\s*\/\s*8.*Übung 2\s*\/\s*8/i)).toBeVisible();
+  const kneeOption = page.getByRole('button', { name: /Knee Push-up.*Knie-Liegestütz/i });
+  await expect(kneeOption).toBeVisible();
+  await kneeOption.click();
+  await expect(kneeOption).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('img', { name: /Knee Push-up|Knie-Liegestütz/i })).toBeVisible();
 });
 
 test('workout actions remain anchored while exercise content scrolls independently', async ({ page }, testInfo) => {

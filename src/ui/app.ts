@@ -6,7 +6,7 @@ import {
 } from '../data/default-workout';
 import { EXERCISE_LIBRARY, EXERCISES_BY_ID } from '../data/exercises';
 import { exportPlanJson, importPlanJson, importPlanUrlPayload } from '../core/plan-io';
-import { clearWorkoutSession, loadPlans, loadWorkoutSession, savePlan, saveWorkoutSession } from '../core/persistence';
+import { clearWorkoutSession, deletePlan, loadPlans, loadWorkoutSession, savePlan, saveWorkoutSession } from '../core/persistence';
 import { validateWorkoutPlan, type WorkoutPlan } from '../core/plan-schema';
 import { createWorkoutSession, dispatchWorkout, getWorkoutSnapshot, type WorkoutSession } from '../core/workout-engine';
 
@@ -46,6 +46,7 @@ export class HomeWorkoutApp {
   private tickHandle: number | null = null;
   private languageFormVisible = false;
   private exercisePickerVisible = false;
+  private readonly exerciseOverrides = new Map<string, string>();
   private importPreview: WorkoutPlan | null = null;
   private notice = '';
 
@@ -99,7 +100,7 @@ export class HomeWorkoutApp {
         en: `${this.draft.name.en ?? planTitle(plan)} · Custom`
       };
     }
-    this.notice = asCopy ? 'Bundled routine copied. Your changes are saved separately. · Standardroutine kopiert.' : '';
+    this.notice = asCopy ? 'An editable copy was created. The source routine remains unchanged. · Eine bearbeitbare Kopie wurde erstellt.' : '';
     this.languageFormVisible = false;
     this.exercisePickerVisible = false;
     if (this.route() === 'editor') this.render();
@@ -226,6 +227,7 @@ export class HomeWorkoutApp {
 
   private startWorkout(plan: WorkoutPlan): void {
     this.activePlan = structuredClone(plan);
+    this.exerciseOverrides.clear();
     if (!isBuiltInWorkout(plan.id)) savePlan(localStorage, plan);
     this.session = createWorkoutSession(this.activePlan, Date.now());
     saveWorkoutSession(localStorage, this.session);
@@ -258,6 +260,34 @@ export class HomeWorkoutApp {
     dialog.showModal();
   }
 
+  private requestDeletePlan(plan: WorkoutPlan): void {
+    if (isBuiltInWorkout(plan.id) || document.querySelector('[data-delete-plan-dialog]')) return;
+    const dialog = document.createElement('dialog');
+    dialog.dataset.deletePlanDialog = '';
+    dialog.setAttribute('aria-labelledby', 'delete-plan-title');
+    dialog.innerHTML = `<form method="dialog">
+      <p class="eyebrow">LOCAL PLAN · LOKALER PLAN</p>
+      <h2 id="delete-plan-title">Delete ${escapeHtml(planTitle(plan))}?</h2>
+      <p>This removes the plan from this browser. Bundled routines are never affected.<br>Der Plan wird aus diesem Browser gelöscht. Standardroutinen bleiben unverändert.</p>
+      <div class="dialog-actions"><button value="cancel" autofocus>Cancel · Abbrechen</button><button class="danger" value="delete">Delete plan · Plan löschen</button></div>
+    </form>`;
+    document.body.append(dialog);
+    dialog.addEventListener('close', () => {
+      if (dialog.returnValue === 'delete') {
+        deletePlan(localStorage, plan.id);
+        if (this.activePlan.id === plan.id) this.activePlan = cloneDefault();
+        if (this.session?.planId === plan.id) {
+          clearWorkoutSession(localStorage);
+          this.session = null;
+        }
+        this.notice = 'Plan deleted · Plan gelöscht';
+        this.renderPlans();
+      }
+      dialog.remove();
+    }, { once: true });
+    dialog.showModal();
+  }
+
   private renderWorkout(): void {
     this.clearScheduledTick();
     if (!this.session) { location.hash = 'home'; return; }
@@ -266,27 +296,42 @@ export class HomeWorkoutApp {
     saveWorkoutSession(localStorage, this.session);
     const snapshot = getWorkoutSnapshot(this.session, this.activePlan, now);
     const exercise = this.activePlan.exercises[snapshot.exerciseIndex]!;
-    const definition = EXERCISES_BY_ID.get(exercise.exerciseId);
+    const selectedExerciseId = this.exerciseOverrides.get(exercise.id) ?? exercise.exerciseId;
+    const definition = EXERCISES_BY_ID.get(selectedExerciseId) ?? EXERCISES_BY_ID.get(exercise.exerciseId);
     const languages = this.activePlan.displayLanguages;
     const isRest = snapshot.phase === 'exercise-rest' || snapshot.phase === 'round-rest';
     const phaseLabel = snapshot.phase === 'round-rest' ? 'Round rest · Rundenpause' : snapshot.phase === 'exercise-rest' ? 'Rest · Pause' : snapshot.phase === 'completed' ? 'Workout complete' : 'Current exercise';
     const target = exercise.type === 'duration' ? formatClock(snapshot.remainingMs ?? 0) : 'min' in exercise.target ? `${exercise.target.min}–${exercise.target.max}${exercise.target.unit === 'per-side' ? ' / side' : ''}` : '';
     const translations = languages.map((code) => {
-      const copy = exercise.translations[code];
+      const copy = selectedExerciseId === exercise.exerciseId
+        ? exercise.translations[code]
+        : definition?.translations[code as 'de' | 'en'] ?? exercise.translations[code];
       return copy ? `<div class="translation"><span>${escapeHtml(this.activePlan.languages.find((language) => language.code === code)?.label ?? code)}</span><h2>${escapeHtml(copy.name)}</h2><p>${escapeHtml(copy.instructions)}</p></div>` : '';
     }).join('');
-    const imageName = languages.map((code) => exercise.translations[code]?.name).filter(Boolean).join(' / ');
+    const imageName = languages.map((code) => selectedExerciseId === exercise.exerciseId
+      ? exercise.translations[code]?.name
+      : definition?.translations[code as 'de' | 'en']?.name ?? exercise.translations[code]?.name).filter(Boolean).join(' / ');
+    const alternativeIds = [exercise.exerciseId, ...exercise.alternativeExerciseIds]
+      .filter((id, index, ids) => ids.indexOf(id) === index && EXERCISES_BY_ID.has(id));
+    const alternatives = !isRest && alternativeIds.length > 1 ? `<div class="alternative-chooser" aria-label="Alternative exercise · Alternative Übung">
+      <span>Movement · Übung</span>
+      <div>${alternativeIds.map((id) => {
+        const option = EXERCISES_BY_ID.get(id)!;
+        return `<button type="button" data-alternative="${escapeHtml(id)}" aria-pressed="${id === selectedExerciseId}">${escapeHtml(option.translations.en.name)} · ${escapeHtml(option.translations.de.name)}</button>`;
+      }).join('')}</div>
+    </div>` : '';
 
     this.shell(`
       <section class="workout-screen ${isRest ? 'is-rest' : ''}">
         <div class="workout-content">
-          <div class="workout-status"><span>Round ${snapshot.roundIndex + 1} / ${this.activePlan.rounds} · Runde ${snapshot.roundIndex + 1} / ${this.activePlan.rounds}</span><span data-workout-total>Total ${formatClock(snapshot.elapsedWorkoutMs)}</span></div>
+          <div class="workout-status"><span>Round ${snapshot.roundIndex + 1} / ${this.activePlan.rounds} · Runde ${snapshot.roundIndex + 1} / ${this.activePlan.rounds}</span><span data-round-exercise-progress>Exercise ${snapshot.exerciseIndex + 1} / ${this.activePlan.exercises.length} · Übung ${snapshot.exerciseIndex + 1} / ${this.activePlan.exercises.length}</span><span data-workout-total>Total ${formatClock(snapshot.elapsedWorkoutMs)}</span></div>
           <div class="phase-pill">${phaseLabel}${snapshot.paused ? ' · Paused · Pausiert' : ''}</div>
           ${snapshot.phase === 'completed' ? `<div class="completion"><p class="eyebrow">DONE</p><h1>Workout complete</h1><p>You made time to move. That is enough for today.</p><button class="primary" data-action="finish">Back home</button></div>` : `
             <div class="exercise-layout">
               <div class="exercise-visual"><img src="${definition?.illustration ?? '/icon.svg'}" alt="${escapeHtml(imageName)}"></div>
               <div class="exercise-copy">${isRest ? `<p class="rest-label">Breathe. The next movement starts when the timer reaches zero.</p>` : translations}</div>
             </div>
+            ${alternatives}
             <div class="target-block"><span>${isRest ? 'READY IN' : exercise.type === 'duration' ? 'TIME LEFT' : 'TARGET'}</span><strong ${isRest || exercise.type === 'duration' ? 'data-workout-countdown' : ''}>${isRest ? formatClock(snapshot.remainingMs ?? 0) : target}</strong></div>`}
         </div>
         ${snapshot.phase === 'completed' ? '' : `
@@ -312,6 +357,15 @@ export class HomeWorkoutApp {
     act('pause', { type: snapshot.paused ? 'RESUME' : 'PAUSE' });
     this.root.querySelector('[data-action="finish"]')?.addEventListener('click', () => { clearWorkoutSession(localStorage); this.session = null; location.hash = 'home'; });
     this.root.querySelector('[data-action="abort"]')?.addEventListener('click', () => this.requestAbortWorkout());
+    for (const button of this.root.querySelectorAll<HTMLButtonElement>('[data-alternative]')) {
+      button.addEventListener('click', () => {
+        const alternativeId = button.dataset.alternative;
+        if (!alternativeId || !alternativeIds.includes(alternativeId)) return;
+        if (alternativeId === exercise.exerciseId) this.exerciseOverrides.delete(exercise.id);
+        else this.exerciseOverrides.set(exercise.id, alternativeId);
+        this.renderWorkout();
+      });
+    }
     if (snapshot.phase !== 'completed' && !snapshot.paused) this.scheduleWorkoutTick();
   }
 
@@ -326,7 +380,12 @@ export class HomeWorkoutApp {
     const exerciseOptions = EXERCISE_LIBRARY.map((exercise) => `<option value="${exercise.id}" aria-label="${escapeHtml(optionLabels[exercise.id] ?? `${exercise.translations.en.name} · ${exercise.translations.de.name}`)}">${escapeHtml(exercise.translations.en.name)} · ${escapeHtml(exercise.translations.de.name)}</option>`).join('');
     const exerciseRows = this.draft.exercises.map((exercise, index) => {
       const name = exercise.translations.en?.name ?? Object.values(exercise.translations)[0]?.name ?? exercise.exerciseId;
-      return `<li><span class="order">${String(index + 1).padStart(2, '0')}</span><strong>${escapeHtml(name)}</strong><span class="row-actions"><button data-move="up" data-id="${escapeHtml(exercise.id)}" aria-label="Move ${escapeHtml(name)} up">↑</button><button data-move="down" data-id="${escapeHtml(exercise.id)}" aria-label="Move ${escapeHtml(name)} down">↓</button><button data-remove="${escapeHtml(exercise.id)}" aria-label="Remove ${escapeHtml(name)}">Remove</button></span></li>`;
+      const targetFields = exercise.type === 'duration' && 'seconds' in exercise.target
+        ? `<label>Seconds · Sekunden<input name="target-${index}-seconds" type="number" min="1" max="7200" value="${exercise.target.seconds}"></label>`
+        : 'min' in exercise.target
+          ? `<label>Minimum<input name="target-${index}-min" type="number" min="1" max="1000" value="${exercise.target.min}"></label><label>Maximum<input name="target-${index}-max" type="number" min="1" max="1000" value="${exercise.target.max}"></label><label>Count · Zählweise<select name="target-${index}-unit"><option value="repetitions" ${exercise.target.unit === 'repetitions' ? 'selected' : ''}>Total repetitions · Gesamt</option><option value="per-side" ${exercise.target.unit === 'per-side' ? 'selected' : ''}>Per side · Pro Seite</option></select></label>`
+          : '';
+      return `<li data-exercise-row="${index}"><span class="order">${String(index + 1).padStart(2, '0')}</span><div class="exercise-row-main"><strong>${escapeHtml(name)}</strong><div class="target-fields">${targetFields}</div></div><span class="row-actions"><button type="button" data-move="up" data-id="${escapeHtml(exercise.id)}" aria-label="Move ${escapeHtml(name)} up">↑</button><button type="button" data-move="down" data-id="${escapeHtml(exercise.id)}" aria-label="Move ${escapeHtml(name)} down">↓</button><button type="button" data-remove="${escapeHtml(exercise.id)}" aria-label="Remove ${escapeHtml(name)}">Remove</button></span></li>`;
     }).join('');
     const languageChecks = this.draft.languages.map((language) => `<label class="check"><input type="checkbox" data-display-language="${escapeHtml(language.code)}" ${this.draft.displayLanguages.includes(language.code) ? 'checked' : ''}> ${escapeHtml(language.label)}</label>`).join('');
     this.shell(`
@@ -363,6 +422,19 @@ export class HomeWorkoutApp {
     this.draft.rounds = Number(data.get('rounds')) || 1;
     this.draft.restBetweenExercises = Math.max(0, Number(data.get('rest-exercises')) || 0);
     this.draft.restBetweenRounds = Math.max(0, Number(data.get('rest-rounds')) || 0);
+    this.draft.exercises = this.draft.exercises.map((exercise, index) => {
+      if (exercise.type === 'duration') {
+        return { ...exercise, target: { seconds: Number(data.get(`target-${index}-seconds`)) || 0 } };
+      }
+      return {
+        ...exercise,
+        target: {
+          min: Number(data.get(`target-${index}-min`)) || 0,
+          max: Number(data.get(`target-${index}-max`)) || 0,
+          unit: data.get(`target-${index}-unit`) === 'per-side' ? 'per-side' : 'repetitions'
+        }
+      };
+    });
   }
 
   private normalizedDraft(): WorkoutPlan {
@@ -446,9 +518,9 @@ export class HomeWorkoutApp {
     const plans = loadPlans(localStorage);
     const card = (plan: WorkoutPlan, bundled: boolean): string => `<article class="plan-card">
       <div><span>${plan.rounds} rounds · ${plan.exercises.length} exercises · ≈ ${estimatedMinutes(plan)} min</span><h2>${escapeHtml(planTitle(plan))}</h2><p>${bundled ? 'Permanent bundled routine · Dauerhafte Standardroutine' : 'Stored only on this device · Nur auf diesem Gerät'}</p></div>
-      <div class="plan-card-actions"><button class="primary" data-start-plan="${escapeHtml(plan.id)}">Start</button><button data-${bundled ? 'copy' : 'edit'}-plan="${escapeHtml(plan.id)}">${bundled ? 'Customize · Anpassen' : 'Edit · Bearbeiten'}</button></div>
+      <div class="plan-card-actions"><button class="primary" data-start-plan="${escapeHtml(plan.id)}">Start</button><button data-${bundled ? 'copy' : 'edit'}-plan="${escapeHtml(plan.id)}">${bundled ? 'Customize · Anpassen' : 'Edit · Bearbeiten'}</button>${bundled ? '' : `<button data-duplicate-plan="${escapeHtml(plan.id)}">Duplicate · Duplizieren</button><button class="danger" data-delete-plan="${escapeHtml(plan.id)}">Delete · Löschen</button>`}</div>
     </article>`;
-    this.shell(`<section class="page-heading"><p class="eyebrow">ROUTINE LIBRARY</p><h1>Plans · Trainingspläne</h1><p>Bundled routines always remain available. Your own plans are stored separately in this browser.</p></section>
+    this.shell(`<section class="page-heading"><p class="eyebrow">ROUTINE LIBRARY</p><h1>Plans · Trainingspläne</h1><p>Bundled routines always remain available. Your own plans are stored separately in this browser.</p>${this.notice ? `<p class="notice" role="status">${escapeHtml(this.notice)}</p>` : ''}</section>
       <section class="saved-plans plan-section"><div class="section-heading"><div><p class="eyebrow">ALWAYS AVAILABLE</p><h2>Bundled routines · Standardroutinen</h2></div><span>${BUILT_IN_WORKOUTS.length} routines</span></div>${BUILT_IN_WORKOUTS.map((plan) => card(plan, true)).join('')}</section>
       <section class="saved-plans plan-section"><div class="section-heading"><div><p class="eyebrow">ON THIS DEVICE</p><h2>My Plans · Meine Pläne</h2></div><a class="button-link" href="#editor" data-create-plan>Create new plan</a></div>${plans.length ? plans.map((plan) => card(plan, false)).join('') : '<div class="empty-state"><h2>No saved plans yet</h2><p>Create, customize or import a plan to see it here. The bundled routines above are never overwritten.</p><a class="button-link" href="#editor" data-create-plan>Create new plan</a></div>'}</section>`);
     for (const button of this.root.querySelectorAll<HTMLButtonElement>('[data-start-plan]')) button.addEventListener('click', () => { const plan = this.findPlan(button.dataset.startPlan ?? ''); if (plan) this.startWorkout(plan); });
@@ -459,6 +531,24 @@ export class HomeWorkoutApp {
     for (const button of this.root.querySelectorAll<HTMLButtonElement>('[data-edit-plan]')) button.addEventListener('click', () => {
       const plan = this.findPlan(button.dataset.editPlan ?? '');
       if (plan && !isBuiltInWorkout(plan.id)) this.openPlanEditor(plan, false);
+    });
+    for (const button of this.root.querySelectorAll<HTMLButtonElement>('[data-duplicate-plan]')) button.addEventListener('click', () => {
+      const source = this.findPlan(button.dataset.duplicatePlan ?? '');
+      if (!source || isBuiltInWorkout(source.id)) return;
+      const copy = structuredClone(source);
+      copy.id = createPlanId();
+      copy.name = Object.fromEntries(Object.entries(copy.name).map(([code, name]) => [
+        code,
+        `${name} · ${code.toLowerCase().startsWith('de') ? 'Kopie' : 'Copy'}`
+      ]));
+      copy.exercises = copy.exercises.map((exercise) => ({ ...exercise, id: `${exercise.exerciseId}-${crypto.randomUUID()}` }));
+      savePlan(localStorage, validateWorkoutPlan(copy));
+      this.notice = 'Plan duplicated · Plan dupliziert';
+      this.renderPlans();
+    });
+    for (const button of this.root.querySelectorAll<HTMLButtonElement>('[data-delete-plan]')) button.addEventListener('click', () => {
+      const plan = this.findPlan(button.dataset.deletePlan ?? '');
+      if (plan && !isBuiltInWorkout(plan.id)) this.requestDeletePlan(plan);
     });
   }
 

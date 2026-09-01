@@ -17,9 +17,10 @@ Home Workout makes a structured routine easy to follow without an account, backe
 - One- or two-language exercise presentation; German and English are bundled
 - Six permanent bundled routines for general fitness, beginners, strength, cardio, active circuits, and advanced bodyweight training
 - A routine picker plus an immutable-default model: bundled routines cannot be overwritten, while local plans are stored separately
-- Visual plan editor, editable local plans, safe copies of bundled routines, custom exercises, local save, JSON import/export, and strict validation
+- Visual plan editor with editable exercise targets, editable local plans, safe copies of bundled routines, duplicate/delete actions, custom exercises, local save, JSON import/export, and strict validation
 - Validated AI-plan launch links plus a public machine-readable guide for ChatGPT and other assistants
-- 33 extensible exercises with original local SVG illustrations, shown directly on the home and workout screens
+- 33 extensible exercises with movement-specific original local SVG illustrations, shown directly on the home and workout screens
+- Per-round `Exercise X / Y` progress and a visible easier-alternative chooser during workouts
 - A clear, confirmed workout-abort action; the Home Workout brand uses the same safe return-to-home flow
 - Stable workout controls and automatic timers without a manual repetition tap counter
 - Responsive layouts, keyboard focus, 44 px controls, a calm light-only theme, and reduced-motion support
@@ -74,7 +75,7 @@ The output is a static PWA in `dist/`, ready for the existing Cloudflare Pages p
 
 ## Cloudflare deployment
 
-Production is hosted in the Cloudflare Pages project `home-workout` in the owner's Cloudflare account. The default Pages URL is `https://home-workout-65g.pages.dev`.
+Production is hosted in the Cloudflare Pages project `home-workout` in the owner's Cloudflare account. The default Pages URL is `https://home-workout-65g.pages.dev`. Changing that generated hostname requires either a custom Cloudflare domain or a new globally available Pages project name; the pending owner choice is tracked in [`BACKLOG.md`](BACKLOG.md).
 
 ```bash
 npm run build
@@ -95,7 +96,7 @@ German (`de`) and English (`en`) ship with the app. Plans may use any supported 
 
 The library contains 33 stable records across legs, push, pull, core, cardio, and full body. Every record contains equipment, difficulty, type, target, DE/EN copy, variant IDs, and a local SVG. The bundled routines use illustrations throughout; the balanced default includes Reverse Lunges and Lying Leg Raises (Beinheben im Liegen). Run `node scripts/generate-exercise-assets.mjs` to regenerate illustrations.
 
-The implemented plan catalogue, architecture, operating notes, and remaining work are documented in [`docs/project-documentation.md`](docs/project-documentation.md) and [`docs/product-roadmap.md`](docs/product-roadmap.md).
+The implemented plan catalogue and architecture are documented in [`docs/project-documentation.md`](docs/project-documentation.md). All open work is durably tracked in [`BACKLOG.md`](BACKLOG.md), with fuller product context in [`docs/product-roadmap.md`](docs/product-roadmap.md).
 
 ## Dependency licensing
 

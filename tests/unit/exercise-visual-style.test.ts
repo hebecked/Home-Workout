@@ -19,28 +19,6 @@ function svgFor(exercise: ExerciseDefinition): string {
   );
 }
 
-function darkMainPath(source: string): string | undefined {
-  return [...source.matchAll(/<path\b[^>]*>/gi)]
-    .map(([element]) => element)
-    .find((element) => /stroke=["']#18233a["']/i.test(element));
-}
-
-function pathData(element: string | undefined): string | undefined {
-  return element?.match(/\bd=["']([^"']+)["']/i)?.[1];
-}
-
-function hasRearwardLegSegment(path: string | undefined): boolean {
-  if (!path) return false;
-  const absoluteSegments = path.matchAll(
-    /M\s*(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)\s+(?:L\s*)?(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)/g
-  );
-  return [...absoluteSegments].some((match) => {
-    const [, startX, startY, endX, endY] = match.map(Number);
-    return startX! >= 120 && startX! <= 160 && startY! >= 130 && startY! <= 160 &&
-      endX! < 100 && endY! >= 155;
-  });
-}
-
 describe('exercise illustration visual system', () => {
   it('uses one consistent background and accent hue for all 33 exercise categories', () => {
     expect(EXERCISE_LIBRARY).toHaveLength(33);
@@ -60,28 +38,34 @@ describe('exercise illustration visual system', () => {
     }
   });
 
-  it('keeps a clearly rearward additional leg in both push-up SVG and its generator template', () => {
+  it('keeps push-up toes and hands grounded without an extra hip limb', () => {
     const pushUp = EXERCISE_LIBRARY.find(({ id }) => id === 'push-up');
     expect(pushUp).toBeDefined();
-    const generatedSvgPath = pathData(darkMainPath(svgFor(pushUp!)));
+    const generatedSvg = svgFor(pushUp!);
 
     const generator = readFileSync(
       resolve(process.cwd(), 'scripts', 'generate-exercise-assets.mjs'),
       'utf8'
     );
-    const pushUpTemplate = generator.match(/'push-up': `([\s\S]*?)`,\s*\n\s*'pull-up':/)?.[1];
+    const pushUpTemplate = generator.match(/'push-up': \{([\s\S]*?)\n\s*\},\n\s*'incline-push-up':/)?.[1];
     expect(pushUpTemplate, 'push-up has a dedicated generator template').toBeDefined();
-    const generatorPath = pathData(darkMainPath(pushUpTemplate!));
 
-    expect(generatedSvgPath, 'generated push-up has a dark main path').toBeDefined();
-    expect(generatorPath, 'push-up generator has a dark main path').toBeDefined();
-    expect(
-      hasRearwardLegSegment(generatedSvgPath),
-      `generated push-up needs a hip-to-rear-foot segment; got ${generatedSvgPath}`
-    ).toBe(true);
-    expect(
-      hasRearwardLegSegment(generatorPath),
-      `generator needs the same hip-to-rear-foot segment; got ${generatorPath}`
-    ).toBe(true);
+    for (const source of [generatedSvg, pushUpTemplate!]) {
+      expect(source).toContain('M219 109L151 124L75 171L50 204');
+      expect(source).toContain('M211 111L183 150L198 204');
+      expect(source).not.toContain('M151 124L58 191');
+    }
+  });
+
+  it('shows the requested movement direction and floor contact in key corrected poses', () => {
+    const byId = new Map(EXERCISE_LIBRARY.map((exercise) => [exercise.id, svgFor(exercise)]));
+
+    expect(byId.get('squat')).toContain('M137 145L94 154L72 204');
+    expect(byId.get('pull-up')).toContain('<circle cx="160" cy="133"');
+    expect(byId.get('pull-up')).toContain('<circle cx="160" cy="75"');
+    for (const id of ['dead-bug', 'lying-leg-raise', 'glute-bridge']) {
+      expect(byId.get(id), `${id} keeps the body at the floor`).toMatch(/cy="18[04]"/);
+      expect(byId.get(id), `${id} includes the shared floor line`).toContain('M42 210H278');
+    }
   });
 });
