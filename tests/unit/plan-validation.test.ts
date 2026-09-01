@@ -44,6 +44,46 @@ describe('validateWorkoutPlan', () => {
   });
 
   it.each([
+    ['translationMetadata', (plan: ReturnType<typeof clonePlan>) => { Reflect.set(plan, 'translationMetadata', null); }],
+    ['translationMetadata.es', (plan: ReturnType<typeof clonePlan>) => {
+      plan.translationMetadata = { es: { sourceLanguage: 'fr', origin: 'machine', reviewStatus: 'reviewed', provider: 'cloudflare', translatedAt: '2026-09-01T12:00:00.000Z' } };
+    }],
+    ['translationMetadata.hi', (plan: ReturnType<typeof clonePlan>) => {
+      Reflect.set(plan, 'translationMetadata', { hi: null });
+    }],
+    ['translationMetadata.hi', (plan: ReturnType<typeof clonePlan>) => {
+      Reflect.set(plan, 'translationMetadata', { hi: { sourceLanguage: 'fr' } });
+    }],
+    ['translationMetadata.hi.sourceLanguage', (plan: ReturnType<typeof clonePlan>) => {
+      plan.translationMetadata = { hi: { sourceLanguage: 'hi', origin: 'machine', reviewStatus: 'reviewed', provider: 'cloudflare', translatedAt: '2026-09-01T12:00:00.000Z' } };
+    }],
+    ['translationMetadata.hi.origin', (plan: ReturnType<typeof clonePlan>) => {
+      plan.translationMetadata = { hi: { sourceLanguage: 'fr', origin: 'machine', reviewStatus: 'reviewed', provider: 'cloudflare', translatedAt: '2026-09-01T12:00:00.000Z' } };
+      Reflect.set(plan.translationMetadata.hi!, 'origin', 'manual');
+    }],
+    ['translationMetadata.hi.reviewStatus', (plan: ReturnType<typeof clonePlan>) => {
+      plan.translationMetadata = { hi: { sourceLanguage: 'fr', origin: 'machine', reviewStatus: 'reviewed', provider: 'cloudflare', translatedAt: '2026-09-01T12:00:00.000Z' } };
+      Reflect.set(plan.translationMetadata.hi!, 'reviewStatus', 'unknown');
+    }],
+    ['translationMetadata.hi.provider', (plan: ReturnType<typeof clonePlan>) => {
+      plan.translationMetadata = { hi: { sourceLanguage: 'fr', origin: 'machine', reviewStatus: 'reviewed', provider: ' ', translatedAt: '2026-09-01T12:00:00.000Z' } };
+    }],
+    ['translationMetadata.hi.translatedAt', (plan: ReturnType<typeof clonePlan>) => {
+      plan.translationMetadata = { hi: { sourceLanguage: 'fr', origin: 'machine', reviewStatus: 'reviewed', provider: 'cloudflare', translatedAt: 'yesterday' } };
+    }]
+  ])('rejects invalid translation provenance at %s', (expectedPath, mutate) => {
+    const plan = clonePlan();
+    mutate(plan);
+    try {
+      validateWorkoutPlan(plan);
+      throw new Error('Expected validation to fail');
+    } catch (error) {
+      expect(error).toBeInstanceOf(PlanValidationError);
+      expect((error as PlanValidationError).issues.map(({ path }) => path)).toContain(expectedPath);
+    }
+  });
+
+  it.each([
     ['unknown schema', (plan: ReturnType<typeof clonePlan>) => { plan.schemaVersion = 99; }],
     ['zero rounds', (plan: ReturnType<typeof clonePlan>) => { plan.rounds = 0; }],
     ['negative rest', (plan: ReturnType<typeof clonePlan>) => { plan.restBetweenExercises = -1; }],
