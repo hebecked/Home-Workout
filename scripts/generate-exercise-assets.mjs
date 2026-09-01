@@ -6,11 +6,11 @@ mkdirSync(directory, { recursive: true });
 
 const groups = {
   legs: `squat sumo-squat reverse-lunge forward-lunge split-squat glute-bridge single-leg-glute-bridge calf-raise wall-sit sumo-squat-hold`.split(' '),
-  arms: `push-up incline-push-up knee-push-up pike-push-up pull-up assisted-pull-up chin-up resistance-band-row resistance-band-pull-apart triceps-dip`.split(' '),
+  arms: `push-up scapular-push-up incline-push-up knee-push-up pike-push-up pull-up assisted-pull-up chin-up resistance-band-row resistance-band-pull-apart triceps-dip`.split(' '),
   core: `dead-bug lying-leg-raise bird-dog plank side-plank mountain-climber hollow-hold superman`.split(' '),
   cardio: `jumping-jack step-jack high-knees marching-in-place shadow-boxing burpee squat-to-reach`.split(' '),
-  warmup: `heel-dig shoulder-roll arm-circle leg-swing`.split(' '),
-  stretch: `calf-stretch hamstring-stretch quadriceps-stretch hip-flexor-stretch`.split(' ')
+  warmup: `heel-dig shoulder-roll arm-circle active-recovery leg-swing`.split(' '),
+  stretch: `calf-stretch hamstring-stretch quadriceps-stretch hip-flexor-stretch shoulder-upper-back-stretch chest-stretch child-pose cat-cow cobra-stretch yoga-bridge`.split(' ')
 };
 const hueByGroup = { legs: 208, arms: 28, core: 276, cardio: 4, warmup: 42, stretch: 160 };
 const hueByExercise = new Map(Object.entries(groups).flatMap(([group, ids]) => ids.map((id) => [id, hueByGroup[group]])));
@@ -72,11 +72,16 @@ const poses = {
     active: '<circle cx="238" cy="103" r="15"/><path d="M219 109L151 124L75 171L50 204M211 111L183 150L198 204"/>',
     motion: 'M264 155C271 139 270 123 263 108'
   },
+  'scapular-push-up': {
+    ghost: '<circle cx="238" cy="109" r="15"/><path d="M219 115L154 132L61 183M154 132L71 204M193 122L193 204"/>',
+    active: '<circle cx="238" cy="119" r="15"/><path d="M219 125L154 141L61 183M154 141L71 204M193 132L193 204"/>',
+    motion: 'M266 105C273 116 273 128 266 139'
+  },
   'incline-push-up': {
-    equipment: '<path d="M48 118H105V204M48 204H118" stroke="#8b96aa" stroke-width="8"/>',
-    ghost: '<circle cx="229" cy="151" r="15"/><path d="M210 155L155 163L101 132M155 163L244 204M113 137L101 165"/>',
-    active: '<circle cx="225" cy="117" r="15"/><path d="M206 123L153 139L101 132M153 139L244 204M117 132L101 165"/>',
-    motion: 'M251 157C259 142 258 128 251 115'
+    equipment: '<path d="M42 130H110M52 130V204M100 130V204" stroke="#8b96aa" stroke-width="8"/>',
+    ghost: '<circle cx="130" cy="140" r="15"/><path d="M148 143L201 168L260 204M148 143L128 160L110 130"/>',
+    active: '<circle cx="132" cy="104" r="15"/><path d="M151 116L203 156L260 204M151 116L110 130"/>',
+    motion: 'M117 98C108 111 108 124 115 136'
   },
   'knee-push-up': {
     ghost: '<circle cx="234" cy="151" r="15"/><path d="M215 156L155 168L96 187L72 204M155 168L184 204M183 204L216 204"/>',
@@ -119,10 +124,10 @@ const poses = {
     motion: 'M126 82C106 77 88 82 75 96'
   },
   'triceps-dip': {
-    equipment: '<path d="M77 124H139V204M77 204H151" stroke="#8b96aa" stroke-width="8"/>',
-    ghost: '<circle cx="189" cy="72" r="16"/><path d="M181 91L167 145M175 108L132 124M167 145L221 162L252 204M167 145L151 204"/>',
-    active: '<circle cx="189" cy="101" r="16"/><path d="M181 120L167 165M178 135L143 145L132 124M167 165L221 172L252 204M167 165L151 204"/>',
-    motion: 'M264 80C271 103 267 125 254 141'
+    equipment: '<path d="M58 154H130M68 154V204M120 154V204" stroke="#8b96aa" stroke-width="8"/>',
+    ghost: '<circle cx="165" cy="82" r="16"/><path d="M158 101L148 145M156 112L128 154M148 145L215 165L260 204"/>',
+    active: '<circle cx="165" cy="111" r="16"/><path d="M158 130L148 165M156 139L136 140L128 154M148 165L215 178L260 204"/>',
+    motion: 'M275 86C282 105 279 124 268 139'
   },
   'dead-bug': {
     ghost: '<circle cx="53" cy="184" r="15"/><path d="M73 185H148M99 182L74 126M145 182L210 178M99 182L100 102M145 182L148 113L206 111"/>',
@@ -146,7 +151,7 @@ const poses = {
   },
   'side-plank': {
     ghost: '',
-    active: '<circle cx="244" cy="116" r="13"/><path d="M228 128L216 142L157 169L84 204M216 142L187 190L151 204M216 142L239 91"/>',
+    active: '<circle cx="244" cy="117" r="13"/><path d="M228 130L215 145L155 171L80 204M215 145L215 204L170 204M215 145L240 91"/>',
     motion: ''
   },
   'mountain-climber': {
@@ -190,9 +195,9 @@ const poses = {
     motion: 'M180 71C199 69 218 75 231 88'
   },
   burpee: {
-    ghost: '<circle cx="160" cy="48" r="16"/><path d="M160 67V137M160 88L126 119M160 88L194 119M160 137L138 204M160 137L182 204"/>',
-    active: '<circle cx="226" cy="151" r="15"/><path d="M207 156L151 168L91 183M151 168L69 204M151 168L222 204M207 156L235 204"/>',
-    motion: 'M247 71C273 95 279 124 263 149'
+    ghost: '',
+    active: '<circle cx="216" cy="128" r="14"/><path d="M200 140L150 159M193 145L180 174L177 204M193 145L208 173L213 204M150 159L110 173L75 204M150 159L137 187L128 204"/>',
+    motion: 'M259 178C274 153 274 125 260 101'
   },
   'squat-to-reach': {
     ghost: '<circle cx="154" cy="78" r="16"/><path d="M154 97L145 146M151 111L113 131M151 111L191 130M145 146L99 160L72 204M145 146L195 160L226 204"/>',
@@ -213,6 +218,11 @@ const poses = {
     ghost: '',
     active: '<circle cx="160" cy="48" r="16"/><path d="M160 67V145M160 89L78 89M160 89L242 89M160 145L136 204M160 145L184 204"/>',
     motion: 'M246 62C267 68 276 87 268 105C261 121 244 127 229 119'
+  },
+  'active-recovery': {
+    ghost: '<circle cx="160" cy="48" r="16"/><path d="M160 67V140M160 88L130 116M160 88L190 116M160 140L140 204M160 140L180 204"/>',
+    active: '<circle cx="160" cy="48" r="16"/><path d="M160 67V140M160 88L132 106M160 88L190 108M160 140L128 161L111 192M160 140L183 204"/>',
+    motion: 'M102 202C94 187 96 173 107 162'
   },
   'leg-swing': {
     equipment: '<path d="M58 45V210" stroke="#8b96aa" stroke-width="8"/>',
@@ -241,6 +251,36 @@ const poses = {
   'hip-flexor-stretch': {
     ghost: '',
     active: '<circle cx="156" cy="55" r="16"/><path d="M156 74L162 139M159 94L126 122M159 94L194 120M162 139L111 159L82 204M162 139L213 204L252 204"/>',
+    motion: ''
+  },
+  'shoulder-upper-back-stretch': {
+    ghost: '',
+    active: '<circle cx="160" cy="53" r="16"/><path d="M160 72V145M160 91L104 104M160 108L128 121L104 104M160 145L136 204M160 145L184 204"/>',
+    motion: ''
+  },
+  'chest-stretch': {
+    ghost: '',
+    active: '<circle cx="160" cy="53" r="16"/><path d="M160 72V145M160 91L110 90L136 61M160 91L210 90L184 61M160 145L136 204M160 145L184 204"/>',
+    motion: ''
+  },
+  'child-pose': {
+    ghost: '',
+    active: '<circle cx="70" cy="182" r="14"/><path d="M87 183L145 175L175 145M100 184L48 204M110 188L62 204M175 145L145 185L195 204"/>',
+    motion: ''
+  },
+  'cat-cow': {
+    ghost: '<circle cx="235" cy="126" r="14"/><path d="M218 132C185 161 137 161 102 136M199 146L218 204M112 141L88 204"/>',
+    active: '<circle cx="235" cy="165" r="14"/><path d="M218 169C182 115 137 115 102 151M199 145L218 204M112 145L88 204"/>',
+    motion: 'M252 137C263 145 267 158 263 170'
+  },
+  'cobra-stretch': {
+    ghost: '',
+    active: '<circle cx="222" cy="92" r="15"/><path d="M207 104C187 119 181 153 154 181L72 194M190 135L208 204M190 135L164 204"/>',
+    motion: ''
+  },
+  'yoga-bridge': {
+    ghost: '',
+    active: '<circle cx="55" cy="180" r="15"/><path d="M75 183L122 181L171 133L216 152L248 204M91 184L72 204"/>',
     motion: ''
   }
 };

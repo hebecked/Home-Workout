@@ -2,7 +2,7 @@
 
 Last updated: 2026-09-01
 
-This is the evidence checklist for the 43 bundled exercise definitions. `Source assigned` means a reliable exercise-specific reference has been recorded. `Text reviewed` and `pose reviewed` are separate because a correct paragraph does not prove a correct illustration. Rows remain open until both reviews are complete.
+This is the evidence checklist for the 51 bundled exercise definitions. `Source assigned` means a reliable exercise-specific reference has been recorded. `Text reviewed` and `pose reviewed` are separate because a correct paragraph does not prove a correct illustration. Rows remain open until both reviews are complete.
 
 ## Priority corrections reviewed in this release
 
@@ -13,6 +13,9 @@ This is the evidence checklist for the 43 bundled exercise definitions. `Source 
 | Chin-up | [ACE technique series](https://www.acefitness.org/continuing-education/prosource/february-2016/5799/ace-technique-series-chin-ups/) | Reviewed | Reviewed | Same vertical composition as Pull-up with closer underhand-grip geometry. |
 | Side Plank | [Mayo Clinic](https://www.mayoclinic.org/healthy-lifestyle/fitness/in-depth/core-strength/art-20546851); [ACE](https://www.acefitness.org/resources/everyone/exercise-library/101/side-plank-with-straight-leg/) | Reviewed | Reviewed | One static same-scale pose: forearm support, elbow below shoulder, and a straight raised line through the body. |
 | Pike Push-up | [ACE inverted-V reference](https://www.acefitness.org/resources/everyone/exercise-library/18/downward-facing-dog/) | Reviewed | Reviewed | Same-scale overlaid start/lowering positions share hip, hand, and foot anchors; the head travels toward the hands. |
+| Burpee | [ACE Exercise Library](https://www.acefitness.org/resources/everyone/exercise-library/body-part/full-body-integrated/) | Reviewed | Reviewed | One readable crouched transition with exactly two arms and two legs replaces the limb-multiplying full-sequence overlay. |
+| Incline Push-up | [ACE progression reference](https://www.acefitness.org/resources/pros/expert-articles/7076/progressions-and-regressions-what-do-they-look-like/) | Reviewed | Reviewed | Hands are visibly anchored to the raised support; feet remain on the floor. |
+| Triceps Dip | [ACE Exercise Library](https://www.acefitness.org/resources/everyone/exercise-library/body-part/arms/triceps/) | Reviewed | Reviewed | Low support behind the hips, visible free space below the seat, and no extra downward body line. |
 
 ## New additions reviewed in this release
 
@@ -28,6 +31,14 @@ This is the evidence checklist for the 43 bundled exercise definitions. `Source 
 | Hamstring Stretch | [Mayo Clinic](https://www.mayoclinic.org/healthy-lifestyle/fitness/in-depth/stretching/art-20546848) | Reviewed | Reviewed | Static supine wall-supported leg position. |
 | Quadriceps Stretch | [Mayo Clinic](https://www.mayoclinic.org/healthy-lifestyle/fitness/in-depth/stretching/art-20546848) | Reviewed | Reviewed | Static supported stance with heel drawn toward the buttocks. |
 | Hip Flexor Stretch | [Mayo Clinic](https://www.mayoclinic.org/healthy-lifestyle/fitness/in-depth/stretching/art-20546848) | Reviewed | Reviewed | Static half-kneeling position with the rear knee and lower leg visibly grounded. |
+| Scapular Push-up | [ACE scapular push-up](https://www.acefitness.org/resources/pros/expert-articles/6489/hike-like-you-mean-it-take-your-hiking-workouts-to-the-next-level/) | Reviewed | Reviewed | Fixed hands, feet, straight elbows, and a small shoulder-girdle-only travel cue. |
+| Active Recovery | [Cleveland Clinic](https://health.clevelandclinic.org/active-recovery) | Reviewed | Reviewed | Deliberately gentle marching pose and low-intensity instructions; full rest remains explicitly allowed. |
+| Shoulder and Upper Back Stretch | [Mayo Clinic upper-body stretches](https://www.mayoclinic.org/healthy-lifestyle/adult-health/multimedia/shoulder-stretches/vid-20084699) | Reviewed | Reviewed | Static cross-body shoulder position with the other hand supporting below the elbow. |
+| Chest Stretch | [Mayo Clinic upper-body stretches](https://www.mayoclinic.org/healthy-lifestyle/adult-health/multimedia/shoulder-stretches/vid-20084699) | Reviewed | Reviewed | Static hands-behind-head position with elbows moving gently back. |
+| Child's Pose | [Mayo Clinic](https://www.mayoclinic.org/healthy-lifestyle/stress-management/multimedia/childs-pose/vid-20453580) | Reviewed | Reviewed | Hips toward heels, torso lowered, forehead supported if needed, and arms extended without a duplicate pose. |
+| Cat-Cow | [Mayo Clinic mindful movements](https://sharedfiles.mayoclinic.org/bedside/ope/GNT-20421908.html) | Reviewed | Reviewed | Same hand/knee anchors with overlaid rounded and released spinal positions. |
+| Cobra Stretch | [South Tees Hospitals NHS](https://www.southtees.nhs.uk/services/back-pain/backtracks/kneeling-exercises/) | Reviewed | Reviewed | One prone position with pelvis and legs grounded and chest supported by the arms. |
+| Yoga Bridge Hold | [Oxford University Hospitals NHS](https://www.ouh.nhs.uk/media/spdfysmr/33852ppfps.pdf) | Reviewed | Reviewed | Static bridge hold, distinct from the repetition-based Glute Bridge entry. |
 
 ## Exercise-by-exercise review
 
@@ -66,4 +77,4 @@ All rows below have movement-specific DE/EN copy in `src/data/exercises.ts`. The
 
 ## Closure rule
 
-The P0 backlog item may be checked only when all 43 rows are `Reviewed / Reviewed`, every general catalogue link above has been replaced by an exercise-specific page where possible, and the generated all-exercise contact sheet has been visually inspected at both phone-card and full-size rendering.
+The P0 backlog item may be checked only when all 51 rows are `Reviewed / Reviewed`, every general catalogue link above has been replaced by an exercise-specific page where possible, and the generated all-exercise contact sheet has been visually inspected at both phone-card and full-size rendering.

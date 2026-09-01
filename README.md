@@ -19,7 +19,7 @@ Home Workout makes a structured routine easy to follow without an account, backe
 - A routine picker plus an immutable-default model: bundled routines cannot be overwritten, while local plans are stored separately
 - Visual plan editor with editable exercise targets, editable local plans, safe copies of bundled routines, duplicate/delete actions, custom exercises, local save, JSON import/export, and strict validation
 - Validated AI-plan launch links plus a public machine-readable guide for ChatGPT and other assistants
-- 43 extensible exercises with movement-specific original local SVG illustrations, including dedicated warm-up and stretching categories
+- 51 extensible exercises with movement-specific original local SVG illustrations, including dedicated warm-up and stretching categories
 - Per-round `Exercise X / Y` progress and a visible easier-alternative chooser during workouts
 - A clear, confirmed workout-abort action; the Home Workout brand uses the same safe return-to-home flow
 - Stable workout controls and automatic timers without a manual repetition tap counter
@@ -102,7 +102,7 @@ German (`de`) and English (`en`) ship with the app. Plans may use any supported 
 
 ## Exercise library
 
-The library contains 43 stable records across legs, push, pull, core, cardio, full body, warm-up, and stretching. It includes Shadowboxing, Sumo Squat Hold, four dynamic warm-ups, and four static post-workout stretches. Every record contains equipment, difficulty, type, target, movement-specific DE/EN copy, variant IDs, and a local SVG. Moving poses are overlaid at one body scale; static holds and stretches use one figure without a misleading direction arrow. Run `node scripts/generate-exercise-assets.mjs` to regenerate illustrations. Source assignment and independent text/pose sign-off are tracked per exercise in [`docs/exercise-audit.md`](docs/exercise-audit.md).
+The library contains 51 stable records across legs, push, pull, core, cardio, full body, warm-up, and stretching. It includes Shadowboxing, Sumo Squat Hold, Scapular Push-up, Active Recovery, dynamic warm-ups, upper-body mobility, and yoga-derived stretches. Every record contains equipment, difficulty, type, target, movement-specific DE/EN copy, variant IDs, and a local SVG. Moving poses are overlaid at one body scale; static holds and stretches use one figure without a misleading direction arrow. Plan Studio groups the picker by bilingual category and sorts each group alphabetically. Run `node scripts/generate-exercise-assets.mjs` to regenerate illustrations. Source assignment and independent text/pose sign-off are tracked per exercise in [`docs/exercise-audit.md`](docs/exercise-audit.md).
 
 The future multi-phase plan format—warm-up, independently timed training blocks, and cool-down—is specified in [`docs/phased-workout-proposal.md`](docs/phased-workout-proposal.md). In that design, sequence repetitions are called **rounds / Runden**, while **repetitions / Wiederholungen** remain the count for a single movement.
 

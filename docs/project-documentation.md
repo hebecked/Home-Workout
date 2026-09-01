@@ -50,7 +50,7 @@ Plan Studio supports:
 - DE/EN plan names and additional BCP-47-style language records;
 - one or two display languages;
 - rounds and rest intervals;
-- selecting from the 43-entry exercise library;
+- selecting from the 51-entry exercise library through bilingual category groups sorted alphabetically;
 - custom exercise names;
 - exercise ordering and removal;
 - repetition range, per-side, and duration target editing;
@@ -71,7 +71,7 @@ Direct links never start a workout immediately. The app validates the payload, r
 
 ## Exercise illustrations
 
-`src/data/exercises.ts` defines 43 exercises. Every entry points to a local SVG in `public/assets/exercises/`. The visual color system is category based:
+`src/data/exercises.ts` defines 51 exercises. Every entry points to a local SVG in `public/assets/exercises/`. The visual color system is category based:
 
 - legs: blue;
 - push/pull/arms: orange;
@@ -80,7 +80,7 @@ Direct links never start a workout immediately. The app validates the payload, r
 - warm-up: gold;
 - stretching: teal.
 
-Moving assets use same-scale overlaid positions; static holds and stretches use one pose without a false direction arrow. All 43 assets are covered by file, palette, pose-mode, and SVG contract tests. Movement and floor-contact sources are recorded in `docs/exercise-sources.md`.
+Moving assets use same-scale overlaid positions; static holds and stretches use one pose without a false direction arrow. All 51 assets are covered by file, palette, pose-mode, and SVG contract tests. Movement and floor-contact sources are recorded in `docs/exercise-sources.md`.
 
 The proposed schema-v2 phase model is documented in `docs/phased-workout-proposal.md`. It separates warm-up, multiple independently configured training blocks, and cool-down, and uses “rounds / Runden” for repeated exercise sequences. It remains backlog work until migration and deterministic engine tests are in place.
 

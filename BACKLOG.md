@@ -6,6 +6,11 @@ This file is the durable hand-off for work that must not exist only in an AI con
 
 ## Priority 0 — movement safety and correctness
 
+- [x] Correct **Burpee** to one readable phase with exactly two arms and two legs; avoid limb multiplication caused by overlaid multi-stage poses.
+- [x] Make **Side Plank** unambiguously forearm-supported: elbow below the shoulder and forearm visibly grounded.
+- [x] Correct **Incline Push-up** so the hands are visibly on the raised support and the feet remain on the floor.
+- [x] Correct **Triceps Dip** with a lower support, free space below the hips, and no ambiguous body line below the seat.
+- [x] Add sourced DE/EN entries and original SVGs for **Scapular Push-up**, **Active Recovery**, shoulder/upper-back and chest stretches, plus a small yoga-derived mobility set.
 - [ ] **Audit every bundled exercise instruction and illustration one by one against reliable sources.** Record the source, the text review, the pose review, and the reviewer status in `docs/exercise-audit.md`; an exercise is not complete until both its DE/EN instructions and its pose are checked.
 - [x] Correct **Pull-up, Assisted Pull-up, and Chin-up** with same-scale overlaid poses that show vertical travel rather than two people moving sideways.
 - [x] Replace the **Side Plank** illustration with one anatomically clear static forearm-supported pose; no second figure is needed for a hold.
@@ -15,6 +20,7 @@ This file is the durable hand-off for work that must not exist only in an AI con
 
 ## Priority 1 — multilingual editing and comprehension
 
+- [x] Group the Plan Studio exercise picker by bilingual category and alphabetize exercises inside every group.
 - [x] Make the AI workout-plan instructions fully English instead of mixing an English heading with German paragraphs.
 - [x] Allow plan and exercise names/instructions to be entered as free text for every added language. Automatic online translation remains optional future work so the offline/private editor does not silently invent fitness instructions.
 - [x] Mark the workout variant selector explicitly as **easier alternatives** and explain that the original movement remains selectable.
@@ -35,6 +41,7 @@ This file is the durable hand-off for work that must not exist only in an AI con
 ## Later product work
 
 - [ ] Implement the phase-aware schema-v2 design in `docs/phased-workout-proposal.md`: warm-up, one or more training blocks, and cool-down/stretching, each with its own rounds and rest rules. Use **rounds / Runden** for repetitions of an exercise sequence and reserve **repetitions / Wiederholungen** for one movement.
+- [ ] Add **active recovery** as an optional phase kind or inter-block transition. It should accept low-intensity duration exercises and remain distinct from passive rest.
 - [ ] Add phase-aware editor controls, import/export migration, progress UI, and validators only after schema-v1 plans can be migrated losslessly.
 - [ ] Add opt-in local workout history and progression views. No analytics or server-side profile is planned.
 - [ ] Add explicit schema migrations before introducing workout-plan schema version 2.
@@ -49,6 +56,6 @@ This file is the durable hand-off for work that must not exist only in an AI con
 - [x] Allow a stored easier alternative to be selected visibly during a workout.
 - [x] Edit repetition ranges, per-side counting, and duration targets in Plan Studio.
 - [x] Duplicate and delete local plans with confirmation; bundled plans remain immutable.
-- [x] Replace the original generic placeholder set with 33 movement-specific local SVGs; the current sourced library now contains 43.
+- [x] Replace the original generic placeholder set with 33 movement-specific local SVGs; the current sourced library now contains 51.
 - [x] Correct Squat, Push-up, Pull-up, Glute Bridge, Dead Bug, and Lying Leg Raises for movement direction and floor contact.
 - [x] Prevent browser tests from silently reusing a stale preview server.

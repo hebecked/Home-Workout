@@ -39,6 +39,16 @@ const previewCategory = (category: string | undefined): { className: string; lab
   if (category === 'stretch') return { className: 'stretch', label: 'Stretch · Dehnen' };
   return null;
 };
+const exerciseCategoryGroups = [
+  { category: 'warm-up', label: 'Warm-up · Aufwärmen' },
+  { category: 'cardio', label: 'Cardio · Kondition' },
+  { category: 'full-body', label: 'Full body · Ganzkörper' },
+  { category: 'legs', label: 'Legs · Beine' },
+  { category: 'push', label: 'Push · Drücken' },
+  { category: 'pull', label: 'Pull · Ziehen' },
+  { category: 'core', label: 'Core · Rumpf' },
+  { category: 'stretch', label: 'Stretching · Dehnen' }
+] as const;
 
 export class HomeWorkoutApp {
   private activePlan: WorkoutPlan = cloneDefault();
@@ -380,8 +390,15 @@ export class HomeWorkoutApp {
       : this.editorMode === 'copy'
         ? 'This editable copy is independent from the permanent bundled routine.'
         : 'Build a routine that speaks your language and fits your room.';
-    const optionLabels: Record<string, string> = { 'sumo-squat': 'Wide stance exercise', 'split-squat': 'Split stance exercise', 'squat-to-reach': 'Reach sequence exercise' };
-    const exerciseOptions = EXERCISE_LIBRARY.map((exercise) => `<option value="${exercise.id}" aria-label="${escapeHtml(optionLabels[exercise.id] ?? `${exercise.translations.en.name} · ${exercise.translations.de.name}`)}">${escapeHtml(exercise.translations.en.name)} · ${escapeHtml(exercise.translations.de.name)}</option>`).join('');
+    const exerciseOptions = exerciseCategoryGroups.map(({ category, label }) => {
+      const options = EXERCISE_LIBRARY
+        .filter((exercise) => exercise.category === category)
+        .slice()
+        .sort((left, right) => left.translations.en.name.localeCompare(right.translations.en.name, 'en', { sensitivity: 'base' }))
+        .map((exercise) => `<option value="${exercise.id}">${escapeHtml(exercise.translations.en.name)} · ${escapeHtml(exercise.translations.de.name)}</option>`)
+        .join('');
+      return `<optgroup label="${label}">${options}</optgroup>`;
+    }).join('');
     const exerciseRows = this.draft.exercises.map((exercise, index) => {
       const name = exercise.translations.en?.name ?? Object.values(exercise.translations)[0]?.name ?? exercise.exerciseId;
       const translationFields = this.draft.languages.map((language) => {

@@ -13,7 +13,7 @@ The user's requested repetition of several exercises in the same order is theref
 
 ## Proposed schema version 2
 
-A plan contains ordered phases instead of one global exercise list. Every phase owns its timing and round rules:
+A plan contains ordered phases instead of one global exercise list. Every phase owns its timing and round rules. In addition to warm-up, training, and cool-down, an optional `active-recovery` phase can contain deliberately low-intensity duration movements such as gentle marching; it is not the same as passive rest.
 
 ```json
 {
@@ -64,6 +64,7 @@ Exercise objects should continue to own a target mode: `repetitions`, `duration`
 ## Runtime behavior
 
 - Warm-up and cool-down default to one round and no automatic rests between exercises.
+- Active-recovery phases default to one round, duration targets, no mandatory rests, and visibly lower-intensity guidance. The user may still choose complete rest.
 - Every training phase can define its own number of rounds and three separate rest values: between exercises, between rounds, and after the phase.
 - The workout screen shows `Phase X / Y`, the phase name, and `Exercise X / Y` within the current round.
 - Phase boundaries receive a short transition card and may be skipped deliberately.

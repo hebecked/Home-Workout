@@ -22,8 +22,8 @@ function svgFor(exercise: ExerciseDefinition): string {
 }
 
 describe('exercise illustration visual system', () => {
-  it('uses one consistent background and accent hue for all 43 exercise categories', () => {
-    expect(EXERCISE_LIBRARY).toHaveLength(43);
+  it('uses one consistent background and accent hue for all 51 exercise categories', () => {
+    expect(EXERCISE_LIBRARY).toHaveLength(51);
 
     for (const exercise of EXERCISE_LIBRARY) {
       const hue = categoryHue[exercise.category];
@@ -69,10 +69,20 @@ describe('exercise illustration visual system', () => {
     expect(byId.get('assisted-pull-up')).toContain('stroke-dasharray="7 6"');
     expect(byId.get('chin-up')).toContain('<circle cx="160" cy="95"');
     expect(byId.get('chin-up')).toContain('<circle cx="160" cy="55"');
-    expect(byId.get('side-plank')).toContain('M228 128L216 142L157 169L84 204');
+    expect(byId.get('side-plank')).toContain('M228 130L215 145L155 171L80 204');
     expect(byId.get('side-plank')).not.toContain('data-pose="start"');
     expect(byId.get('pike-push-up')).toContain('L185 84L260 204');
     expect(byId.get('pike-push-up')).not.toContain('cx="191"');
+    expect(byId.get('side-plank')).toContain('M215 145L215 204L170 204');
+    expect(byId.get('incline-push-up')).toContain('M151 116L110 130');
+    expect(byId.get('incline-push-up')).toContain('L260 204');
+    expect(byId.get('triceps-dip')).toContain('M58 154H130');
+    expect(byId.get('triceps-dip')).not.toContain('M167 165L151 204');
+    expect(byId.get('burpee')).not.toContain('data-pose="start"');
+    expect(byId.get('burpee')).toContain('M193 145L180 174L177 204');
+    expect(byId.get('burpee')).toContain('M193 145L208 173L213 204');
+    expect(byId.get('burpee')).toContain('M150 159L110 173L75 204');
+    expect(byId.get('burpee')).toContain('M150 159L137 187L128 204');
     for (const id of ['dead-bug', 'lying-leg-raise', 'glute-bridge']) {
       expect(byId.get(id), `${id} keeps the body at the floor`).toMatch(/cy="18[04]"/);
       expect(byId.get(id), `${id} includes the shared floor line`).toContain('M42 210H278');

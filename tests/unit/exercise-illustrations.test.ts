@@ -10,15 +10,17 @@ function numericAttribute(element: string | undefined, attribute: string): numbe
 }
 
 describe('exercise illustrations', () => {
-  it('gives all 43 exercises a local pose and movement indicators only where movement is shown', () => {
-    expect(EXERCISE_LIBRARY).toHaveLength(43);
+  it('gives all 51 exercises a local pose and movement indicators only where movement is shown', () => {
+    expect(EXERCISE_LIBRARY).toHaveLength(51);
     const singlePoseIds = new Set([
-      'side-plank', 'sumo-squat-hold', 'shoulder-roll', 'arm-circle',
-      'calf-stretch', 'hamstring-stretch', 'quadriceps-stretch', 'hip-flexor-stretch'
+      'side-plank', 'sumo-squat-hold', 'shoulder-roll', 'arm-circle', 'burpee',
+      'calf-stretch', 'hamstring-stretch', 'quadriceps-stretch', 'hip-flexor-stretch',
+      'shoulder-upper-back-stretch', 'chest-stretch', 'child-pose', 'cobra-stretch', 'yoga-bridge'
     ]);
     const staticIds = new Set([
       'side-plank', 'sumo-squat-hold',
-      'calf-stretch', 'hamstring-stretch', 'quadriceps-stretch', 'hip-flexor-stretch'
+      'calf-stretch', 'hamstring-stretch', 'quadriceps-stretch', 'hip-flexor-stretch',
+      'shoulder-upper-back-stretch', 'chest-stretch', 'child-pose', 'cobra-stretch', 'yoga-bridge'
     ]);
 
     for (const exercise of EXERCISE_LIBRARY) {

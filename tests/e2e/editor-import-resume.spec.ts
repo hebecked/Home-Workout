@@ -31,6 +31,15 @@ test('desktop editor creates, orders and saves a multilingual plan', async ({ pa
   await page.getByRole('button', { name: /^add$/i }).click();
   await page.getByLabel(/plan name.*Français/i).fill('Force compacte');
   await page.getByRole('button', { name: /add exercise|Übung hinzufügen/i }).click();
+  const picker = page.getByLabel(/^Select exercise$/i);
+  await expect(picker.locator('optgroup')).toHaveCount(8);
+  const groupLabels = await picker.locator('optgroup').evaluateAll((groups) => groups.map((group) => group.getAttribute('label')));
+  expect(groupLabels).toEqual([
+    'Warm-up · Aufwärmen', 'Cardio · Kondition', 'Full body · Ganzkörper', 'Legs · Beine',
+    'Push · Drücken', 'Pull · Ziehen', 'Core · Rumpf', 'Stretching · Dehnen'
+  ]);
+  const legOptions = await picker.locator('optgroup[label="Legs · Beine"] option').allTextContents();
+  expect(legOptions).toEqual([...legOptions].sort((left, right) => left.localeCompare(right, 'en', { sensitivity: 'base' })));
   await page.getByRole('option', { name: /^Squat · Kniebeuge$/i }).click();
   await page.getByRole('button', { name: /add selected|Auswahl hinzufügen/i }).click();
 

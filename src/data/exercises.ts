@@ -26,6 +26,7 @@ const seeds: Seed[] = [
   ['wall-sit', 'legs', 'Wandsitz', 'Wall Sit', 'beginner', 'duration', ['squat'], ['split-squat']],
   ['sumo-squat-hold', 'legs', 'Sumo-Kniebeugen-Halten', 'Sumo Squat Hold', 'beginner', 'duration', ['wall-sit'], ['sumo-squat']],
   ['push-up', 'push', 'Liegestütz', 'Push-up', 'intermediate', 'repetitions', ['incline-push-up', 'knee-push-up'], ['pike-push-up']],
+  ['scapular-push-up', 'push', 'Schulterblatt-Liegestütz', 'Scapular Push-up', 'intermediate', 'repetitions', ['knee-push-up'], ['push-up']],
   ['incline-push-up', 'push', 'Erhöhter Liegestütz', 'Incline Push-up', 'beginner', 'repetitions', ['knee-push-up'], ['push-up']],
   ['knee-push-up', 'push', 'Knie-Liegestütz', 'Knee Push-up', 'beginner', 'repetitions', ['incline-push-up'], ['push-up']],
   ['pike-push-up', 'push', 'Pike-Liegestütz', 'Pike Push-up', 'advanced', 'repetitions', ['push-up'], []],
@@ -53,11 +54,18 @@ const seeds: Seed[] = [
   ['heel-dig', 'warm-up', 'Fersen-Tippen', 'Heel Digs', 'beginner', 'duration', ['marching-in-place'], ['high-knees']],
   ['shoulder-roll', 'warm-up', 'Schulterkreisen', 'Shoulder Rolls', 'beginner', 'duration', [], []],
   ['arm-circle', 'warm-up', 'Armkreisen', 'Arm Circles', 'beginner', 'duration', ['shoulder-roll'], []],
+  ['active-recovery', 'warm-up', 'Aktive Erholung', 'Active Recovery', 'beginner', 'duration', [], ['marching-in-place']],
   ['leg-swing', 'warm-up', 'Beinschwingen', 'Leg Swings', 'beginner', 'duration', ['marching-in-place'], []],
   ['calf-stretch', 'stretch', 'Waden-Dehnung', 'Calf Stretch', 'beginner', 'duration', [], []],
   ['hamstring-stretch', 'stretch', 'Oberschenkelrückseiten-Dehnung', 'Hamstring Stretch', 'beginner', 'duration', [], []],
   ['quadriceps-stretch', 'stretch', 'Oberschenkelvorderseiten-Dehnung', 'Quadriceps Stretch', 'beginner', 'duration', [], []],
-  ['hip-flexor-stretch', 'stretch', 'Hüftbeuger-Dehnung', 'Hip Flexor Stretch', 'beginner', 'duration', [], []]
+  ['hip-flexor-stretch', 'stretch', 'Hüftbeuger-Dehnung', 'Hip Flexor Stretch', 'beginner', 'duration', [], []],
+  ['shoulder-upper-back-stretch', 'stretch', 'Schulter- und oberer Rücken-Stretch', 'Shoulder and Upper Back Stretch', 'beginner', 'duration', [], []],
+  ['chest-stretch', 'stretch', 'Brust-Dehnung', 'Chest Stretch', 'beginner', 'duration', [], []],
+  ['child-pose', 'stretch', 'Kindhaltung', "Child's Pose", 'beginner', 'duration', [], []],
+  ['cat-cow', 'stretch', 'Katze-Kuh', 'Cat-Cow', 'beginner', 'duration', [], []],
+  ['cobra-stretch', 'stretch', 'Kobra-Dehnung', 'Cobra Stretch', 'beginner', 'duration', [], []],
+  ['yoga-bridge', 'stretch', 'Yoga-Brücke', 'Yoga Bridge Hold', 'beginner', 'duration', ['glute-bridge'], []]
 ];
 
 const bandExercises = new Set(['resistance-band-row', 'resistance-band-pull-apart', 'assisted-pull-up']);
@@ -107,6 +115,10 @@ const detailedInstructions: Record<string, Record<'de' | 'en', string>> = {
   'push-up': {
     de: 'Stütze dich auf Hände und Zehen, die Hände etwas weiter als schulterbreit, und bilde eine Linie von Kopf bis Fersen. Beuge die Ellenbogen und senke Brust und Becken gemeinsam; drücke dich ohne durchhängende Hüfte wieder hoch.',
     en: 'Support yourself on hands and toes with hands slightly wider than shoulders, forming a straight line from head to heels. Bend your elbows and lower chest and hips together, then press up without letting your hips sag.'
+  },
+  'scapular-push-up': {
+    de: 'Beginne im hohen Stütz mit gestreckten Ellenbogen und einer geraden Linie von Kopf bis Fersen. Lasse den Brustkorb nur durch das Zusammenführen der Schulterblätter leicht zwischen die Arme sinken. Drücke anschließend den Boden weg, bis sich die Schulterblätter wieder auseinanderbewegen; die Ellenbogen bleiben gestreckt.',
+    en: 'Start in a high plank with straight elbows and a line from head to heels. Let your chest sink slightly between your arms only by drawing the shoulder blades together. Then push the floor away until the shoulder blades separate again; keep your elbows straight.'
   },
   'incline-push-up': {
     de: 'Lege die Hände auf eine stabile erhöhte Fläche und gehe mit den Füßen zurück, bis der Körper eine gerade Linie bildet. Senke die Brust zur Kante und drücke dich wieder weg; halte Hüfte und Rumpf stabil.',
@@ -216,6 +228,10 @@ const detailedInstructions: Record<string, Record<'de' | 'en', string>> = {
     de: 'Stehe stabil und strecke beide Arme seitlich auf Schulterhöhe. Zeichne kleine kontrollierte Kreise, die allmählich etwas größer werden. Wechsle nach der Hälfte der Zeit die Richtung und halte die Schultern tief.',
     en: 'Stand steadily and extend both arms sideways at shoulder height. Make small controlled circles that gradually become slightly larger. Reverse direction halfway through and keep your shoulders down.'
   },
+  'active-recovery': {
+    de: 'Reduziere das Tempo deutlich und marschiere oder steige locker am Platz. Lasse die Arme entspannt mitschwingen und atme ruhig, bis sich deine Belastung wieder leicht anfühlt. Wenn selbst die langsame Bewegung zu anstrengend ist, pausiere vollständig.',
+    en: 'Reduce the pace substantially and march or step gently in place. Let your arms swing loosely and breathe steadily until the effort feels easy again. If even the slow movement feels too demanding, take complete rest.'
+  },
   'leg-swing': {
     de: 'Halte dich leicht an einer Wand oder einem stabilen Gegenstand fest. Schwinge ein Bein kontrolliert vor und zurück, ohne den Oberkörper zu verdrehen oder Schwung zu erzwingen. Wechsle nach der Hälfte der Zeit die Seite.',
     en: 'Use light support from a wall or sturdy object. Swing one leg forward and backward with control without twisting your torso or forcing the range. Change sides halfway through.'
@@ -235,6 +251,30 @@ const detailedInstructions: Record<string, Record<'de' | 'en', string>> = {
   'hip-flexor-stretch': {
     de: 'Knie auf einem gepolsterten Knie und stelle den anderen Fuß vorn auf. Halte Rücken und Becken aufrecht und verlagere das Gewicht sanft nach vorn, bis du einen Zug an der Vorderseite der knienden Hüfte spürst. Halte und wechsle nach der Hälfte die Seite.',
     en: 'Kneel on one padded knee with the other foot in front. Keep your back and pelvis upright and gently shift weight forward until you feel a stretch at the front of the kneeling hip. Hold and change sides halfway through.'
+  },
+  'shoulder-upper-back-stretch': {
+    de: 'Stehe oder sitze aufrecht und führe einen Arm auf Schulterhöhe quer vor die Brust. Stütze ihn mit der anderen Hand unterhalb des Ellenbogens und ziehe ihn sanft näher zum Körper, ohne den Oberkörper zu verdrehen. Halte die Schulter tief und wechsle nach der Hälfte die Seite.',
+    en: 'Stand or sit tall and bring one arm across your chest at shoulder height. Support it below the elbow with the other hand and gently draw it closer without rotating your torso. Keep the shoulder down and change sides halfway through.'
+  },
+  'chest-stretch': {
+    de: 'Stehe oder sitze aufrecht und lege die Hände locker hinter den Kopf. Führe die gebeugten Ellenbogen sanft nach hinten und ziehe die Schulterblätter leicht zusammen, bis du einen angenehmen Zug in der Brust spürst. Halte den unteren Rücken neutral und atme frei.',
+    en: 'Stand or sit tall and place your hands lightly behind your head. Gently draw the bent elbows backward and bring the shoulder blades slightly together until you feel a comfortable chest stretch. Keep your lower back neutral and breathe freely.'
+  },
+  'child-pose': {
+    de: 'Knie dich hin, setze das Gesäß Richtung Fersen und lege den Oberkörper zwischen oder auf die Oberschenkel. Strecke die Arme nach vorn oder lege sie entspannt neben den Körper und stütze die Stirn bei Bedarf erhöht ab. Atme langsam und bleibe nur in einem angenehmen Bereich.',
+    en: 'Kneel, sit your hips toward your heels, and lower your torso between or onto your thighs. Reach your arms forward or rest them beside your body, supporting your forehead if needed. Breathe slowly and stay only within a comfortable range.'
+  },
+  'cat-cow': {
+    de: 'Beginne im Vierfüßlerstand mit Händen unter den Schultern und Knien unter der Hüfte. Beim Einatmen lässt du den Bauch sanft sinken und hebst Brust und Becken; beim Ausatmen rundest du den Rücken und lässt Kopf und Becken sinken. Wechsle langsam ohne in die Endposition zu drücken.',
+    en: 'Start on hands and knees with hands under shoulders and knees under hips. As you inhale, gently release your belly and lift chest and pelvis; as you exhale, round your back and let head and pelvis lower. Alternate slowly without forcing either end position.'
+  },
+  'cobra-stretch': {
+    de: 'Lege dich auf den Bauch und setze die Hände unter oder leicht vor die Schultern. Drücke sanft in die Hände und hebe den Brustkorb nur so weit an, wie Becken und Beine entspannt am Boden bleiben. Halte Schultern und Nacken lang und beende die Position bei Schmerzen im Rücken.',
+    en: 'Lie face down with hands under or slightly in front of your shoulders. Press gently through your hands and lift your chest only as far as your pelvis and legs can remain relaxed on the floor. Keep shoulders and neck long, and stop if the position causes back pain.'
+  },
+  'yoga-bridge': {
+    de: 'Lege dich auf den Rücken, beuge die Knie und stelle die Füße hüftbreit nahe am Gesäß auf. Drücke beide Füße in den Boden und hebe das Becken, bis Knie, Hüfte und Schultern eine ansteigende Linie bilden. Halte ruhig, ohne die Knie auseinanderfallen zu lassen oder den Nacken zu belasten.',
+    en: 'Lie on your back with knees bent and feet hip-width apart near your hips. Press both feet into the floor and lift your pelvis until knees, hips, and shoulders form a rising line. Hold steadily without letting knees fall apart or placing pressure on your neck.'
   }
 };
 

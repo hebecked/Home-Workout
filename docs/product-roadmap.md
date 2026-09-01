@@ -9,7 +9,8 @@ Last updated: 2026-09-01
 - Separate local storage for user-created and imported plans.
 - Direct editing of local plans while preserving their stable plan ID.
 - Safe customization of a bundled routine as a new local copy; the bundled source remains unchanged.
-- Complete movement-specific local SVG coverage for all 43 exercise-library entries with category colors: legs blue, arms orange, core purple, cardio/full body red, warm-up gold, and stretching teal.
+- Complete movement-specific local SVG coverage for all 51 exercise-library entries with category colors: legs blue, arms orange, core purple, cardio/full body red, warm-up gold, and stretching teal.
+- The Plan Studio exercise picker is grouped by bilingual category and alphabetized within each group.
 - Small motion arrows, same-scale overlaid movement poses, single-pose static holds, and corrected floor contact for easily confused movements.
 - AI plan guide, strict direct-link validation, import preview, and JSON-file fallback.
 - Stable workout controls, reload-safe timing, skippable rests, and a confirmed abort flow.
@@ -44,9 +45,9 @@ Evidence basis:
 
 ### Illustration status
 
-- All 43 SVG files contain a movement-specific pose, the category palette, and file-level contract tests. Moving exercises use a bounded motion arrow; static holds and stretches intentionally do not.
+- All 51 SVG files contain a movement-specific pose, the category palette, and file-level contract tests. Moving exercises use a bounded motion arrow; static holds and stretches intentionally do not.
 - Pull-up, Assisted Pull-up, Chin-up, and Pike Push-up use same-scale overlaid positions so no sideways travel is implied. Side Plank uses one static figure.
-- All 43 exercises have movement-specific German and English instructions. The remaining independent source comparison is tracked row by row in `docs/exercise-audit.md`.
+- All 51 exercises have movement-specific German and English instructions. The remaining independent source comparison is tracked row by row in `docs/exercise-audit.md`.
 - Source notes and the meaning of the translucent pose are recorded in `docs/exercise-sources.md`.
 
 ### Later enhancements
