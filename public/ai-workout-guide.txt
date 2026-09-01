@@ -37,6 +37,7 @@ PLAN RULES
 - translations must contain {"name": string, "instructions": string} for every configured language.
 - alternativeExerciseIds is always an array of safe exercise IDs.
 - Use only the exact fields defined by the schema; unexpected fields are rejected.
+- Omit translationMetadata. It is optional app-managed provenance created only by the built-in machine-translation workflow.
 
 MINIMAL EXAMPLE
 {"schemaVersion":1,"id":"ai-beginner-full-body","languages":[{"code":"de","label":"Deutsch"},{"code":"en","label":"English"}],"name":{"de":"KI Ganzkörper Einstieg","en":"AI Beginner Full Body"},"displayLanguages":["de","en"],"rounds":2,"restBetweenExercises":25,"restBetweenRounds":60,"exercises":[{"id":"slot-squat","exerciseId":"squat","type":"repetitions","target":{"min":8,"max":12,"unit":"repetitions"},"translations":{"de":{"name":"Kniebeuge","instructions":"Kontrolliert absenken und über die ganze Fußsohle aufrichten."},"en":{"name":"Squat","instructions":"Lower with control and stand through the whole foot."}},"alternativeExerciseIds":["wall-sit"]},{"id":"slot-dead-bug","exerciseId":"dead-bug","type":"repetitions","target":{"min":6,"max":10,"unit":"per-side"},"translations":{"de":{"name":"Käfer","instructions":"Den unteren Rücken ruhig halten und diagonal strecken."},"en":{"name":"Dead Bug","instructions":"Keep the lower back steady and extend opposite limbs."}},"alternativeExerciseIds":["bird-dog"]}]}

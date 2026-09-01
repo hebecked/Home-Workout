@@ -99,6 +99,55 @@ test('desktop editor creates, orders and saves a multilingual plan', async ({ pa
   await expect(page.getByText(/Plan deleted|Plan gelöscht/i)).toBeVisible();
 });
 
+test('machine translation requires consent and explicit review before saving', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'firefox-desktop', 'Representative translation-review journey');
+  await page.route('**/api/translate', async (route) => {
+    const request = route.request().postDataJSON() as {
+      consent: boolean;
+      items: Array<{ id: string; text: string }>;
+    };
+    expect(request.consent).toBe(true);
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        provider: 'cloudflare-m2m100-1.2b',
+        translations: request.items.map(({ id, text }) => ({ id, text: `FR ${text}` }))
+      })
+    });
+  });
+  await page.goto('/#editor');
+  await page.getByLabel(/plan name.*English|English.*plan name/i).fill('Translation Test');
+  await page.getByRole('button', { name: /add language|Sprache hinzufügen/i }).click();
+  await page.getByLabel(/language code|Sprachcode/i).fill('fr');
+  await page.getByLabel(/language label|Sprachname/i).fill('Français');
+  await page.getByRole('button', { name: /^add$/i }).click();
+  await page.getByRole('button', { name: /add exercise|Übung hinzufügen/i }).click();
+  await page.getByRole('option', { name: /^Squat · Kniebeuge$/i }).click();
+  await page.getByRole('button', { name: /add selected|Auswahl hinzufügen/i }).click();
+
+  await page.getByRole('button', { name: /pre-translate draft/i }).click();
+  await expect(page.getByRole('status')).toContainText(/confirm.*sent to Cloudflare/i);
+  await page.getByLabel(/I consent to sending/i).check();
+  await page.getByRole('button', { name: /pre-translate draft/i }).click();
+  await expect(page.getByLabel(/plan name.*Français/i)).toHaveValue('FR Translation Test');
+  await expect(page.getByText(/review required before saving/i)).toBeVisible();
+
+  await page.getByRole('button', { name: /save locally|lokal speichern/i }).click();
+  await expect(page.getByRole('status')).toContainText(/review and confirm/i);
+  await page.getByLabel(/Français: machine translated/i).check();
+  await page.getByRole('button', { name: /save locally|lokal speichern/i }).click();
+  await expect(page.getByRole('status')).toContainText(/saved|gespeichert/i);
+
+  const storedRaw = await page.evaluate(() => localStorage.getItem('home-workout:plans') ?? '[]');
+  const stored = JSON.parse(storedRaw) as Array<{
+    translationMetadata?: Record<string, { reviewStatus: string; provider: string }>;
+  }>;
+  expect(stored[0]?.translationMetadata?.fr).toMatchObject({
+    reviewStatus: 'reviewed',
+    provider: 'cloudflare-m2m100-1.2b'
+  });
+});
+
 test('customizing a bundled routine creates a separate editable plan', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'firefox-desktop', 'Representative immutable-default journey');
   await page.goto('/#plans');

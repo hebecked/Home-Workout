@@ -55,7 +55,7 @@ Evidence basis:
 - Optional plan history/migrations if the JSON schema moves beyond version 1.
 - Phase-aware schema version 2 with warm-up, multiple training phases, cool-down, per-phase rounds, and independent rest rules; see `docs/phased-workout-proposal.md`.
 - Optional workout history and progression tracking, stored locally and opt-in only.
-- Optional consent-based automatic translation and translated UI chrome; manual free-text translations already work for every configured plan language.
+- Consent-based Cloudflare pre-translation is implemented with visible provenance and mandatory manual review. Additional translated UI chrome remains later work.
 - A richer native install prompt and offline/update feedback; device-specific installation instructions are already visible on the guide page.
 - Accessibility review with screen-reader smoke tests in addition to the current semantic, focus, contrast, motion, and touch-target checks.
 

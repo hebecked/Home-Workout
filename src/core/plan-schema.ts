@@ -1,5 +1,12 @@
 export type LanguageDefinition = { code: string; label: string };
 export type Translation = { name: string; instructions: string };
+export type TranslationMetadata = {
+  sourceLanguage: string;
+  origin: 'machine';
+  reviewStatus: 'needs-review' | 'reviewed';
+  provider: string;
+  translatedAt: string;
+};
 export type RepetitionTarget = { min: number; max: number; unit: 'repetitions' | 'per-side' };
 export type DurationTarget = { seconds: number };
 export type ExerciseTarget = RepetitionTarget | DurationTarget;
@@ -23,6 +30,7 @@ export interface WorkoutPlan {
   restBetweenExercises: number;
   restBetweenRounds: number;
   exercises: PlanExercise[];
+  translationMetadata?: Record<string, TranslationMetadata>;
 }
 
 export interface ValidationIssue { path: string; message: string }
@@ -32,6 +40,14 @@ export class PlanValidationError extends Error {
     super(`Invalid workout plan: ${issues.map((issue) => `${issue.path}: ${issue.message}`).join('; ')}`);
     this.name = 'PlanValidationError';
   }
+}
+
+export function assertMachineTranslationsReviewed(plan: WorkoutPlan): void {
+  const pending = Object.entries(plan.translationMetadata ?? {}).find(([, metadata]) => metadata.reviewStatus === 'needs-review');
+  if (pending) throw new PlanValidationError([{
+    path: `translationMetadata.${pending[0]}.reviewStatus`,
+    message: 'must be reviewed before saving, exporting, or starting'
+  }]);
 }
 
 const languagePattern = /^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/;
@@ -44,8 +60,9 @@ export function validateWorkoutPlan(input: unknown): WorkoutPlan {
   const issue = (path: string, message: string): void => { issues.push({ path, message }); };
   if (!input || typeof input !== 'object' || Array.isArray(input)) throw new PlanValidationError([{ path: '$', message: 'must be an object' }]);
   const plan = input as Record<string, unknown>;
-  const keys = ['schemaVersion', 'id', 'languages', 'name', 'displayLanguages', 'rounds', 'restBetweenExercises', 'restBetweenRounds', 'exercises'];
-  if (!exactKeys(plan, keys) || Object.keys(plan).length !== keys.length) issue('$', 'contains missing or unexpected fields');
+  const requiredKeys = ['schemaVersion', 'id', 'languages', 'name', 'displayLanguages', 'rounds', 'restBetweenExercises', 'restBetweenRounds', 'exercises'];
+  const allowedKeys = [...requiredKeys, 'translationMetadata'];
+  if (!exactKeys(plan, allowedKeys) || requiredKeys.some((key) => !(key in plan))) issue('$', 'contains missing or unexpected fields');
   if (plan.schemaVersion !== 1) issue('schemaVersion', 'must equal 1');
   if (!safeText(plan.id)) issue('id', 'must be non-empty safe text');
   if (!Number.isInteger(plan.rounds) || (plan.rounds as number) < 1) issue('rounds', 'must be a positive integer');
@@ -102,9 +119,29 @@ export function validateWorkoutPlan(input: unknown): WorkoutPlan {
       const copy = translation as Record<string, unknown>;
       if (!exactKeys(copy, ['name', 'instructions']) || !safeText(copy.name) || !safeText(copy.instructions)) issue(`${path}.translations.${code}`, 'requires safe name and instructions');
     }
-    if (Object.keys(translations).some((code) => !languageCodes.has(code))) issue(`${path}.translations`, 'contains an unknown language');
+  if (Object.keys(translations).some((code) => !languageCodes.has(code))) issue(`${path}.translations`, 'contains an unknown language');
     if (!Array.isArray(exercise.alternativeExerciseIds) || exercise.alternativeExerciseIds.some((id) => !safeText(id))) issue(`${path}.alternativeExerciseIds`, 'must be an array of exercise ids');
   });
+
+  if (plan.translationMetadata !== undefined) {
+    const metadata = plan.translationMetadata && typeof plan.translationMetadata === 'object' && !Array.isArray(plan.translationMetadata)
+      ? plan.translationMetadata as Record<string, unknown>
+      : null;
+    if (!metadata) issue('translationMetadata', 'must be an object');
+    else for (const [code, entry] of Object.entries(metadata)) {
+      const path = `translationMetadata.${code}`;
+      if (!languageCodes.has(code)) { issue(path, 'references an unknown language'); continue; }
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) { issue(path, 'must be an object'); continue; }
+      const record = entry as Record<string, unknown>;
+      const metadataKeys = ['sourceLanguage', 'origin', 'reviewStatus', 'provider', 'translatedAt'];
+      if (!exactKeys(record, metadataKeys) || Object.keys(record).length !== metadataKeys.length) issue(path, 'contains missing or unexpected fields');
+      if (typeof record.sourceLanguage !== 'string' || !languageCodes.has(record.sourceLanguage) || record.sourceLanguage === code) issue(`${path}.sourceLanguage`, 'must reference a different configured language');
+      if (record.origin !== 'machine') issue(`${path}.origin`, 'must equal machine');
+      if (record.reviewStatus !== 'needs-review' && record.reviewStatus !== 'reviewed') issue(`${path}.reviewStatus`, 'must be needs-review or reviewed');
+      if (!safeText(record.provider)) issue(`${path}.provider`, 'must be non-empty safe text');
+      if (typeof record.translatedAt !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/.test(record.translatedAt)) issue(`${path}.translatedAt`, 'must be an ISO UTC timestamp');
+    }
+  }
 
   if (issues.length) throw new PlanValidationError(issues);
   return input as WorkoutPlan;

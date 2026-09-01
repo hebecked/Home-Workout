@@ -1,4 +1,4 @@
-import { PlanValidationError, validateWorkoutPlan, type WorkoutPlan } from './plan-schema';
+import { assertMachineTranslationsReviewed, PlanValidationError, validateWorkoutPlan, type WorkoutPlan } from './plan-schema';
 
 export class PlanImportError extends Error {
   constructor(public readonly userMessage: string, options?: ErrorOptions) {
@@ -13,7 +13,9 @@ export function importPlanJson(json: string): WorkoutPlan {
     if (parsed && typeof parsed === 'object' && Object.prototype.hasOwnProperty.call(parsed, '__proto__')) {
       throw new Error('Forbidden key');
     }
-    return validateWorkoutPlan(parsed);
+    const plan = validateWorkoutPlan(parsed);
+    assertMachineTranslationsReviewed(plan);
+    return plan;
   } catch (error) {
     if (error instanceof PlanImportError) throw error;
     const detail = error instanceof PlanValidationError && error.issues[0] ? ` (${error.issues[0].path})` : '';
@@ -23,6 +25,7 @@ export function importPlanJson(json: string): WorkoutPlan {
 
 export function exportPlanJson(plan: WorkoutPlan): string {
   validateWorkoutPlan(plan);
+  assertMachineTranslationsReviewed(plan);
   return JSON.stringify(plan, null, 2);
 }
 

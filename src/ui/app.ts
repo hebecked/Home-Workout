@@ -8,6 +8,7 @@ import { EXERCISE_LIBRARY, EXERCISES_BY_ID } from '../data/exercises';
 import { exportPlanJson, importPlanJson, importPlanUrlPayload } from '../core/plan-io';
 import { clearWorkoutSession, deletePlan, loadPlans, loadWorkoutSession, savePlan, saveWorkoutSession } from '../core/persistence';
 import { validateWorkoutPlan, type WorkoutPlan } from '../core/plan-schema';
+import { translatePlanDraft } from '../core/translation';
 import { createWorkoutSession, dispatchWorkout, getWorkoutSnapshot, type WorkoutSession } from '../core/workout-engine';
 
 const APP_CONFIG: { githubUrl: string } = { githubUrl: 'https://github.com/hebecked/Home-Workout' };
@@ -58,6 +59,7 @@ export class HomeWorkoutApp {
   private tickHandle: number | null = null;
   private languageFormVisible = false;
   private exercisePickerVisible = false;
+  private translationBusy = false;
   private readonly exerciseOverrides = new Map<string, string>();
   private importPreview: WorkoutPlan | null = null;
   private notice = '';
@@ -414,6 +416,14 @@ export class HomeWorkoutApp {
     }).join('');
     const languageChecks = this.draft.languages.map((language) => `<label class="check"><input type="checkbox" data-display-language="${escapeHtml(language.code)}" ${this.draft.displayLanguages.includes(language.code) ? 'checked' : ''}> ${escapeHtml(language.label)}</label>`).join('');
     const planNameFields = this.draft.languages.map((language) => `<label>Plan name · Planname (${escapeHtml(language.label)})<input name="name-${escapeHtml(language.code)}" value="${escapeHtml(this.draft.name[language.code] ?? '')}" required></label>`).join('');
+    const defaultSourceLanguage = this.draft.languages.find(({ code }) => code === 'en')?.code ?? this.draft.languages[0]?.code ?? '';
+    const defaultTargetLanguage = [...this.draft.languages].reverse().find(({ code }) => code !== defaultSourceLanguage)?.code ?? '';
+    const languageOptions = (selected: string): string => this.draft.languages.map((language) => `<option value="${escapeHtml(language.code)}" ${language.code === selected ? 'selected' : ''}>${escapeHtml(language.label)} (${escapeHtml(language.code)})</option>`).join('');
+    const translationReviews = Object.entries(this.draft.translationMetadata ?? {}).map(([code, metadata]) => {
+      const label = this.draft.languages.find((language) => language.code === code)?.label ?? code;
+      return `<label class="translation-review"><input type="checkbox" data-review-translation="${escapeHtml(code)}" ${metadata.reviewStatus === 'reviewed' ? 'checked' : ''}><span><strong>${escapeHtml(label)}: machine translated</strong><small>Source: ${escapeHtml(metadata.sourceLanguage)} · Provider: ${escapeHtml(metadata.provider)} · ${metadata.reviewStatus === 'reviewed' ? 'Reviewed' : 'Review required before saving'}</small></span></label>`;
+    }).join('');
+    const translationAssistant = this.draft.languages.length > 1 ? `<div class="translation-assistant"><div><p class="eyebrow">OPTIONAL ONLINE PRE-TRANSLATION</p><h3>Translate with Cloudflare AI</h3><p>This sends the selected source text to Cloudflare only after your consent. Existing target text will be replaced. Always review fitness instructions before saving.</p></div><div class="translation-controls"><label>Source language<select name="translation-source">${languageOptions(defaultSourceLanguage)}</select></label><label>Target language<select name="translation-target">${languageOptions(defaultTargetLanguage)}</select></label><label class="check translation-consent"><input type="checkbox" name="translation-consent"> I consent to sending these plan texts to Cloudflare for translation.</label><button type="button" class="secondary" data-action="translate-plan" ${this.translationBusy ? 'disabled' : ''}>${this.translationBusy ? 'Translating…' : 'Pre-translate draft'}</button></div>${translationReviews ? `<div class="translation-reviews">${translationReviews}</div>` : ''}</div>` : '';
     this.shell(`
       <section class="page-heading"><p class="eyebrow">PLAN STUDIO</p><h1>${editorTitle}</h1><p>${editorIntro}</p></section>
       <form class="editor" data-editor>
@@ -426,6 +436,7 @@ export class HomeWorkoutApp {
         <section class="form-section"><div class="section-heading"><h2>02 · Languages</h2><button type="button" class="secondary" data-action="show-language">Add language · Sprache hinzufügen</button></div>
           <div class="check-row"><span>Visible side by side (max. 2)</span>${languageChecks}</div>
           ${this.languageFormVisible ? `<div class="inline-form"><label>Language code · Sprachcode<input name="language-code" placeholder="fr" pattern="[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*"></label><label>Language label · Sprachname<input name="language-label" placeholder="Français"></label><button type="button" data-action="add-language">Add</button></div>` : ''}
+          ${translationAssistant}
         </section>
         <section class="form-section"><div class="section-heading"><h2>03 · Exercises</h2><button type="button" class="secondary" data-action="show-exercises">Add exercise · Übung hinzufügen</button></div>
           ${this.exercisePickerVisible ? `<div class="inline-form"><label>Select exercise<select name="exercise-library" size="5">${exerciseOptions}</select></label><button type="button" data-action="add-selected">Add selected · Auswahl hinzufügen</button></div>` : ''}
@@ -476,7 +487,35 @@ export class HomeWorkoutApp {
       const fallback = exercise.translations.en ?? exercise.translations.de ?? Object.values(exercise.translations)[0]!;
       for (const language of this.draft.languages) exercise.translations[language.code] ||= { name: fallback.name, instructions: fallback.instructions };
     }
-    return validateWorkoutPlan(structuredClone(this.draft));
+    const plan = validateWorkoutPlan(structuredClone(this.draft));
+    const pendingReview = Object.entries(plan.translationMetadata ?? {}).find(([, metadata]) => metadata.reviewStatus === 'needs-review');
+    if (pendingReview) {
+      const label = plan.languages.find(({ code }) => code === pendingReview[0])?.label ?? pendingReview[0];
+      throw new Error(`Review and confirm the machine translation for ${label} before saving or starting.`);
+    }
+    return plan;
+  }
+
+  private async preTranslateDraft(): Promise<void> {
+    this.syncDraftFromForm();
+    const sourceLanguage = this.root.querySelector<HTMLSelectElement>('[name="translation-source"]')?.value ?? '';
+    const targetLanguage = this.root.querySelector<HTMLSelectElement>('[name="translation-target"]')?.value ?? '';
+    const consent = this.root.querySelector<HTMLInputElement>('[name="translation-consent"]')?.checked ?? false;
+    if (!consent) { this.notice = 'Confirm that the selected plan text may be sent to Cloudflare.'; this.renderEditor(); return; }
+    if (!sourceLanguage || !targetLanguage || sourceLanguage === targetLanguage) { this.notice = 'Choose two different languages for translation.'; this.renderEditor(); return; }
+    this.translationBusy = true;
+    this.notice = 'Translating draft… Existing target text will be replaced.';
+    this.renderEditor();
+    try {
+      this.draft = await translatePlanDraft(this.draft, sourceLanguage, targetLanguage);
+      const label = this.draft.languages.find(({ code }) => code === targetLanguage)?.label ?? targetLanguage;
+      this.notice = `${label} was pre-translated. Review every field and confirm the review before saving.`;
+    } catch (error) {
+      this.notice = error instanceof Error ? error.message : 'Automatic translation is currently unavailable.';
+    } finally {
+      this.translationBusy = false;
+      this.renderEditor();
+    }
   }
 
   private bindEditor(): void {
@@ -489,6 +528,18 @@ export class HomeWorkoutApp {
       this.draft.languages.push({ code, label }); this.draft.name[code] = this.draft.name.en || label;
       if (this.draft.displayLanguages.length < 2) this.draft.displayLanguages.push(code);
       this.languageFormVisible = false; this.notice = `${label} added.`; this.renderEditor();
+    });
+    this.root.querySelector('[data-action="translate-plan"]')?.addEventListener('click', () => { void this.preTranslateDraft(); });
+    for (const checkbox of this.root.querySelectorAll<HTMLInputElement>('[data-review-translation]')) checkbox.addEventListener('change', () => {
+      this.syncDraftFromForm();
+      const code = checkbox.dataset.reviewTranslation;
+      const metadata = code ? this.draft.translationMetadata?.[code] : undefined;
+      if (!metadata) return;
+      metadata.reviewStatus = checkbox.checked ? 'reviewed' : 'needs-review';
+      const label = this.draft.languages.find((language) => language.code === code)?.label ?? code;
+      this.notice = checkbox.checked ? `${label} translation marked as reviewed.` : `${label} translation requires review.`;
+      const notice = this.root.querySelector<HTMLElement>('.notice');
+      if (notice) notice.textContent = this.notice;
     });
     for (const checkbox of this.root.querySelectorAll<HTMLInputElement>('[data-display-language]')) checkbox.addEventListener('change', () => {
       const selected = [...this.root.querySelectorAll<HTMLInputElement>('[data-display-language]:checked')].map((item) => item.dataset.displayLanguage!).slice(0, 2);

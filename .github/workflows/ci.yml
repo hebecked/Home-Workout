@@ -2,8 +2,11 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, "codex/**"]
   pull_request:
+
+permissions:
+  contents: read
 
 jobs:
   quality:
@@ -23,6 +26,11 @@ jobs:
       - run: npx playwright install --with-deps
       - run: npm run build
       - run: npm run e2e
+      - uses: actions/upload-artifact@v4
+        with:
+          name: production-dist
+          path: dist
+          retention-days: 3
 
   mutation:
     runs-on: ubuntu-latest

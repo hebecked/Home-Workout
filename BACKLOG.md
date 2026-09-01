@@ -24,7 +24,7 @@ This file is the durable hand-off for work that must not exist only in an AI con
 - [x] Make the AI workout-plan instructions fully English instead of mixing an English heading with German paragraphs.
 - [x] Allow plan and exercise names/instructions to be entered as free text for every added language. Automatic online translation remains optional future work so the offline/private editor does not silently invent fitness instructions.
 - [x] Mark the workout variant selector explicitly as **easier alternatives** and explain that the original movement remains selectable.
-- [ ] Consider optional automatic translation only with explicit user consent, visible source/quality status, and manual review before saving.
+- [x] Add optional Cloudflare Workers AI pre-translation with explicit user consent, visible source/provider/review status, request limits, and mandatory manual review before saving, exporting, or starting.
 
 ## Priority 2 — phase-aware workout model
 

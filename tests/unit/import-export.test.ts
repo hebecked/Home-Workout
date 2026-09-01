@@ -61,6 +61,15 @@ describe('plan JSON import and export', () => {
 
   it('round-trips every supported field losslessly', () => {
     const original = makeMultilingualPlan();
+    original.translationMetadata = {
+      hi: {
+        sourceLanguage: 'fr',
+        origin: 'machine',
+        reviewStatus: 'reviewed',
+        provider: 'cloudflare-m2m100-1.2b',
+        translatedAt: '2026-09-01T12:00:00.000Z'
+      }
+    };
 
     const exported = exportPlanJson(original);
     const imported = importPlanJson(exported);

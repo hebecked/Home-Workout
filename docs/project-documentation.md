@@ -55,10 +55,21 @@ Plan Studio supports:
 - exercise ordering and removal;
 - repetition range, per-side, and duration target editing;
 - local save, start, and JSON export.
+- optional consent-based Cloudflare pre-translation with explicit source/target selection and mandatory review before save, export, or start.
 
 The plan library adds explicit duplicate and confirmed-delete actions for local plans. These actions are never shown for bundled routines.
 
 Imported JSON and AI links go through the same strict version-1 validator before preview, save, or start. Unknown properties, unsafe text, invalid languages, impossible targets, unsupported schema versions, and oversized/invalid URL payloads are rejected.
+
+Schema version 1 remains backward compatible: `translationMetadata` is optional. When present, it records the source language, machine origin, provider, UTC timestamp, and `needs-review` or `reviewed` status for a translated target language. Old plans without this property remain valid and round-trip unchanged.
+
+## Optional automatic translation
+
+The editor sends only the selected plan name and exercise names/instructions to the same-origin `/api/translate` endpoint after explicit consent. The Pages Function validates the request, enforces per-item and total-size limits, applies a best-effort per-client rate limit, and calls Cloudflare Workers AI model `@cf/meta/m2m100-1.2b` through the `AI` binding. It returns no-cache JSON and does not persist request or response text.
+
+Translations are drafts, not trusted fitness guidance. The editor displays the source, provider, and review status and blocks save/start/export while a machine translation remains `needs-review`. A failure leaves the existing draft untouched. Manual multilingual editing continues to work offline.
+
+`public/_routes.json` limits Function invocation to `/api/*`, so navigation and static assets do not consume the Workers request allowance. `wrangler.jsonc` is the production source of truth for the Pages output directory and AI binding.
 
 ## AI-generated plans
 
@@ -89,6 +100,8 @@ The proposed schema-v2 phase model is documented in `docs/phased-workout-proposa
 - `src/ui/app.ts`: hash routing, rendering, event binding, editor, plan library, imports, instructions, and workout UI.
 - `src/data/default-workout.ts`: permanent bundled routine catalogue.
 - `src/data/exercises.ts`: exercise metadata, translations, targets, variants, and illustration paths.
+- `src/core/translation.ts`: translation request/response validation, batching, immutable draft application, and review metadata.
+- `functions/api/translate.ts`: same-origin Cloudflare Workers AI translation endpoint.
 - `src/core/plan-schema.ts`: strict runtime validator and plan types.
 - `src/core/plan-io.ts`: JSON and base64url import/export.
 - `src/core/persistence.ts`: local plan and active-session persistence.

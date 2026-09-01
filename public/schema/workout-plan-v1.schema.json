@@ -20,6 +20,21 @@
     "rounds": { "type": "integer", "minimum": 1 },
     "restBetweenExercises": { "type": "number", "minimum": 0 },
     "restBetweenRounds": { "type": "number", "minimum": 0 },
+    "translationMetadata": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["sourceLanguage", "origin", "reviewStatus", "provider", "translatedAt"],
+        "properties": {
+          "sourceLanguage": { "type": "string" },
+          "origin": { "const": "machine" },
+          "reviewStatus": { "enum": ["needs-review", "reviewed"] },
+          "provider": { "type": "string", "minLength": 1 },
+          "translatedAt": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
     "exercises": {
       "type": "array", "minItems": 1,
       "items": {

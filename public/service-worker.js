@@ -1,6 +1,6 @@
 /* global Response */
 
-const CACHE = 'home-workout-v13';
+const CACHE = 'home-workout-v14';
 const APP_SHELL = ['/manifest.webmanifest', '/icon.svg', '/maskable-icon.svg', '/ai-workout-guide.txt'];
 
 self.addEventListener('install', (event) => {

@@ -26,6 +26,23 @@ describe('validateWorkoutPlan', () => {
     expect(validateWorkoutPlan(plan).displayLanguages).toEqual(['es-MX']);
   });
 
+  it('accepts reviewed or pending machine-translation provenance without requiring it on old plans', () => {
+    const plan = clonePlan();
+    plan.translationMetadata = {
+      hi: {
+        sourceLanguage: 'fr',
+        origin: 'machine',
+        reviewStatus: 'needs-review',
+        provider: 'cloudflare-m2m100-1.2b',
+        translatedAt: '2026-09-01T12:00:00.000Z'
+      }
+    };
+
+    expect(validateWorkoutPlan(plan)).toStrictEqual(plan);
+    plan.translationMetadata.hi!.reviewStatus = 'reviewed';
+    expect(validateWorkoutPlan(plan)).toStrictEqual(plan);
+  });
+
   it.each([
     ['unknown schema', (plan: ReturnType<typeof clonePlan>) => { plan.schemaVersion = 99; }],
     ['zero rounds', (plan: ReturnType<typeof clonePlan>) => { plan.rounds = 0; }],
@@ -53,6 +70,9 @@ describe('validateWorkoutPlan', () => {
     }],
     ['markup in user-facing text', (plan: ReturnType<typeof clonePlan>) => {
       plan.exercises[0]!.translations.fr!.instructions = '<img src=x onerror=alert(1)>';
+    }],
+    ['translation metadata for an unknown language', (plan: ReturnType<typeof clonePlan>) => {
+      plan.translationMetadata = { es: { sourceLanguage: 'fr', origin: 'machine', reviewStatus: 'reviewed', provider: 'cloudflare', translatedAt: '2026-09-01T12:00:00.000Z' } };
     }]
   ])('rejects %s with useful issue paths', (_label, mutate) => {
     const plan = clonePlan();

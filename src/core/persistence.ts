@@ -1,4 +1,4 @@
-import { validateWorkoutPlan, type WorkoutPlan } from './plan-schema';
+import { assertMachineTranslationsReviewed, validateWorkoutPlan, type WorkoutPlan } from './plan-schema';
 import type { WorkoutSession } from './workout-engine';
 
 const PLANS_KEY = 'home-workout:plans';
@@ -27,6 +27,7 @@ export function loadPlans(storage: Storage): WorkoutPlan[] {
 
 export function savePlan(storage: Storage, plan: WorkoutPlan): void {
   validateWorkoutPlan(plan);
+  assertMachineTranslationsReviewed(plan);
   const plans = loadPlans(storage);
   const index = plans.findIndex(({ id }) => id === plan.id);
   const next = structuredClone(plans);

@@ -100,6 +100,10 @@ Plans use strict `schemaVersion: 1`. The machine-readable schema is at [`public/
 
 German (`de`) and English (`en`) ship with the app. Plans may use any supported BCP-47-style code and a free-form display label. After adding a language, the Plan Studio exposes editable plan names plus exercise names and instructions for that language. German is not a required base language. One or two configured languages can be displayed in caller-defined order.
 
+Plan Studio also offers optional Cloudflare Workers AI pre-translation. It runs only after an explicit consent checkbox, replaces only the selected target language, and marks the result as machine translated with its source, provider, timestamp, and review state. A generated translation cannot be saved, exported, or started until the user confirms review. Manual editing and all existing offline plan functionality remain available without the online service.
+
+Only `/api/*` invokes a Pages Function; `public/_routes.json` keeps the rest of the site on unlimited static Pages delivery. The production AI binding is declared as `AI` in `wrangler.jsonc`. Translation requests are same-origin, size limited, best-effort rate limited, never cached, and are not stored by this application.
+
 ## Exercise library
 
 The library contains 51 stable records across legs, push, pull, core, cardio, full body, warm-up, and stretching. It includes Shadowboxing, Sumo Squat Hold, Scapular Push-up, Active Recovery, dynamic warm-ups, upper-body mobility, and yoga-derived stretches. Every record contains equipment, difficulty, type, target, movement-specific DE/EN copy, variant IDs, and a local SVG. Moving poses are overlaid at one body scale; static holds and stretches use one figure without a misleading direction arrow. Plan Studio groups the picker by bilingual category and sorts each group alphabetically. Run `node scripts/generate-exercise-assets.mjs` to regenerate illustrations. Source assignment and independent text/pose sign-off are tracked per exercise in [`docs/exercise-audit.md`](docs/exercise-audit.md).

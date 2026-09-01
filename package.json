@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "tsc --noEmit && vite build",
-    "deploy:cloudflare": "wrangler pages deploy dist --project-name home-workout",
+    "deploy:cloudflare": "wrangler pages deploy",
     "preview": "vite preview --host 0.0.0.0",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
