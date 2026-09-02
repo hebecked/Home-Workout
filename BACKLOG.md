@@ -28,6 +28,7 @@ This file is the durable hand-off for work that must not exist only in an AI con
 - [x] Add optional Cloudflare Workers AI pre-translation with explicit user consent, visible source/provider/review status, request limits, and mandatory manual review before saving, exporting, or starting.
 - [ ] Keep repetition targets and duration counters directly below the exercise image on all viewport sizes; audit the fixed workout menu/action bar so it cannot cover these values, and make the bar as compact as accessibility allows.
 - [ ] Investigate and harden failed CI `quality` workflow runs: identify the failing step from retained logs/artifacts, reproduce it locally or in CI, fix the underlying cause, and document how future failures are diagnosed. A successful mutation job alone must not be treated as a releasable build.
+- [ ] Add a small, easily reachable **Impressum** page or footer section with the responsible owner and legally required contact/provider information; keep it available in the installed PWA and offline shell.
 
 ## Priority 2 — phase-aware workout model
 
