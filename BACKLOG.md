@@ -17,6 +17,7 @@ This file is the durable hand-off for work that must not exist only in an AI con
 - [x] Redesign the **Pike Push-up** illustration with same-scale overlaid start/lowering poses, fixed hands and feet, and no implied sideways movement.
 - [x] Add sourced DE/EN entries and original local SVGs for **Shadowboxing**, **Sumo Squat Hold**, four dynamic warm-ups, and four post-workout stretches.
 - [x] Replace every generic exercise sentence with a concise, movement-specific DE/EN setup, action, and key form cue. The complete per-exercise source/pose audit remains open above.
+- [ ] Run a human review of every exercise illustration with a temporary sequential viewer: show one image at a time, provide a comment field, and allow **Confirm** or **Needs correction**. Iterate through all flagged images until every graphic is confirmed, then remove the review-only viewer.
 
 ## Priority 1 — multilingual editing and comprehension
 
@@ -25,6 +26,7 @@ This file is the durable hand-off for work that must not exist only in an AI con
 - [x] Allow plan and exercise names/instructions to be entered as free text for every added language. Automatic online translation remains optional future work so the offline/private editor does not silently invent fitness instructions.
 - [x] Mark the workout variant selector explicitly as **easier alternatives** and explain that the original movement remains selectable.
 - [x] Add optional Cloudflare Workers AI pre-translation with explicit user consent, visible source/provider/review status, request limits, and mandatory manual review before saving, exporting, or starting.
+- [ ] Keep repetition targets and duration counters directly below the exercise image on all viewport sizes; audit the fixed workout menu/action bar so it cannot cover these values, and make the bar as compact as accessibility allows.
 
 ## Priority 2 — phase-aware workout model
 
