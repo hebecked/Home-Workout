@@ -4,6 +4,17 @@ Last reviewed: 2026-09-01
 
 This file is the durable hand-off for work that must not exist only in an AI conversation. `docs/product-roadmap.md` contains the fuller product context; this file is the short operational checklist.
 
+## External app-testing findings — decisions pending
+
+The following findings come from `feedback-home-workout-debugging.md` (03.09.2026). They are **not accepted TODOs**. We will review them one by one and explicitly choose **Fix**, **fix differently**, or **ignore** before changing the product. The order is the order in which we will discuss them.
+
+1. **BUG-HW-004 · Automatic translation consent (high):** The `Pre-translate draft` button was reported enabled before the Cloudflare transfer-consent checkbox was selected. The decision must cover the disabled state, no-request guarantee, continued translation after consent, and preservation of existing manual translations. Report evidence: TC-HW-011/TC-HW-012, Chromium and WebKit.
+2. **BUG-HW-003 · Zero rounds accepted (high):** A locally saved plan was reported to accept `Rounds = 0`. The decision must cover client-side and schema validation, a clear error, and preventing invalid persistence while retaining values from `1` upward. Report evidence: TC-HW-018, Chromium and WebKit.
+3. **BUG-HW-001 · Start-page color contrast (high):** The external accessibility run reported serious WCAG 2 AA contrast failures for the brand mark, `START WORKOUT`, and category labels. The decision must cover normal, focus, hover, disabled, and workout states and a Chromium/WebKit recheck. Report evidence: TC-HW-021 and axe-core output.
+4. **BUG-HW-002 · Skip-link focus in WebKit (medium/high):** The first `Tab` reportedly did not focus `Zum Inhalt springen` in WebKit, although Chromium passed. The decision must cover first-focus order, visible focus, main-content focus after activation, and absence of a keyboard trap. Report evidence: TC-HW-022.
+
+The report also notes that Firefox could not start because of `spawn UNKNOWN`; this is currently a test-environment issue rather than an app finding. Firefox coverage should be considered separately after the local runner problem is resolved, and the four cases above plus the manual-translation regression case should be rerun after any chosen changes.
+
 ## Priority 0 — movement safety and correctness
 
 - [x] Correct **Burpee** to one readable phase with exactly two arms and two legs; avoid limb multiplication caused by overlaid multi-stage poses.
