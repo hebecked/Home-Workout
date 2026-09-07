@@ -124,8 +124,8 @@ select[size] { min-height: 180px; }
 .workout-exercise-heading { margin-bottom: .65rem; }
 .workout-exercise-heading h2 { margin: 0; font-size: clamp(1.15rem, 2.5vw, 2rem); line-height: 1.2; letter-spacing: -.025em; overflow-wrap: anywhere; }
 .workout-exercise-heading h2 + h2 { margin-top: .2rem; color: var(--muted); font-size: clamp(1rem, 2vw, 1.5rem); }
-.workout-exit { display: inline-flex; align-items: center; gap: .4rem; min-width: 44px; min-height: 44px; padding: .5rem .75rem; background: transparent; color: var(--muted); border-color: transparent; font-size: .8rem; }
-.workout-exit > span { font-size: 1.5rem; line-height: 1; }
+.workout-exit { display: inline-flex; align-items: center; gap: .4rem; min-width: 44px; min-height: 44px; padding: .5rem .75rem; background: var(--surface); color: var(--ink); border: 1px solid var(--muted); border-radius: 999px; font-size: .8rem; }
+.workout-exit > span { color: var(--danger); font-size: 1.5rem; font-weight: 850; line-height: 1; }
 .workout-exit:hover { color: var(--danger); border-color: var(--danger); }
 .legal-notice { max-width: 52rem; line-height: 1.6; padding-bottom: 2rem; }
 .legal-notice h2:not(:first-child) { margin-top: 2rem; }

@@ -301,7 +301,7 @@ for (const id of ids) {
       .replace('markerWidth="4.5" markerHeight="4.5"', 'markerWidth="8" markerHeight="8"')
       .replace('opacity=".55"', 'opacity="1"')
     : svg;
-  writeFileSync(resolve(directory, `${id}.svg`), rendered);
+  writeFileSync(resolve(directory, `${id}.svg`), id === 'burpee' ? rendered.replace('d="M42 210H278"', 'data-ground="separate-panels" d="M28 210H136 M184 210H292"') : rendered);
 }
 
 const expected = [...Object.values(groups)].flat();

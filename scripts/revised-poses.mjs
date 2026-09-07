@@ -61,7 +61,7 @@ export const revisedPoses = {
   'hollow-hold': pose(figure([99, 168], [116, 185], [168, 198], [[[79, 158], [45, 144]]], [[[213, 181], [256, 164]]], 'left'), figure([73, 193], [99, 197], [161, 197], [[[66, 197], [30, 197]]], [[[207, 197], [253, 197]]], 'left'), 'M55 185V156 M263 195V172'),
   'high-knees': pose(march(true), marchStart, 'M217 173V126'),
   'marching-in-place': pose(march(false), marchStart, 'M218 190V155'),
-  burpee: pose(panel(crouch, 0, 105, .49) + panel(jump, 160, 105, .49), panel(push(false), 0, 105, .49) + panel(push(true), 160, 105, .49), 'M146 169H174 M281 181V140', '<g fill="#18233a" font-family="sans-serif" font-size="13"><text x="52" y="78">1 → 2</text><text x="215" y="78">3 → 4</text></g>'),
+  burpee: pose(panel(crouch, 0, 105, .49) + panel(push(true), 160, 105, .49), panel(push(false), 0, 105, .49) + panel(jump, 160, 105, .49), 'M288 181V140', '<g data-phase-panels="stationary" fill="none" stroke="#bca5a3" stroke-width="1"><rect x="12" y="58" width="140" height="162" rx="14"/><rect x="168" y="58" width="140" height="162" rx="14"/></g><g font-family="sans-serif" font-size="20" font-weight="700" text-anchor="middle"><text x="65" y="88" fill="#18233a">1</text><text x="99" y="88" fill="hsl(4 42% 76%)">2</text><text x="225" y="88" fill="#18233a">3</text><text x="259" y="88" fill="hsl(4 42% 76%)">4</text></g>'),
   'squat-to-reach': pose(standing([[[132, 47], [111, 21]], [[188, 47], [209, 21]]]), squat(false), 'M82 154V81 M238 154V81'),
   superman: pose(prone(true)),
   'superman-dynamic': pose(prone(true), prone(false), 'M61 210V187 M271 195V171'),

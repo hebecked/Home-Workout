@@ -149,15 +149,16 @@ test('machine translation explains the transfer and requires explicit review bef
 test('illustration reviewer saves an empty comment as confirmation and text as a correction', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium-phone', 'Representative local-review journey');
   await page.goto('/#review');
-  await expect(page.getByRole('heading', { name: '1 / 6' })).toBeVisible();
-  await page.getByRole('button', { name: /next|weiter/i }).click();
-  await expect(page.getByRole('heading', { name: '2 / 6' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '1 / 1' })).toBeVisible();
   await page.getByLabel(/comment|kommentar/i).fill('Arm position needs a clearer cue.');
   await page.getByRole('button', { name: /next|weiter/i }).click();
   const reviews = await page.evaluate(() => JSON.parse(localStorage.getItem('home-workout:illustration-reviews') ?? '[]') as Array<{ status: string; comment: string }>);
-  expect(reviews).toHaveLength(2);
-  expect(reviews[0]).toMatchObject({ status: 'confirmed', comment: '' });
-  expect(reviews[1]).toMatchObject({ status: 'needs-correction', comment: 'Arm position needs a clearer cue.' });
+  expect(reviews).toHaveLength(1);
+  expect(reviews[0]).toMatchObject({ status: 'needs-correction', comment: 'Arm position needs a clearer cue.' });
+  await page.evaluate(() => localStorage.removeItem('home-workout:illustration-reviews'));
+  await page.reload();
+  await page.getByRole('button', { name: /next|weiter/i }).click();
+  await expect(page.getByRole('heading', { name: 'Review complete' })).toBeVisible();
 });
 
 test('editor rejects zero rounds without changing it to one', async ({ page }, testInfo) => {

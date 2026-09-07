@@ -2,7 +2,7 @@
 
 Last updated: 2026-09-07
 
-This checklist covers 52 exercise definitions. After the second owner review, 46 illustrations are accepted and six replacements await round-three approval. Automated checks do not constitute owner sign-off. See [review-round-3.md](review-round-3.md).
+This checklist covers 52 exercise definitions. After round three, 51 illustrations are accepted. Only Burpee awaits round-four approval; its colors, phase labels and stationary panels have been corrected. Earlier decisions are documented in [review-round-3.md](review-round-3.md).
 
 ## Corrections made during the completed audit
 
@@ -35,14 +35,14 @@ This checklist covers 52 exercise definitions. After the second owner review, 46
 | `pull-up` | Pull-up | [Cleveland Clinic — How to do Pull-ups](https://health.clevelandclinic.org/pull-ups) | Reviewed | Reviewed | 2026-09-01 |
 | `assisted-pull-up` | Assisted Pull-up | [ACE — Assisted Pull-up progression](https://www.acefitness.org/resources/pros/expert-articles/5565/4-moves-to-help-you-master-the-pull-up/) | Reviewed | Reviewed | 2026-09-01 |
 | `chin-up` | Chin-up | [ACE — Chin-up technique](https://www.acefitness.org/continuing-education/prosource/february-2016/5799/ace-technique-series-chin-ups/) | Reviewed | Reviewed | 2026-09-01 |
-| `resistance-band-row` | Resistance Band Row | [ACE — Resistance-band Rows](https://www.acefitness.org/resources/everyone/blog/6087/how-to-create-a-home-gym-on-a-tight-budget/) | Reviewed | Owner review pending | 2026-09-07 |
+| `resistance-band-row` | Resistance Band Row | [ACE — Resistance-band Rows](https://www.acefitness.org/resources/everyone/blog/6087/how-to-create-a-home-gym-on-a-tight-budget/) | Reviewed | Owner confirmed | 2026-09-07 |
 | `resistance-band-pull-apart` | Resistance Band Pull-apart | [ACE — Dynamic warm-up drills (PDF)](https://www.acefitness.org/certifiednews/images/article/pdfs/Dynamic.pdf) | Reviewed | Reviewed | 2026-09-01 |
-| `dead-bug` | Dead Bug | [ACE — Supine Dead Bug](https://www.acefitness.org/resources/everyone/exercise-library/147/supine-dead-bug/) | Reviewed | Owner review pending | 2026-09-07 |
+| `dead-bug` | Dead Bug | [ACE — Supine Dead Bug](https://www.acefitness.org/resources/everyone/exercise-library/147/supine-dead-bug/) | Reviewed | Owner confirmed | 2026-09-07 |
 | `lying-leg-raise` | Lying Leg Raises | [Oxford Health NHS — Core Strength (PDF)](https://oxfordhealth.nhs.uk/wp-content/uploads/sites/22/2023/10/Core-Strength.pdf) | Reviewed | Reviewed | 2026-09-01 |
 | `bird-dog` | Bird Dog | [ACE — Bird-dog](https://www.acefitness.org/resources/everyone/exercise-library/14/bird-dog/) | Reviewed | Reviewed | 2026-09-01 |
 | `plank` | Plank | [ACE — Front Plank](https://www.acefitness.org/resources/everyone/exercise-library/32/front-plank/) | Reviewed | Owner confirmed | 2026-09-07 |
 | `side-plank` | Side Plank | [ACE — Side Plank with Straight Leg](https://www.acefitness.org/resources/everyone/exercise-library/101/side-plank-with-straight-leg/) | Reviewed | Reviewed | 2026-09-01 |
-| `mountain-climber` | Mountain Climber | [ACE — Mountain Climbers](https://www.acefitness.org/resources/everyone/exercise-library/258/mountain-climbers/) | Reviewed | Owner review pending | 2026-09-07 |
+| `mountain-climber` | Mountain Climber | [ACE — Mountain Climbers](https://www.acefitness.org/resources/everyone/exercise-library/258/mountain-climbers/) | Reviewed | Owner confirmed | 2026-09-07 |
 | `hollow-hold` | Hollow Hold | [Connecticut Children's — Core Strengthening Program (PDF)](https://www.connecticutchildrens.org/sites/default/files/2024-01/core_strengthening_home_exercise_program.pdf) | Reviewed | Owner confirmed | 2026-09-07 |
 | `jumping-jack` | Jumping Jack | [ACE — Body-weight interval exercise table](https://www.acefitness.org/continuing-education/certified/september-2024/8711/body-weight-interval-training-equipment-free-and-highly-versatile/) | Reviewed | Reviewed | 2026-09-01 |
 | `step-jack` | Step Jack | [ACE — Body-weight interval exercise table](https://www.acefitness.org/continuing-education/certified/september-2024/8711/body-weight-interval-training-equipment-free-and-highly-versatile/) | Reviewed | Reviewed | 2026-09-01 |
@@ -60,12 +60,12 @@ This checklist covers 52 exercise definitions. After the second owner review, 46
 | `active-recovery` | Active Recovery | [Cleveland Clinic — Active Recovery](https://health.clevelandclinic.org/active-recovery) | Reviewed | Reviewed | 2026-09-01 |
 | `leg-swing` | Leg Swings | [Mayo Clinic Press — Dynamic stretching examples](https://mcpress.mayoclinic.org/nutrition-fitness/does-stretching-prevent-injuries/) | Reviewed | Owner confirmed | 2026-09-07 |
 | `calf-stretch` | Calf Stretch | [Mayo Clinic — Basic stretches](https://www.mayoclinic.org/healthy-lifestyle/fitness/in-depth/stretching/art-20546848) | Reviewed | Owner confirmed | 2026-09-07 |
-| `hamstring-stretch` | Hamstring Stretch | [NHS Plymouth — Hamstring stretch](https://www.plymouthhospitals.nhs.uk/display-pil/pil-paediatric-physiotherapy-exercises-5942/) | Reviewed | Owner review pending | 2026-09-07 |
+| `hamstring-stretch` | Hamstring Stretch | [NHS Plymouth — Hamstring stretch](https://www.plymouthhospitals.nhs.uk/display-pil/pil-paediatric-physiotherapy-exercises-5942/) | Reviewed | Owner confirmed | 2026-09-07 |
 | `quadriceps-stretch` | Quadriceps Stretch | [Mayo Clinic — Basic stretches](https://www.mayoclinic.org/healthy-lifestyle/fitness/in-depth/stretching/art-20546848) | Reviewed | Reviewed | 2026-09-01 |
 | `hip-flexor-stretch` | Hip Flexor Stretch | [Mayo Clinic — Basic stretches](https://www.mayoclinic.org/healthy-lifestyle/fitness/in-depth/stretching/art-20546848) | Reviewed | Owner confirmed | 2026-09-07 |
 | `shoulder-upper-back-stretch` | Shoulder and Upper Back Stretch | [Mayo Clinic — Upper-body stretches](https://www.mayoclinic.org/healthy-lifestyle/adult-health/multimedia/shoulder-stretches/vid-20084699) | Reviewed | Owner confirmed | 2026-09-07 |
 | `chest-stretch` | Chest Stretch | [Leicester Hospitals NHS — Chest stretch](https://yourhealth.leicestershospitals.nhs.uk/library/csi/therapies/physiotherapy/4419-exercises-to-help-manage-your-thoracic-outlet-syndrome-tos/file) | Reviewed | Owner confirmed | 2026-09-07 |
-| `child-pose` | Child's Pose | [ACE — Child's Pose](https://www.acefitness.org/resources/everyone/exercise-library/227/childs-pose/) | Reviewed | Owner review pending | 2026-09-07 |
+| `child-pose` | Child's Pose | [ACE — Child's Pose](https://www.acefitness.org/resources/everyone/exercise-library/227/childs-pose/) | Reviewed | Owner confirmed | 2026-09-07 |
 | `cat-cow` | Cat-Cow | [Mayo Clinic — Cat-cow Pose](https://www.mayoclinic.org/healthy-lifestyle/stress-management/multimedia/cat-cow-pose/vid-20453581) | Reviewed | Reviewed | 2026-09-01 |
 | `cobra-stretch` | Cobra Stretch | [ACE — Cobra](https://www.acefitness.org/resources/everyone/exercise-library/16/cobra/) | Reviewed | Owner confirmed | 2026-09-07 |
 | `yoga-bridge` | Yoga Bridge Hold | [Mayo Clinic — Core-strength Bridge](https://www.mayoclinic.org/healthy-lifestyle/fitness/in-depth/core-strength/art-20546851) | Reviewed | Owner confirmed | 2026-09-07 |
