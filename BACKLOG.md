@@ -8,6 +8,14 @@ This file is the durable hand-off for work that must not exist only in an AI con
 
 The following findings come from `feedback-home-workout-debugging.md` (03.09.2026). They are **not accepted TODOs**. We will review them one by one and explicitly choose **Fix**, **fix differently**, or **ignore** before changing the product. The order is the order in which we will discuss them.
 
+### Resolutions accepted 2026-09-07
+
+- [x] BUG-HW-004: remove the separate checkbox. The button copy now names Cloudflare, the data sent (plan name, exercise names, and instructions), the translation purpose, the replacement of target text, and the need to remove personal/confidential information and review output before saving.
+- [x] BUG-HW-003: preserve `0` through editor parsing, reject it in the shared schema validation, show a clear error, and prevent persistence.
+- [x] BUG-HW-001: replace the failing primary and category colours with WCAG 2 AA values. The former values and the rollback mapping are in `docs/accessibility-colors.md`.
+- [x] BUG-HW-002: render the skip link as the first focusable element and retain a focusable main-content target.
+- [ ] Rerun the four cases and manual-translation regression in Chromium and WebKit. Firefox remains a separate local-runner issue.
+
 1. **BUG-HW-004 · Automatic translation consent (high):** The `Pre-translate draft` button was reported enabled before the Cloudflare transfer-consent checkbox was selected. The decision must cover the disabled state, no-request guarantee, continued translation after consent, and preservation of existing manual translations. Report evidence: TC-HW-011/TC-HW-012, Chromium and WebKit.
 2. **BUG-HW-003 · Zero rounds accepted (high):** A locally saved plan was reported to accept `Rounds = 0`. The decision must cover client-side and schema validation, a clear error, and preventing invalid persistence while retaining values from `1` upward. Report evidence: TC-HW-018, Chromium and WebKit.
 3. **BUG-HW-001 · Start-page color contrast (high):** The external accessibility run reported serious WCAG 2 AA contrast failures for the brand mark, `START WORKOUT`, and category labels. The decision must cover normal, focus, hover, disabled, and workout states and a Chromium/WebKit recheck. Report evidence: TC-HW-021 and axe-core output.
@@ -37,9 +45,16 @@ The report also notes that Firefox could not start because of `spawn UNKNOWN`; t
 - [x] Allow plan and exercise names/instructions to be entered as free text for every added language. Automatic online translation remains optional future work so the offline/private editor does not silently invent fitness instructions.
 - [x] Mark the workout variant selector explicitly as **easier alternatives** and explain that the original movement remains selectable.
 - [x] Add optional Cloudflare Workers AI pre-translation with explicit user consent, visible source/provider/review status, request limits, and mandatory manual review before saving, exporting, or starting.
-- [ ] Keep repetition targets and duration counters directly below the exercise image on all viewport sizes; audit the fixed workout menu/action bar so it cannot cover these values, and make the bar as compact as accessibility allows.
-- [ ] Investigate and harden failed CI `quality` workflow runs: identify the failing step from retained logs/artifacts, reproduce it locally or in CI, fix the underlying cause, and document how future failures are diagnosed. A successful mutation job alone must not be treated as a releasable build.
-- [ ] Add a small, easily reachable **Impressum** page or footer section with the responsible owner and legally required contact/provider information; keep it available in the installed PWA and offline shell.
+- [x] Put repetition targets and duration counters directly below the image and compact the controls without dropping below 44px touch targets. Regression checks cover phone, tablet, desktop and 844×390 landscape layouts.
+- [x] Investigate historical `quality` failures and retain future diagnostics. The latest historical failure was the coverage step, already followed by a boundary-test fix and successful runs. Current local coverage passes unchanged 95% thresholds. See `docs/ci-quality.md` for evidence and limitations; a fresh remote run awaits an authorized push.
+- [x] Add a footer-linked **Impressum** with the owner-supplied name and address. Email omission relies on the stated private, non-economic character, not absence of data storage. Chromium offline reload passes. See `docs/review-round-2.md` for the legal scope.
+- [ ] Verify offline reload on Safari/device or Linux WebKit; Windows WebKit fails internally. Native Firefox also cannot launch on this workstation. These limitations are recorded, not counted as successful browser tests.
+
+### Illustration review, round 2 — 2026-09-07
+
+- [x] Revise all 33 owner-flagged SVGs; preserve the 18 confirmed images byte-for-byte. Add a separate Dynamic Superman exercise.
+- [x] Open only the 34 revised/new images in the second review queue; preserve revision-1 feedback, and save blank comments as confirmation.
+- [ ] Obtain owner approval for revision 2, apply any further feedback, and repeat. Agent checks are not owner acceptance.
 
 ## Priority 2 — phase-aware workout model
 

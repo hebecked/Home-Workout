@@ -61,7 +61,7 @@ describe('built-in exercise library', () => {
 
     expect(byId.get('assisted-pull-up')?.equipment).toEqual(['pull-up bar', 'resistance band']);
     expect(byId.get('wall-sit')?.equipment).toContain('wall or stable support');
-    expect(byId.get('hamstring-stretch')?.equipment).toContain('wall or stable support');
+    expect(byId.get('hamstring-stretch')?.equipment).toEqual(['none']);
     expect(byId.get('split-squat')?.defaultTarget).toMatchObject({ unit: 'per-side' });
     expect(byId.get('single-leg-glute-bridge')?.defaultTarget).toMatchObject({ unit: 'per-side' });
   });

@@ -11,15 +11,15 @@ function numericAttribute(element: string | undefined, attribute: string): numbe
 
 describe('exercise illustrations', () => {
   it('gives all 51 exercises a local pose and movement indicators only where movement is shown', () => {
-    expect(EXERCISE_LIBRARY).toHaveLength(51);
+    expect(EXERCISE_LIBRARY).toHaveLength(52);
     const singlePoseIds = new Set([
-      'side-plank', 'sumo-squat-hold', 'shoulder-roll', 'arm-circle', 'burpee',
-      'calf-stretch', 'hamstring-stretch', 'quadriceps-stretch', 'hip-flexor-stretch',
+      'side-plank', 'sumo-squat-hold', 'plank', 'superman', 'wall-sit',
+      'calf-stretch', 'hamstring-stretch', 'quadriceps-stretch',
       'shoulder-upper-back-stretch', 'chest-stretch', 'child-pose', 'cobra-stretch', 'yoga-bridge'
     ]);
     const staticIds = new Set([
-      'side-plank', 'sumo-squat-hold',
-      'calf-stretch', 'hamstring-stretch', 'quadriceps-stretch', 'hip-flexor-stretch',
+      'side-plank', 'sumo-squat-hold', 'plank', 'superman', 'wall-sit',
+      'calf-stretch', 'hamstring-stretch', 'quadriceps-stretch',
       'shoulder-upper-back-stretch', 'chest-stretch', 'child-pose', 'cobra-stretch', 'yoga-bridge'
     ]);
 
@@ -46,9 +46,9 @@ describe('exercise illustrations', () => {
       const marker = svg.match(/<marker\b[^>]*id=["']motion-arrow["'][^>]*>/i)?.[0];
       expect.soft(marker, `${exerciseId} defines #motion-arrow`).toBeDefined();
       expect.soft(numericAttribute(marker, 'markerWidth'), `${exerciseId} markerWidth`).toBeGreaterThan(0);
-      expect.soft(numericAttribute(marker, 'markerWidth'), `${exerciseId} markerWidth`).toBeLessThanOrEqual(5);
+      expect.soft(numericAttribute(marker, 'markerWidth'), `${exerciseId} markerWidth`).toBeLessThanOrEqual(8);
       expect.soft(numericAttribute(marker, 'markerHeight'), `${exerciseId} markerHeight`).toBeGreaterThan(0);
-      expect.soft(numericAttribute(marker, 'markerHeight'), `${exerciseId} markerHeight`).toBeLessThanOrEqual(5);
+      expect.soft(numericAttribute(marker, 'markerHeight'), `${exerciseId} markerHeight`).toBeLessThanOrEqual(8);
 
       const movement = svg.match(
         /<(?:path|line|polyline)\b[^>]*marker-end=["']url\(#motion-arrow\)["'][^>]*>/i

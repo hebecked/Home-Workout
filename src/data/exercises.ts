@@ -50,6 +50,7 @@ const seeds: Seed[] = [
   ['burpee', 'full-body', 'Burpee', 'Burpee', 'advanced', 'repetitions', ['squat-to-reach'], []],
   ['squat-to-reach', 'full-body', 'Kniebeuge mit Strecken', 'Squat to Reach', 'beginner', 'repetitions', ['squat'], ['burpee']],
   ['superman', 'core', 'Superman', 'Superman', 'beginner', 'duration', ['bird-dog'], ['hollow-hold']],
+  ['superman-dynamic', 'core', 'Superman dynamisch', 'Dynamic Superman', 'beginner', 'repetitions', ['bird-dog'], []],
   ['triceps-dip', 'push', 'Trizeps-Dip', 'Triceps Dip', 'intermediate', 'repetitions', ['incline-push-up'], ['pike-push-up']],
   ['heel-dig', 'warm-up', 'Fersen-Tippen', 'Heel Digs', 'beginner', 'duration', ['marching-in-place'], ['high-knees']],
   ['shoulder-roll', 'warm-up', 'Schulterkreisen', 'Shoulder Rolls', 'beginner', 'duration', [], []],
@@ -70,7 +71,7 @@ const seeds: Seed[] = [
 
 const bandExercises = new Set(['resistance-band-row', 'resistance-band-pull-apart']);
 const barExercises = new Set(['pull-up', 'chin-up']);
-const supportExercises = new Set(['wall-sit', 'leg-swing', 'calf-stretch', 'hamstring-stretch', 'quadriceps-stretch']);
+const supportExercises = new Set(['wall-sit', 'leg-swing', 'calf-stretch', 'quadriceps-stretch', 'chest-stretch']);
 const perSideExercises = new Set(['reverse-lunge', 'forward-lunge', 'split-squat', 'single-leg-glute-bridge', 'bird-dog', 'dead-bug']);
 const detailedInstructions: Record<string, Record<'de' | 'en', string>> = {
   squat: {
@@ -210,6 +211,10 @@ const detailedInstructions: Record<string, Record<'de' | 'en', string>> = {
     en: 'Lower into a squat by bending hips and knees. Press up to standing and reach both arms overhead, then lower your arms and begin the next squat.'
   },
   superman: {
+    de: 'Lege dich auf den Bauch, strecke die Arme nach vorn und spanne den Bauch an. Hebe Arme, Brust und Beine leicht an und halte die Position für die angezeigte Zeit bei ruhiger Atmung. Halte den Nacken lang und senke am Ende kontrolliert ab. Für wiederholtes Heben und Senken wähle Superman dynamisch.',
+    en: 'Lie face down with your arms extended overhead and brace your abdomen. Lift arms, chest and legs slightly and hold for the displayed time while breathing steadily. Keep your neck long and lower with control at the end. Choose Dynamic Superman for repeated lifting and lowering.'
+  },
+  'superman-dynamic': {
     de: 'Lege dich auf den Bauch und spanne den Bauch an. Hebe Arme, Brust und Beine nur so weit wie bequem vom Boden, halte Nacken und Wirbelsäule neutral und senke kontrolliert ab.',
     en: 'Lie face down and brace your abdomen. Lift arms, chest, and legs only as far as comfortable, keep neck and spine neutral, then lower with control.'
   },
@@ -242,8 +247,8 @@ const detailedInstructions: Record<string, Record<'de' | 'en', string>> = {
     en: 'Place your hands on a wall and step one foot behind the other. Bend the front knee while keeping the back leg straight and its heel on the floor. Gently move your hips forward, hold without bouncing, and change sides halfway through.'
   },
   'hamstring-stretch': {
-    de: 'Lege dich nahe einer Wand auf den Rücken und stütze eine Ferse mit leicht gebeugtem Knie an der Wand ab. Strecke das Knie nur so weit, bis du einen sanften Zug an der Oberschenkelrückseite spürst. Halte und wechsle nach der Hälfte die Seite.',
-    en: 'Lie on your back near a wall and rest one heel against it with the knee slightly bent. Straighten the knee only until you feel a gentle pull along the back of the thigh. Hold and change sides halfway through.'
+    de: 'Setze dich auf den Boden und strecke ein Bein nach vorn; die Zehen zeigen nach oben. Winkle das andere Bein seitlich an. Neige den Oberkörper mit langem Rücken aus der Hüfte zum gestreckten Bein, bis du einen sanften Zug an der Oberschenkelrückseite spürst. Die Hände müssen den Fuß nicht erreichen. Halte ohne Wippen und wechsle nach der Hälfte der Zeit die Seite.',
+    en: 'Sit on the floor with one leg extended in front, toes pointing up. Bend the other leg out to the side. Hinge forward from your hips with a long back until you feel a gentle stretch behind the extended thigh. You do not need to reach your foot. Hold without bouncing and change sides halfway through.'
   },
   'quadriceps-stretch': {
     de: 'Stehe neben einer Wand und halte dich leicht fest. Greife einen Knöchel und führe die Ferse sanft Richtung Gesäß; die Knie bleiben nah beieinander und der Bauch ist leicht angespannt. Halte ohne ins Hohlkreuz zu fallen und wechsle nach der Hälfte die Seite.',
@@ -258,8 +263,8 @@ const detailedInstructions: Record<string, Record<'de' | 'en', string>> = {
     en: 'Stand or sit tall and bring one arm across your chest at shoulder height. Support it below the elbow with the other hand and gently draw it closer without rotating your torso. Keep the shoulder down and change sides halfway through.'
   },
   'chest-stretch': {
-    de: 'Stehe oder sitze aufrecht und lege die Hände locker hinter den Kopf. Führe die gebeugten Ellenbogen sanft nach hinten und ziehe die Schulterblätter leicht zusammen, bis du einen angenehmen Zug in der Brust spürst. Halte den unteren Rücken neutral und atme frei.',
-    en: 'Stand or sit tall and place your hands lightly behind your head. Gently draw the bent elbows backward and bring the shoulder blades slightly together until you feel a comfortable chest stretch. Keep your lower back neutral and breathe freely.'
+    de: 'Stelle dich seitlich neben eine Wand oder einen Türrahmen. Lege einen Unterarm mit gebeugtem Ellenbogen etwa auf Schulterhöhe an. Drehe den Oberkörper sanft von der Wand weg, bis du einen angenehmen Zug in der Brust spürst. Halte ohne Wippen und wechsle nach der Hälfte der Zeit die Seite.',
+    en: 'Stand beside a wall or door frame. Rest one forearm against it with the elbow bent around shoulder height. Gently turn your torso away until you feel a comfortable chest stretch. Hold without bouncing and change sides halfway through.'
   },
   'child-pose': {
     de: 'Knie dich hin, setze das Gesäß Richtung Fersen und lege den Oberkörper zwischen oder auf die Oberschenkel. Strecke die Arme nach vorn oder lege sie entspannt neben den Körper und stütze die Stirn bei Bedarf erhöht ab. Atme langsam und bleibe nur in einem angenehmen Bereich.',

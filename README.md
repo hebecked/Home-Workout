@@ -19,7 +19,7 @@ Home Workout makes a structured routine easy to follow without an account, backe
 - A routine picker plus an immutable-default model: bundled routines cannot be overwritten, while local plans are stored separately
 - Visual plan editor with editable exercise targets, editable local plans, safe copies of bundled routines, duplicate/delete actions, custom exercises, local save, JSON import/export, and strict validation
 - Validated AI-plan launch links plus a public machine-readable guide for ChatGPT and other assistants
-- 51 extensible exercises with movement-specific original local SVG illustrations, including dedicated warm-up and stretching categories
+- 52 extensible exercises with movement-specific original local SVG illustrations, including dedicated warm-up and stretching categories
 - Per-round `Exercise X / Y` progress and a visible easier-alternative chooser during workouts
 - A clear, confirmed workout-abort action; the Home Workout brand uses the same safe return-to-home flow
 - Stable workout controls and automatic timers without a manual repetition tap counter
@@ -100,13 +100,13 @@ Plans use strict `schemaVersion: 1`. The machine-readable schema is at [`public/
 
 German (`de`) and English (`en`) ship with the app. Plans may use any supported BCP-47-style code and a free-form display label. After adding a language, the Plan Studio exposes editable plan names plus exercise names and instructions for that language. German is not a required base language. One or two configured languages can be displayed in caller-defined order.
 
-Plan Studio also offers optional Cloudflare Workers AI pre-translation. It runs only after an explicit consent checkbox, replaces only the selected target language, and marks the result as machine translated with its source, provider, timestamp, and review state. A generated translation cannot be saved, exported, or started until the user confirms review. Manual editing and all existing offline plan functionality remain available without the online service.
+Plan Studio also offers optional Cloudflare Workers AI pre-translation. It runs only after clicking Translate, with an adjacent notice explaining the transfer to Cloudflare, replaces only the selected target language, and marks the result as machine translated with its source, provider, timestamp, and review state. A generated translation cannot be saved, exported, or started until the user confirms review. Manual editing and all existing offline plan functionality remain available without the online service.
 
 Only `/api/*` invokes a Pages Function; `public/_routes.json` keeps the rest of the site on unlimited static Pages delivery. The production AI binding is declared as `AI` in `wrangler.jsonc`. Translation requests are same-origin, size limited, best-effort rate limited, never cached, and are not stored by this application.
 
 ## Exercise library
 
-The library contains 51 stable records across legs, push, pull, core, cardio, full body, warm-up, and stretching. It includes Shadowboxing, Sumo Squat Hold, Scapular Push-up, Active Recovery, dynamic warm-ups, upper-body mobility, and yoga-derived stretches. Every record contains equipment, difficulty, type, target, movement-specific DE/EN copy, variant IDs, and a local SVG. Moving poses are overlaid at one body scale; static holds and stretches use one figure without a misleading direction arrow. Plan Studio groups the picker by bilingual category and sorts each group alphabetically. Run `node scripts/generate-exercise-assets.mjs` to regenerate illustrations. Source assignment and independent text/pose sign-off are tracked per exercise in [`docs/exercise-audit.md`](docs/exercise-audit.md).
+The library contains 52 stable records across legs, push, pull, core, cardio, full body, warm-up, and stretching. It includes Shadowboxing, Sumo Squat Hold, Scapular Push-up, Active Recovery, dynamic warm-ups, upper-body mobility, and yoga-derived stretches. Every record contains equipment, difficulty, type, target, movement-specific DE/EN copy, variant IDs, and a local SVG. Moving poses are overlaid at one body scale; static holds and stretches use one figure without a misleading direction arrow. Plan Studio groups the picker by bilingual category and sorts each group alphabetically. Run `node scripts/generate-exercise-assets.mjs` to regenerate illustrations. Source assignment and independent text/pose sign-off are tracked per exercise in [`docs/exercise-audit.md`](docs/exercise-audit.md).
 
 The future multi-phase plan format—warm-up, independently timed training blocks, and cool-down—is specified in [`docs/phased-workout-proposal.md`](docs/phased-workout-proposal.md). In that design, sequence repetitions are called **rounds / Runden**, while **repetitions / Wiederholungen** remain the count for a single movement.
 

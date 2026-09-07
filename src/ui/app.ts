@@ -5,6 +5,7 @@ import {
   isBuiltInWorkout
 } from '../data/default-workout';
 import { EXERCISE_LIBRARY, EXERCISES_BY_ID } from '../data/exercises';
+import { illustrationRevision, CURRENT_REVIEW_ILLUSTRATIONS, REVIEW_ROUND } from '../data/illustration-revisions';
 import { exportPlanJson, importPlanJson, importPlanUrlPayload } from '../core/plan-io';
 import { clearWorkoutSession, deletePlan, loadPlans, loadWorkoutSession, savePlan, saveWorkoutSession } from '../core/persistence';
 import { validateWorkoutPlan, type WorkoutPlan } from '../core/plan-schema';
@@ -19,6 +20,14 @@ const formatClock = (milliseconds: number): string => {
 };
 const cloneDefault = (): WorkoutPlan => structuredClone(DEFAULT_WORKOUT);
 const createPlanId = (): string => `plan-${Date.now()}-${crypto.randomUUID()}`;
+const ILLUSTRATION_REVIEWS_KEY = 'home-workout:illustration-reviews';
+type IllustrationReview = {
+  exerciseId: string;
+  comment: string;
+  status: 'confirmed' | 'needs-correction';
+  reviewedAt: string;
+  revision?: number;
+};
 const createEmptyDraft = (): WorkoutPlan => ({
   ...cloneDefault(), id: createPlanId(), name: { de: 'Mein Trainingsplan', en: '' }, rounds: 1, exercises: []
 });
@@ -55,6 +64,7 @@ export class HomeWorkoutApp {
   private activePlan: WorkoutPlan = cloneDefault();
   private session: WorkoutSession | null = null;
   private draft: WorkoutPlan = createEmptyDraft();
+  private illustrationReviewIndex = 0;
   private editorMode: 'create' | 'edit' | 'copy' = 'create';
   private tickHandle: number | null = null;
   private languageFormVisible = false;
@@ -67,7 +77,11 @@ export class HomeWorkoutApp {
   constructor(private readonly root: HTMLElement) {}
 
   start(): void {
-    window.addEventListener('hashchange', () => this.render());
+    document.querySelector<HTMLAnchorElement>('.skip-link')?.addEventListener('click', (event) => {
+      event.preventDefault();
+      document.querySelector<HTMLElement>('#main')?.focus();
+    });
+    window.addEventListener('hashchange', () => { this.render(); window.scrollTo({ top: 0, left: 0, behavior: 'instant' }); });
     this.session = loadWorkoutSession(localStorage);
     if (this.session) this.activePlan = this.findPlan(this.session.planId) ?? cloneDefault();
     const linkedPlanLoaded = this.loadLinkedPlan();
@@ -126,10 +140,10 @@ export class HomeWorkoutApp {
     this.root.innerHTML = `
       <header class="site-header">
         <a href="#home" class="brand" aria-label="Home Workout"><span class="brand-mark">HW</span><span>Home Workout</span></a>
-        <nav aria-label="Primary"><a href="#instructions" aria-label="Workout guide">Instructions</a><a href="#plans" aria-label="${savedPlansLabel}">My Plans</a></nav>
+        ${this.route() === 'workout' && this.session?.phase !== 'completed' ? '<button class="workout-exit" data-action="abort" aria-label="End workout · Training beenden"><span aria-hidden="true">×</span> Beenden</button>' : `<nav aria-label="Primary"><a href="#instructions" aria-label="Workout guide">Instructions</a><a href="#plans" aria-label="${savedPlansLabel}">My Plans</a><a href="#review" aria-label="Illustration review">Review</a></nav>`}
       </header>
       <main id="main" tabindex="-1">${content}</main>
-      <footer><span>Private by design · Offline ready</span><span>PolyForm Perimeter 1.0.0</span></footer>`;
+      <footer><span>Private by design · Offline ready</span><a href="#impressum">Impressum</a><span>PolyForm Perimeter 1.0.0</span></footer>`;
     this.root.querySelector<HTMLAnchorElement>('.brand')?.addEventListener('click', (event) => {
       if (this.route() !== 'workout' || !this.session) return;
       event.preventDefault();
@@ -148,6 +162,8 @@ export class HomeWorkoutApp {
     else if (route === 'import') this.renderImport();
     else if (route === 'plans') this.renderPlans();
     else if (route === 'instructions') this.renderInstructions();
+    else if (route === 'review') this.renderIllustrationReview();
+    else if (route === 'impressum') this.renderLegalNotice();
     else this.renderHome();
   }
 
@@ -320,11 +336,12 @@ export class HomeWorkoutApp {
       const copy = selectedExerciseId === exercise.exerciseId
         ? exercise.translations[code]
         : definition?.translations[code as 'de' | 'en'] ?? exercise.translations[code];
-      return copy ? `<div class="translation"><span>${escapeHtml(this.activePlan.languages.find((language) => language.code === code)?.label ?? code)}</span><h2>${escapeHtml(copy.name)}</h2><p>${escapeHtml(copy.instructions)}</p></div>` : '';
+      return copy ? `<div class="translation"><span>${escapeHtml(this.activePlan.languages.find((language) => language.code === code)?.label ?? code)}</span><p>${escapeHtml(copy.instructions)}</p></div>` : '';
     }).join('');
-    const imageName = languages.map((code) => selectedExerciseId === exercise.exerciseId
+    const displayNames = languages.map((code) => selectedExerciseId === exercise.exerciseId
       ? exercise.translations[code]?.name
-      : definition?.translations[code as 'de' | 'en']?.name ?? exercise.translations[code]?.name).filter(Boolean).join(' / ');
+      : definition?.translations[code as 'de' | 'en']?.name ?? exercise.translations[code]?.name).filter((name): name is string => Boolean(name));
+    const imageName = displayNames.join(' / ');
     const alternativeIds = [exercise.exerciseId, ...exercise.alternativeExerciseIds]
       .filter((id, index, ids) => ids.indexOf(id) === index && EXERCISES_BY_ID.has(id));
     const alternatives = !isRest && alternativeIds.length > 1 ? `<div class="alternative-chooser" aria-label="Easier alternatives · Leichtere Alternativen">
@@ -344,11 +361,11 @@ export class HomeWorkoutApp {
           <div class="phase-pill">${phaseLabel}${snapshot.paused ? ' · Paused · Pausiert' : ''}</div>
           ${snapshot.phase === 'completed' ? `<div class="completion"><p class="eyebrow">DONE</p><h1>Workout complete</h1><p>You made time to move. That is enough for today.</p><button class="primary" data-action="finish">Back home</button></div>` : `
             <div class="exercise-layout">
-              <div class="exercise-visual"><img src="${definition?.illustration ?? '/icon.svg'}" alt="${escapeHtml(imageName)}"></div>
+              <div class="exercise-visual-column"><div class="workout-exercise-heading">${displayNames.map(name => `<h2>${escapeHtml(name)}</h2>`).join('')}</div><div class="exercise-visual"><img src="${definition?.illustration ?? '/icon.svg'}?v=${illustrationRevision(selectedExerciseId)}" alt="${escapeHtml(imageName)}"></div>
+              <div class="target-block"><span>${isRest ? 'READY IN' : exercise.type === 'duration' ? 'TIME LEFT' : 'TARGET'}</span><strong ${isRest || exercise.type === 'duration' ? 'data-workout-countdown' : ''}>${isRest ? formatClock(snapshot.remainingMs ?? 0) : target}</strong></div></div>
               <div class="exercise-copy">${isRest ? `<p class="rest-label">Rest. Next starts automatically.</p>` : translations}</div>
             </div>
-            ${alternatives}
-            <div class="target-block"><span>${isRest ? 'READY IN' : exercise.type === 'duration' ? 'TIME LEFT' : 'TARGET'}</span><strong ${isRest || exercise.type === 'duration' ? 'data-workout-countdown' : ''}>${isRest ? formatClock(snapshot.remainingMs ?? 0) : target}</strong></div>`}
+            ${alternatives}`}
         </div>
         ${snapshot.phase === 'completed' ? '' : `
           <div class="workout-actions">
@@ -357,7 +374,6 @@ export class HomeWorkoutApp {
               <button class="pause" data-action="pause" aria-label="${snapshot.paused ? 'Resume · Fortsetzen' : 'Pause'}">${snapshot.paused ? '▶' : 'Ⅱ'}</button>
               <button data-action="next" aria-label="Next · Weiter"><span>Next</span> →</button>
             </div>
-            <button class="abort-workout" data-action="abort">Abort workout · Training beenden</button>
           </div>`}
       </section>`);
 
@@ -423,7 +439,7 @@ export class HomeWorkoutApp {
       const label = this.draft.languages.find((language) => language.code === code)?.label ?? code;
       return `<label class="translation-review"><input type="checkbox" data-review-translation="${escapeHtml(code)}" ${metadata.reviewStatus === 'reviewed' ? 'checked' : ''}><span><strong>${escapeHtml(label)}: machine translated</strong><small>Source: ${escapeHtml(metadata.sourceLanguage)} · Provider: ${escapeHtml(metadata.provider)} · ${metadata.reviewStatus === 'reviewed' ? 'Reviewed' : 'Review required before saving'}</small></span></label>`;
     }).join('');
-    const translationAssistant = this.draft.languages.length > 1 ? `<div class="translation-assistant"><div><p class="eyebrow">OPTIONAL ONLINE PRE-TRANSLATION</p><h3>Translate with Cloudflare AI</h3><p>This sends the selected source text to Cloudflare only after your consent. Existing target text will be replaced. Always review fitness instructions before saving.</p></div><div class="translation-controls"><label>Source language<select name="translation-source">${languageOptions(defaultSourceLanguage)}</select></label><label>Target language<select name="translation-target">${languageOptions(defaultTargetLanguage)}</select></label><label class="check translation-consent"><input type="checkbox" name="translation-consent"> I consent to sending these plan texts to Cloudflare for translation.</label><button type="button" class="secondary" data-action="translate-plan" ${this.translationBusy ? 'disabled' : ''}>${this.translationBusy ? 'Translating…' : 'Pre-translate draft'}</button></div>${translationReviews ? `<div class="translation-reviews">${translationReviews}</div>` : ''}</div>` : '';
+    const translationAssistant = this.draft.languages.length > 1 ? `<div class="translation-assistant"><div><p class="eyebrow">OPTIONAL ONLINE PRE-TRANSLATION</p><h3>Translate with Cloudflare AI</h3><p>When you click “Translate draft”, the plan name, exercise names and instructions in the source language are sent to Cloudflare, an external service provider, for machine translation. Remove personal or confidential information first. Existing text in the target language will be replaced. Check the translation before saving.</p></div><div class="translation-controls"><label>Source language<select name="translation-source">${languageOptions(defaultSourceLanguage)}</select></label><label>Target language<select name="translation-target">${languageOptions(defaultTargetLanguage)}</select></label><button type="button" class="secondary" data-action="translate-plan" ${this.translationBusy ? 'disabled' : ''}>${this.translationBusy ? 'Translating…' : 'Translate draft'}</button></div>${translationReviews ? `<div class="translation-reviews">${translationReviews}</div>` : ''}</div>` : '';
     this.shell(`
       <section class="page-heading"><p class="eyebrow">PLAN STUDIO</p><h1>${editorTitle}</h1><p>${editorIntro}</p></section>
       <form class="editor" data-editor>
@@ -456,7 +472,7 @@ export class HomeWorkoutApp {
     for (const language of this.draft.languages) {
       this.draft.name[language.code] = String(data.get(`name-${language.code}`) ?? '').trim();
     }
-    this.draft.rounds = Number(data.get('rounds')) || 1;
+    this.draft.rounds = Number(data.get('rounds'));
     this.draft.restBetweenExercises = Math.max(0, Number(data.get('rest-exercises')) || 0);
     this.draft.restBetweenRounds = Math.max(0, Number(data.get('rest-rounds')) || 0);
     this.draft.exercises = this.draft.exercises.map((exercise, index) => {
@@ -500,8 +516,6 @@ export class HomeWorkoutApp {
     this.syncDraftFromForm();
     const sourceLanguage = this.root.querySelector<HTMLSelectElement>('[name="translation-source"]')?.value ?? '';
     const targetLanguage = this.root.querySelector<HTMLSelectElement>('[name="translation-target"]')?.value ?? '';
-    const consent = this.root.querySelector<HTMLInputElement>('[name="translation-consent"]')?.checked ?? false;
-    if (!consent) { this.notice = 'Confirm that the selected plan text may be sent to Cloudflare.'; this.renderEditor(); return; }
     if (!sourceLanguage || !targetLanguage || sourceLanguage === targetLanguage) { this.notice = 'Choose two different languages for translation.'; this.renderEditor(); return; }
     this.translationBusy = true;
     this.notice = 'Translating draft… Existing target text will be replaced.';
@@ -565,7 +579,7 @@ export class HomeWorkoutApp {
       if (index < 0 || destination < 0 || destination >= this.draft.exercises.length) return;
       const [item] = this.draft.exercises.splice(index, 1); this.draft.exercises.splice(destination, 0, item!); this.renderEditor();
     });
-    const withPlan = (callback: (plan: WorkoutPlan) => void): void => { try { callback(this.normalizedDraft()); } catch (error) { this.notice = error instanceof Error ? error.message : 'Invalid plan'; this.renderEditor(); } };
+    const withPlan = (callback: (plan: WorkoutPlan) => void): void => { try { callback(this.normalizedDraft()); } catch (error) { this.notice = error instanceof Error && /rounds: must be a positive integer/.test(error.message) ? 'Rounds must be at least 1. · Runden müssen mindestens 1 sein.' : error instanceof Error ? error.message : 'Invalid plan'; this.renderEditor(); } };
     this.root.querySelector('[data-action="save-plan"]')?.addEventListener('click', () => withPlan((plan) => {
       savePlan(localStorage, plan);
       this.editorMode = 'edit';
@@ -646,6 +660,70 @@ export class HomeWorkoutApp {
       const button = event.currentTarget as HTMLButtonElement;
       void navigator.clipboard.writeText(guideUrl).then(() => { button.textContent = 'Copied'; }).catch(() => { window.prompt('Copy link', guideUrl); });
     });
+  }
+
+  private loadIllustrationReviews(): IllustrationReview[] {
+    try {
+      const stored = JSON.parse(localStorage.getItem(ILLUSTRATION_REVIEWS_KEY) ?? '[]') as unknown;
+      if (!Array.isArray(stored)) return [];
+      return stored.filter((entry): entry is IllustrationReview => Boolean(entry)
+        && typeof entry === 'object'
+        && typeof (entry as IllustrationReview).exerciseId === 'string'
+        && typeof (entry as IllustrationReview).comment === 'string'
+        && ((entry as IllustrationReview).status === 'confirmed' || (entry as IllustrationReview).status === 'needs-correction')
+        && typeof (entry as IllustrationReview).reviewedAt === 'string');
+    } catch {
+      return [];
+    }
+  }
+
+  private saveIllustrationReview(review: IllustrationReview): void {
+    const reviews = this.loadIllustrationReviews().filter((entry) => entry.exerciseId !== review.exerciseId || (entry.revision ?? 1) !== review.revision);
+    reviews.push(review);
+    localStorage.setItem(ILLUSTRATION_REVIEWS_KEY, JSON.stringify(reviews));
+  }
+
+  private renderIllustrationReview(): void {
+    const history = this.loadIllustrationReviews();
+    const library = EXERCISE_LIBRARY.filter(({ id }) => CURRENT_REVIEW_ILLUSTRATIONS.has(id));
+    const reviewsByExercise = new Map(history.filter(review => (review.revision ?? 1) === illustrationRevision(review.exerciseId)).map((review) => [review.exerciseId, review]));
+    const nextIndex = library.findIndex((exercise) => !reviewsByExercise.has(exercise.id));
+    if (nextIndex >= 0) this.illustrationReviewIndex = nextIndex;
+    const exercise = library[this.illustrationReviewIndex];
+    const completed = nextIndex === -1;
+    const corrections = library.flatMap(({ id }) => { const review = reviewsByExercise.get(id); return review?.status === 'needs-correction' ? [review] : []; });
+    if (completed || !exercise) {
+      this.shell(`<section class="page-heading"><p class="eyebrow">BILDABNAHME · RUNDE ${REVIEW_ROUND}</p><h1>Review complete</h1><p>${library.length} überarbeitete oder neue Bilder geprüft. ${corrections.length ? `${corrections.length} benötigen weitere Korrekturen.` : 'Alle Bilder dieser Runde sind abgenommen.'}</p></section><section class="illustration-review-summary"><h2>Gespeichertes Feedback</h2>${corrections.length ? `<ul>${corrections.map(({ exerciseId, comment }) => `<li><strong>${escapeHtml(EXERCISES_BY_ID.get(exerciseId)?.translations.en.name ?? exerciseId)}</strong><p>${escapeHtml(comment)}</p></li>`).join('')}</ul>` : '<p>Keine weiteren Korrekturen vermerkt.</p>'}<button type="button" data-action="download-illustration-feedback">Download feedback JSON</button></section>`);
+      this.root.querySelector<HTMLButtonElement>('[data-action="download-illustration-feedback"]')?.addEventListener('click', () => {
+        const blob = new Blob([JSON.stringify(this.loadIllustrationReviews(), null, 2)], { type: 'application/json' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob); link.download = 'home-workout-illustration-review.json'; link.click(); URL.revokeObjectURL(link.href);
+      });
+      return;
+    }
+    const previousReview = [...history].reverse().find(review => review.exerciseId === exercise.id && (review.revision ?? 1) < illustrationRevision(exercise.id));
+    const number = this.illustrationReviewIndex + 1;
+    this.shell(`<section class="illustration-reviewer"><div class="illustration-review-heading"><p class="eyebrow">BILDABNAHME · RUNDE ${REVIEW_ROUND}</p><h1>${number} / ${library.length}</h1><p>${escapeHtml(exercise.translations.en.name)} · ${escapeHtml(exercise.translations.de.name)}</p></div><img src="${escapeHtml(exercise.illustration)}?v=${illustrationRevision(exercise.id)}" alt="${escapeHtml(`${exercise.translations.en.name} · ${exercise.translations.de.name}`)}"><p>${escapeHtml(exercise.translations.de.instructions)}</p>${previousReview?.comment ? `<details><summary>Dein bisheriges Feedback</summary><p>${escapeHtml(previousReview.comment)}</p></details>` : ''}<form data-illustration-review><label>Comment · Kommentar<textarea name="illustration-comment" rows="5" placeholder="Leer lassen, wenn das Bild passt."></textarea></label><p class="review-hint">Weiter speichert deinen Kommentar. Ohne Kommentar ist das Bild abgenommen. Bisheriges Feedback bleibt erhalten.</p><p role="alert" data-review-error></p><button type="submit" class="primary">Next · Weiter</button></form></section>`);
+    this.root.querySelector<HTMLFormElement>('[data-illustration-review]')?.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      if (!(form instanceof HTMLFormElement)) return;
+      const comment = new FormData(form).get('illustration-comment');
+      const text = typeof comment === 'string' ? comment.trim() : '';
+      try {
+        this.saveIllustrationReview({ exerciseId: exercise.id, comment: text, status: text ? 'needs-correction' : 'confirmed', reviewedAt: new Date().toISOString(), revision: illustrationRevision(exercise.id) });
+      } catch {
+        const error = this.root.querySelector<HTMLElement>('[data-review-error]');
+        if (error) error.textContent = 'Speichern fehlgeschlagen. Dein Kommentar bleibt im Feld. Bitte aktiviere den Browserspeicher und versuche es erneut.';
+        return;
+      }
+      this.illustrationReviewIndex = Math.min(this.illustrationReviewIndex + 1, library.length - 1);
+      this.renderIllustrationReview();
+    });
+  }
+
+  private renderLegalNotice(): void {
+    this.shell(`<section class="page-heading"><p class="eyebrow">ANBIETERANGABEN</p><h1>Impressum</h1><p>Home Workout ist ein privates, nicht gewerbliches Projekt.</p></section><section class="instruction-list legal-notice"><h2>Anbieter</h2><address>Dr. Dustin Hebecker<br>[postal address removed]<br>[postal locality removed]<br>Deutschland</address><h2>Nutzung auf eigene Verantwortung</h2><p>Du entscheidest selbst, ob die Übungen und die gewählte Belastung für dich geeignet sind. Die App bietet allgemeine Trainingsanregungen und ersetzt keine medizinische Beratung oder persönliche Trainingsbetreuung.</p><p>Trainiere innerhalb deiner Möglichkeiten und beende die Übung bei Schmerzen oder Unwohlsein. Kläre bei gesundheitlichen Einschränkungen oder Unsicherheit vor dem Training ärztlich ab, welche Belastung für dich geeignet ist.</p><p>Dieser Hinweis schließt gesetzliche Haftungsansprüche nicht aus.</p><h2>Feedback</h2><p>Fehler gefunden oder eine Idee zur Verbesserung? Nutze das <a href="${APP_CONFIG.githubUrl}/issues">öffentliche Feedback- und Fehlerforum auf GitHub</a>. Bitte veröffentliche dort keine Gesundheitsdaten oder anderen vertraulichen Informationen.</p></section>`);
   }
 
   private showResumeDialog(): void {

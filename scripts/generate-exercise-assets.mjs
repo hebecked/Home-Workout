@@ -1,5 +1,6 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { revisedPoses } from './revised-poses.mjs';
 
 const directory = resolve('public/assets/exercises');
 mkdirSync(directory, { recursive: true });
@@ -7,7 +8,7 @@ mkdirSync(directory, { recursive: true });
 const groups = {
   legs: `squat sumo-squat reverse-lunge forward-lunge split-squat glute-bridge single-leg-glute-bridge calf-raise wall-sit sumo-squat-hold`.split(' '),
   arms: `push-up scapular-push-up incline-push-up knee-push-up pike-push-up pull-up assisted-pull-up chin-up resistance-band-row resistance-band-pull-apart triceps-dip`.split(' '),
-  core: `dead-bug lying-leg-raise bird-dog plank side-plank mountain-climber hollow-hold superman`.split(' '),
+  core: `dead-bug lying-leg-raise bird-dog plank side-plank mountain-climber hollow-hold superman superman-dynamic`.split(' '),
   cardio: `jumping-jack step-jack high-knees marching-in-place shadow-boxing burpee squat-to-reach`.split(' '),
   warmup: `heel-dig shoulder-roll arm-circle active-recovery leg-swing`.split(' '),
   stretch: `calf-stretch hamstring-stretch quadriceps-stretch hip-flexor-stretch shoulder-upper-back-stretch chest-stretch child-pose cat-cow cobra-stretch yoga-bridge`.split(' ')
@@ -285,6 +286,7 @@ const poses = {
   }
 };
 
+Object.assign(poses, revisedPoses);
 const ids = Object.keys(poses);
 for (const id of ids) {
   const hue = hueByExercise.get(id);
@@ -294,7 +296,12 @@ for (const id of ids) {
   const startPose = pose.ghost ? `<g data-pose="start" fill="none" stroke="hsl(${hue} 42% 76%)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">${pose.ghost}</g>` : '';
   const motion = pose.motion ? `<path d="${pose.motion}" fill="none" stroke="hsl(${hue} 55% 52%)" stroke-width="4" stroke-linecap="round" opacity=".72" marker-end="url(#motion-arrow)"/>` : '';
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240" role="img" aria-labelledby="title"><title id="title">${title}</title><defs><marker id="motion-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4.5" markerHeight="4.5" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="hsl(${hue} 55% 52%)" opacity=".55"/></marker></defs><rect width="320" height="240" rx="28" fill="hsl(${hue} 42% 93%)"/>${pose.equipment ?? ''}${startPose}<g data-pose="finish" fill="none" stroke="#18233a" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">${pose.active}</g>${motion}<path d="M42 210H278" stroke="hsl(${hue} 65% 48%)" stroke-width="7" stroke-linecap="round"/></svg>`;
-  writeFileSync(resolve(directory, `${id}.svg`), svg);
+  const rendered = Object.hasOwn(revisedPoses, id)
+    ? svg.replace('viewBox="0 0 320 240"', `viewBox="0 0 320 240" style="--pose-background:hsl(${hue} 42% 93%)"`)
+      .replace('markerWidth="4.5" markerHeight="4.5"', 'markerWidth="8" markerHeight="8"')
+      .replace('opacity=".55"', 'opacity="1"')
+    : svg;
+  writeFileSync(resolve(directory, `${id}.svg`), rendered);
 }
 
 const expected = [...Object.values(groups)].flat();

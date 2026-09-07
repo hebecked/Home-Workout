@@ -99,7 +99,7 @@ test('desktop editor creates, orders and saves a multilingual plan', async ({ pa
   await expect(page.getByText(/Plan deleted|Plan gelöscht/i)).toBeVisible();
 });
 
-test('machine translation requires consent and explicit review before saving', async ({ page }, testInfo) => {
+test('machine translation explains the transfer and requires explicit review before saving', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'firefox-desktop', 'Representative translation-review journey');
   await page.route('**/api/translate', async (route) => {
     const request = route.request().postDataJSON() as {
@@ -125,10 +125,8 @@ test('machine translation requires consent and explicit review before saving', a
   await page.getByRole('option', { name: /^Squat · Kniebeuge$/i }).click();
   await page.getByRole('button', { name: /add selected|Auswahl hinzufügen/i }).click();
 
-  await page.getByRole('button', { name: /pre-translate draft/i }).click();
-  await expect(page.getByRole('status')).toContainText(/confirm.*sent to Cloudflare/i);
-  await page.getByLabel(/I consent to sending/i).check();
-  await page.getByRole('button', { name: /pre-translate draft/i }).click();
+  await expect(page.getByText(/sent to Cloudflare, an external service provider/i)).toBeVisible();
+  await page.getByRole('button', { name: /translate draft/i }).click();
   await expect(page.getByLabel(/plan name.*Français/i)).toHaveValue('FR Translation Test');
   await expect(page.getByText(/review required before saving/i)).toBeVisible();
 
@@ -146,6 +144,30 @@ test('machine translation requires consent and explicit review before saving', a
     reviewStatus: 'reviewed',
     provider: 'cloudflare-m2m100-1.2b'
   });
+});
+
+test('illustration reviewer saves an empty comment as confirmation and text as a correction', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-phone', 'Representative local-review journey');
+  await page.goto('/#review');
+  await expect(page.getByRole('heading', { name: '1 / 6' })).toBeVisible();
+  await page.getByRole('button', { name: /next|weiter/i }).click();
+  await expect(page.getByRole('heading', { name: '2 / 6' })).toBeVisible();
+  await page.getByLabel(/comment|kommentar/i).fill('Arm position needs a clearer cue.');
+  await page.getByRole('button', { name: /next|weiter/i }).click();
+  const reviews = await page.evaluate(() => JSON.parse(localStorage.getItem('home-workout:illustration-reviews') ?? '[]') as Array<{ status: string; comment: string }>);
+  expect(reviews).toHaveLength(2);
+  expect(reviews[0]).toMatchObject({ status: 'confirmed', comment: '' });
+  expect(reviews[1]).toMatchObject({ status: 'needs-correction', comment: 'Arm position needs a clearer cue.' });
+});
+
+test('editor rejects zero rounds without changing it to one', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'firefox-desktop', 'Representative editor validation journey');
+  await page.goto('/#editor');
+  await page.getByLabel(/^Rounds$/i).fill('0');
+  await page.getByRole('button', { name: /save locally|lokal speichern/i }).click();
+  await expect(page.getByRole('status')).toContainText(/rounds must be at least 1|Runden müssen mindestens 1 sein/i);
+  const savedPlans = await page.evaluate(() => localStorage.getItem('home-workout:plans'));
+  expect(savedPlans).toBeNull();
 });
 
 test('customizing a bundled routine creates a separate editable plan', async ({ page }, testInfo) => {
