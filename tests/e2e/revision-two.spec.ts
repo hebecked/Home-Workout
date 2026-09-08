@@ -63,13 +63,40 @@ test('targets remain visible on short and narrow screens', async ({ page }) => {
     await expect.poll(() => page.evaluate(() => {
       const selectors = ['.target-block', '.workout-actions', '.workout-exercise-heading', '.exercise-visual', '.site-header'];
       const boxes = selectors.map(s => document.querySelector(s)?.getBoundingClientRect());
-      if (boxes.some(box => !box)) return false;
+      if (boxes.some(box => !box)) return { fits: { elementsFound: false } };
       const [target, actions, names, image, header] = boxes;
-      return scrollY === 0 && document.documentElement.scrollWidth <= innerWidth
-        && header!.top >= 0 && names!.top >= 0 && names!.bottom <= image!.top
-        && target!.bottom <= actions!.top && target!.right <= innerWidth
-        && actions!.bottom <= innerHeight;
-    }), { message: `${width}x${height}: names, targets and controls fit` }).toBe(true);
+      return {
+        fits: {
+          elementsFound: true,
+          pageAtTop: scrollY === 0,
+          noHorizontalOverflow: document.documentElement.scrollWidth <= innerWidth,
+          headerVisible: header!.top >= 0,
+          namesVisible: names!.top >= 0 && names!.bottom <= image!.top,
+          targetAboveControls: target!.bottom <= actions!.top,
+          targetFitsWidth: target!.right <= innerWidth,
+          controlsFitHeight: actions!.bottom <= innerHeight
+        },
+        metrics: {
+          viewport: { width: innerWidth, height: innerHeight },
+          documentWidth: document.documentElement.scrollWidth,
+          target: { bottom: target!.bottom, right: target!.right },
+          actions: { top: actions!.top, bottom: actions!.bottom },
+          names: { top: names!.top, bottom: names!.bottom },
+          imageTop: image!.top,
+          headerTop: header!.top,
+          scrollY
+        }
+      };
+    }), { message: `${width}x${height}: names, targets and controls fit` }).toMatchObject({ fits: {
+      elementsFound: true,
+      pageAtTop: true,
+      noHorizontalOverflow: true,
+      headerVisible: true,
+      namesVisible: true,
+      targetAboveControls: true,
+      targetFitsWidth: true,
+      controlsFitHeight: true
+    } });
     await expect(page.locator('.workout-exercise-heading h2')).toHaveCount(2);
     await expect(page.locator('.site-header [data-action="abort"]')).toBeVisible();
     await expect(page.locator('.workout-actions [data-action="abort"]')).toHaveCount(0);
