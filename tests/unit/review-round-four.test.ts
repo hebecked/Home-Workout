@@ -4,20 +4,22 @@ import { CURRENT_REVIEW_ILLUSTRATIONS, illustrationRevision } from '../../src/da
 
 it('only requests a new Burpee review and retains accepted revision numbers', () => {
   expect([...CURRENT_REVIEW_ILLUSTRATIONS]).toEqual(['burpee']);
-  expect(illustrationRevision('burpee')).toBe(5);
+  expect(illustrationRevision('burpee')).toBe(6);
   expect(illustrationRevision('dead-bug')).toBe(3);
   expect(illustrationRevision('squat')).toBe(2);
 });
 
-it('overlays four Burpee phases with matching rounded labels and no panels', () => {
+it('shows four separated Burpee phases in the existing palette without panels', () => {
   const svg = readFileSync('public/assets/exercises/burpee.svg', 'utf8');
-  expect(svg).toContain('data-phase-labels="overlaid"');
+  expect(svg).toContain('data-phase-labels="sequence"');
   expect(svg).not.toContain('data-phase-panels');
   expect(svg).toContain('Comic Sans');
   expect(svg).not.toContain('→');
   expect(svg).not.toContain('M146 169H174');
-  ['#18233a', '#667085', '#a72f32', '#a65312'].forEach((color, index) => {
-    expect(svg).toContain(`data-burpee-phase="${index + 1}" stroke="${color}"`);
-    expect(svg).toContain(`fill="${color}">${index + 1}</text>`);
+  [1, 2, 3, 4].forEach(number => {
+    expect(svg).toContain(`data-burpee-phase="${number}"`);
+    expect(svg).toContain(`>${number}</text>`);
   });
+  expect(svg).not.toContain('#a72f32');
+  expect(svg).not.toContain('#a65312');
 });

@@ -48,15 +48,14 @@ h1 { font-size: clamp(3rem, 8vw, 7rem); line-height: .88; letter-spacing: -.075e
 .plan-stats strong { color: var(--accent); font-size: 1.4rem; margin-right: .3rem; }
 .primary { background: var(--accent); color: #fff; border-color: var(--accent); }
 .primary:hover { background: var(--accent-strong); }
-.start-button { margin-top: 2rem; width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.2rem; }
+.start-button { margin-top: 2rem; width: 100%; display: flex; justify-content: center; align-items: center; padding: 1rem 1.2rem; }
 .create-plan-button { display: grid; gap: .3rem; margin-top: .75rem; text-align: center; text-decoration: none; color: var(--accent-strong); border: 2px solid var(--accent); background: var(--soft); }
 .create-plan-button span { font-size: .8rem; }
 .plan-options { padding: 2rem clamp(1rem, 4vw, 4rem); background: var(--soft); border-block: 1px solid var(--line); }
 .plan-options-heading h2 { font-size: clamp(1.7rem, 4vw, 2.8rem); margin-bottom: .6rem; }
 .plan-options-heading p { line-height: 1.5; }
 .plan-options .action-grid { gap: .75rem; border: 0; }
-.plan-options .action-card { background: var(--surface); border: 1px solid var(--muted); border-radius: 12px; min-width: 0; box-shadow: 0 3px 0 #dce3ff; }
-.plan-options .action-card[data-create-plan] { border: 2px solid var(--accent); }
+.plan-options .action-grid .action-card { background: var(--surface); border: 1px solid var(--muted); border-radius: 12px; min-width: 0; box-shadow: 0 3px 0 #dce3ff; }
 .plan-options .action-card:hover { background: var(--soft); border-color: var(--accent); }
 .plan-options .action-number { width: 2.4rem; height: 2.4rem; display: grid; place-items: center; border-radius: 50%; background: var(--accent); color: white; font-weight: 850; font-size: 1rem; }
 .editor-ai-callout { margin: 1.5rem clamp(1rem, 9vw, 9rem); display: flex; flex-wrap: wrap; align-items: center; gap: 1.5rem; padding: 1.5rem; background: var(--soft); border: 2px solid var(--accent); border-radius: 12px; }

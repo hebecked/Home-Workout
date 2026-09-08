@@ -2,7 +2,7 @@
 
 Last updated: 2026-09-07
 
-This checklist covers 52 exercise definitions. After round three, 51 illustrations are accepted. Only Burpee awaits round-five approval: four overlapping, color-coded phases and rounded matching numbers replace the rejected panels. Earlier decisions are documented in [review-round-3.md](review-round-3.md).
+This checklist covers 52 exercise definitions. After round three, 51 illustrations are accepted. Only Burpee awaits round-six approval: four separate small poses with rounded numbers use the existing palette, without frames or overlapping figures. Earlier decisions are documented in [review-round-3.md](review-round-3.md).
 
 ## Corrections made during the completed audit
 

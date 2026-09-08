@@ -13,6 +13,7 @@ describe('exercise illustrations', () => {
   it('gives all 51 exercises a local pose and movement indicators only where movement is shown', () => {
     expect(EXERCISE_LIBRARY).toHaveLength(52);
     const singlePoseIds = new Set([
+      'burpee',
       'side-plank', 'sumo-squat-hold', 'plank', 'superman', 'wall-sit',
       'calf-stretch', 'hamstring-stretch', 'quadriceps-stretch',
       'shoulder-upper-back-stretch', 'chest-stretch', 'child-pose', 'cobra-stretch', 'yoga-bridge'

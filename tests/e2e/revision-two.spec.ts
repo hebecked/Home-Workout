@@ -15,7 +15,7 @@ test('old feedback survives the revised review and only current decisions finish
   expect(reviews.filter(r => r.exerciseId === 'burpee')).toHaveLength(2);
   await page.evaluate((ids) => {
     const old = JSON.parse(localStorage.getItem('home-workout:illustration-reviews') ?? '[]') as unknown[];
-    localStorage.setItem('home-workout:illustration-reviews', JSON.stringify([...old, ...ids.map(exerciseId => ({ exerciseId, revision: 5, status: 'confirmed', comment: '', reviewedAt: '2026-09-08' }))]));
+    localStorage.setItem('home-workout:illustration-reviews', JSON.stringify([...old, ...ids.map(exerciseId => ({ exerciseId, revision: 6, status: 'confirmed', comment: '', reviewedAt: '2026-09-08' }))]));
   }, [...CURRENT_REVIEW_ILLUSTRATIONS]);
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Review complete' })).toBeVisible();

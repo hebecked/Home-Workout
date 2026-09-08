@@ -39,7 +39,7 @@ const marchStart = figure([159, 44], [155, 69], [149, 125], [[[133, 96], [155, 1
 const prone = raised => figure(raised ? [217, 177] : [217, 194], raised ? [193, 182] : [193, 194], [138, 195], [[[228, raised ? 171 : 194], [263, raised ? 160 : 194]]], [[[98, raised ? 184 : 195], [56, raised ? 178 : 195]]]);
 const crouch = figure([182, 121], [165, 141], [125, 165], [[[182, 174], [185, 204]]], [[[160, 180], [126, 204]]]);
 const jump = figure([160, 52], [160, 76], [160, 131], [[[136, 49], [125, 20]], [[184, 49], [195, 20]]], [[[147, 164], [144, 199]], [[173, 164], [176, 199]]], 'front');
-const burpeePhase = (svg, number, color, shift = 0) => `<g data-burpee-phase="${number}" stroke="${color}" stroke-width="7" transform="translate(35 42) scale(.8)"><g transform="translate(${shift} 0)">${svg}</g></g>`;
+const burpeePhase = (svg, number, x) => `<g data-burpee-phase="${number}" transform="translate(${x} 130) scale(.39)">${svg}</g>`;
 const shoulder = standing([[[129, 93], [130, 126]], [[191, 93], [190, 126]]]);
 const hipStretch = shift => figure([147 + shift, 62], [147 + shift, 86], [147 + shift, 140], [[[173 + shift, 113], [191, 150]]], [[[195, 153], [197, 204]], [[114, 202], [66, 202]]]);
 export const revisedPoses = {
@@ -61,7 +61,7 @@ export const revisedPoses = {
   'hollow-hold': pose(figure([99, 168], [116, 185], [168, 198], [[[79, 158], [45, 144]]], [[[213, 181], [256, 164]]], 'left'), figure([73, 193], [99, 197], [161, 197], [[[66, 197], [30, 197]]], [[[207, 197], [253, 197]]], 'left'), 'M55 185V156 M263 195V172'),
   'high-knees': pose(march(true), marchStart, 'M217 173V126'),
   'marching-in-place': pose(march(false), marchStart, 'M218 190V155'),
-  burpee: pose(burpeePhase(push(true), 3, '#a72f32', -45) + burpeePhase(crouch, 1, '#18233a'), burpeePhase(jump, 4, '#a65312', 25) + burpeePhase(push(false), 2, '#667085', -45), 'M278 164V100', '<g data-phase-labels="overlaid" font-family="Comic Sans MS, Comic Sans, cursive" font-size="24" font-weight="700" text-anchor="middle"><text x="103" y="33" fill="#18233a">1</text><text x="141" y="33" fill="#667085">2</text><text x="179" y="33" fill="#a72f32">3</text><text x="217" y="33" fill="#a65312">4</text></g>'),
+  burpee: pose(burpeePhase(crouch, 1, -25) + burpeePhase(push(false), 2, 60) + burpeePhase(push(true), 3, 140) + burpeePhase(jump, 4, 220), '', 'M306 187V152', '<g data-phase-labels="sequence" fill="#18233a" font-family="Comic Sans MS, Comic Sans, cursive" font-size="20" font-weight="700" text-anchor="middle"><text x="36" y="108">1</text><text x="115" y="108">2</text><text x="195" y="108">3</text><text x="282" y="108">4</text></g>'),
   'squat-to-reach': pose(standing([[[132, 47], [111, 21]], [[188, 47], [209, 21]]]), squat(false), 'M82 154V81 M238 154V81'),
   superman: pose(prone(true)),
   'superman-dynamic': pose(prone(true), prone(false), 'M61 210V187 M271 195V171'),
