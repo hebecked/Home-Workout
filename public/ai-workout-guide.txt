@@ -5,7 +5,7 @@ The BASE_URL is the origin from which this text file was loaded.
 
 YOUR TASK
 1. Ask for or infer goal, experience level, available equipment, duration, days per week, limitations, and preferred languages.
-2. Create a safe, balanced plan matching the JSON schema at:
+2. Draft a balanced plan appropriate to the stated experience and equipment, without guaranteeing safety or health suitability, matching the JSON schema at:
    BASE_URL/schema/workout-plan-v1.schema.json
 3. Prefer exercise IDs from the supported library below so the app can show a matching illustration.
 4. Return either:
@@ -14,13 +14,21 @@ YOUR TASK
       BASE64URL_UTF8_JSON means the complete compact JSON encoded as UTF-8 base64url without padding.
    B) Fallback: the complete JSON in a code block and tell the user to save it as a .json file and upload it on the app's Upload / Import page.
 5. Never claim that the plan is medical advice. If the user reports pain, injury, pregnancy, cardiovascular concerns, or another relevant condition, recommend qualified professional guidance.
+6. Include a short, visible safety note in the user's language next to the plan link or JSON, not only inside this guide. Explain that the app checks technical import compatibility, not medical or health suitability. The user is responsible for deciding whether to use an AI-generated plan and must review its exercises and workload before training; recommend medical advice for health-related uncertainty. Do not suggest that this waives statutory liability rights or makes the app provider immune from liability.
+7. Give practical safety instructions: start within personal ability, use stable equipment and enough space, and stop if pain or feeling unwell occurs. Do not infer that a person is medically cleared to exercise. Ask about relevant limitations without requesting unnecessary sensitive details.
 
 SUPPORTED EXERCISE IDS
-legs: squat, sumo-squat, reverse-lunge, forward-lunge, split-squat, glute-bridge, single-leg-glute-bridge, calf-raise, wall-sit
-arms/push: push-up, incline-push-up, knee-push-up, pike-push-up, triceps-dip
-arms/pull: pull-up, assisted-pull-up, chin-up, resistance-band-row, resistance-band-pull-apart
-core: dead-bug, lying-leg-raise, bird-dog, plank, side-plank, hollow-hold, superman
-cardio/full body: jumping-jack, step-jack, high-knees, marching-in-place, mountain-climber, burpee, squat-to-reach
+These 52 IDs have built-in illustrations and reference instructions. Prefer their exact IDs when they fit the requested workout so the user gets the best experience, including a matching image. Every exercise entry must still provide a name and instructions for each configured language in translations.
+legs: squat, sumo-squat, reverse-lunge, forward-lunge, split-squat, glute-bridge, single-leg-glute-bridge, calf-raise, wall-sit, sumo-squat-hold
+push: push-up, scapular-push-up, incline-push-up, knee-push-up, pike-push-up, triceps-dip
+pull: pull-up, assisted-pull-up, chin-up, resistance-band-row, resistance-band-pull-apart
+core: dead-bug, lying-leg-raise, bird-dog, plank, side-plank, mountain-climber, hollow-hold, superman, superman-dynamic
+cardio: jumping-jack, step-jack, high-knees, marching-in-place, shadow-boxing
+full-body: burpee, squat-to-reach
+warm-up: heel-dig, shoulder-roll, arm-circle, active-recovery, leg-swing
+stretch: calf-stretch, hamstring-stretch, quadriceps-stretch, hip-flexor-stretch, shoulder-upper-back-stretch, chest-stretch, child-pose, cat-cow, cobra-stretch, yoga-bridge
+
+Custom exercises are also allowed. Give each custom exercise a descriptive kebab-case exerciseId and provide clear names and instructions for every configured language. Custom exercises work normally but do not have a matching built-in illustration.
 
 PLAN RULES
 - schemaVersion must be 1.

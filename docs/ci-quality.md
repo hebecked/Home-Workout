@@ -10,4 +10,6 @@ Reproduce with Node 22 and a clean `npm ci`, then `npm run check:licenses`, `npm
 
 On this Windows workstation, native Firefox fails before loading the app with `browserType.launch: spawn UNKNOWN`. Default Windows fallback projects use Chromium even when their names say Firefox or WebKit. Set `PLAYWRIGHT_NATIVE_ENGINES=1` to test the named engines; do not report fallback runs as native browser coverage. CI on Ubuntu uses the native engines.
 
-Native Windows WebKit also fails offline document reload with an internal browser error, even after service-worker control and cached JavaScript have been verified. The offline reload test is explicitly skipped only for that Windows/engine combination; online legal notice and keyboard navigation remain tested. Chromium offline reload passes. Safari/device and Linux WebKit offline verification remains outstanding.
+The 2026-09-08 CI attachment shows native Firefox layout overflow and WebKit's internal navigation error after `context.setOffline(true)`. The workout shell now uses the actual header height via CSS Grid instead of subtracting an assumed fixed height.
+
+Offline verification now starts an isolated origin on an OS-assigned free port, waits for service-worker control and cached assets, shuts down that origin, then reloads. This tests actual origin unavailability, without browser-specific offline emulation. The native Windows WebKit test now passes, with no skip or swallowed error. Chromium and Firefox run the same test in CI. Safari on a physical device remains a separate verification step.

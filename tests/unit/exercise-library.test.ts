@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { EXERCISE_LIBRARY } from '../../src/data/exercises';
@@ -19,6 +19,15 @@ const requiredIds = [
 ];
 
 describe('built-in exercise library', () => {
+  it('keeps every supported exercise in the AI guide in sync with the library', () => {
+    const guide = readFileSync(resolve(process.cwd(), 'public', 'ai-workout-guide.txt'), 'utf8');
+    const supportedSection = guide.split('SUPPORTED EXERCISE IDS\n')[1]?.split('\n\nIf no supported exercise fits')[0] ?? '';
+    const guideIds = [...supportedSection.matchAll(/^[a-z-]+: (.+)$/gm)]
+      .flatMap((match) => match[1]!.split(', '));
+    expect(new Set(guideIds)).toEqual(new Set(EXERCISE_LIBRARY.map(({ id }) => id)));
+    expect(guideIds).toHaveLength(EXERCISE_LIBRARY.length);
+  });
+
   it('contains at least 30 stable, unique exercises including every required exercise', () => {
     expect(EXERCISE_LIBRARY.length).toBeGreaterThanOrEqual(30);
     const ids = EXERCISE_LIBRARY.map(({ id }) => id);

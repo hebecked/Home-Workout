@@ -5,7 +5,7 @@ import {
   isBuiltInWorkout
 } from '../data/default-workout';
 import { EXERCISE_LIBRARY, EXERCISES_BY_ID } from '../data/exercises';
-import { illustrationRevision, CURRENT_REVIEW_ILLUSTRATIONS, REVIEW_ROUND } from '../data/illustration-revisions';
+import { illustrationRevision } from '../data/illustration-revisions';
 import { exportPlanJson, importPlanJson, importPlanUrlPayload } from '../core/plan-io';
 import { clearWorkoutSession, deletePlan, loadPlans, loadWorkoutSession, savePlan, saveWorkoutSession } from '../core/persistence';
 import { validateWorkoutPlan, type WorkoutPlan } from '../core/plan-schema';
@@ -13,6 +13,7 @@ import { translatePlanDraft } from '../core/translation';
 import { createWorkoutSession, dispatchWorkout, getWorkoutSnapshot, type WorkoutSession } from '../core/workout-engine';
 
 const APP_CONFIG: { githubUrl: string } = { githubUrl: 'https://github.com/hebecked/Home-Workout' };
+const AI_SAFETY_NOTICE = '<div class="ai-safety-note"><p>Die Importprüfung kontrolliert die technische Verwendbarkeit des Plans – sie ist keine gesundheitliche Freigabe. Du nutzt KI-generierte Trainingspläne in eigener Verantwortung. Prüfe Übungen, Umfang und Belastung vor dem Training und kläre gesundheitliche Unsicherheiten ärztlich. Gesetzliche Haftungsansprüche bleiben unberührt.</p><p>The import check validates technical compatibility, not whether a workout is safe for your health. Review AI-generated exercises and workload before training; seek medical advice if unsure about your health. Statutory liability rights remain unaffected.</p></div>';
 const escapeHtml = (value: string): string => value.replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[character]!);
 const formatClock = (milliseconds: number): string => {
   const seconds = Math.max(0, Math.ceil(milliseconds / 1000));
@@ -20,14 +21,6 @@ const formatClock = (milliseconds: number): string => {
 };
 const cloneDefault = (): WorkoutPlan => structuredClone(DEFAULT_WORKOUT);
 const createPlanId = (): string => `plan-${Date.now()}-${crypto.randomUUID()}`;
-const ILLUSTRATION_REVIEWS_KEY = 'home-workout:illustration-reviews';
-type IllustrationReview = {
-  exerciseId: string;
-  comment: string;
-  status: 'confirmed' | 'needs-correction';
-  reviewedAt: string;
-  revision?: number;
-};
 const createEmptyDraft = (): WorkoutPlan => ({
   ...cloneDefault(), id: createPlanId(), name: { de: 'Mein Trainingsplan', en: '' }, rounds: 1, exercises: []
 });
@@ -64,7 +57,6 @@ export class HomeWorkoutApp {
   private activePlan: WorkoutPlan = cloneDefault();
   private session: WorkoutSession | null = null;
   private draft: WorkoutPlan = createEmptyDraft();
-  private illustrationReviewIndex = 0;
   private editorMode: 'create' | 'edit' | 'copy' = 'create';
   private tickHandle: number | null = null;
   private languageFormVisible = false;
@@ -136,11 +128,12 @@ export class HomeWorkoutApp {
   }
 
   private shell(content: string): void {
+    this.root.classList.toggle('workout-active', this.route() === 'workout' && this.session !== null && this.session.phase !== 'completed');
     const savedPlansLabel = this.route() === 'home' ? 'Saved routines' : 'My Plans · Meine Pläne';
     this.root.innerHTML = `
       <header class="site-header">
         <a href="#home" class="brand" aria-label="Home Workout"><span class="brand-mark">HW</span><span>Home Workout</span></a>
-        ${this.route() === 'workout' && this.session?.phase !== 'completed' ? '<button class="workout-exit" data-action="abort" aria-label="End workout · Training beenden"><span aria-hidden="true">×</span> Beenden</button>' : `<nav aria-label="Primary"><a href="#instructions" aria-label="Workout guide">Instructions</a><a href="#plans" aria-label="${savedPlansLabel}">My Plans</a><a href="#review" aria-label="Illustration review">Review</a></nav>`}
+        ${this.route() === 'workout' && this.session?.phase !== 'completed' ? '<button class="workout-exit" data-action="abort" aria-label="End workout · Training beenden"><span aria-hidden="true">×</span> Beenden</button>' : `<nav aria-label="Primary"><a href="#instructions" aria-label="Workout guide">Instructions</a><a href="#plans" aria-label="${savedPlansLabel}">My Plans</a></nav>`}
       </header>
       <main id="main" tabindex="-1">${content}</main>
       <footer><span>Private by design · Offline ready</span><a href="#impressum">Impressum</a><span>PolyForm Perimeter 1.0.0</span></footer>`;
@@ -162,7 +155,6 @@ export class HomeWorkoutApp {
     else if (route === 'import') this.renderImport();
     else if (route === 'plans') this.renderPlans();
     else if (route === 'instructions') this.renderInstructions();
-    else if (route === 'review') this.renderIllustrationReview();
     else if (route === 'impressum') this.renderLegalNotice();
     else this.renderHome();
   }
@@ -234,6 +226,7 @@ export class HomeWorkoutApp {
           </div>
           <button class="primary start-button" data-action="start">START WORKOUT</button>
           <a class="button-link create-plan-button" href="#editor" data-create-plan>Eigenen Trainingsplan erstellen <span>Create a workout plan →</span></a>
+          <p class="home-safety">Trainiere innerhalb deiner Möglichkeiten und höre bei Schmerzen oder Unwohlsein auf. Kläre gesundheitliche Unsicherheiten vorab ärztlich. Die App ersetzt keine medizinische Beratung. <a href="#impressum">Weitere Hinweise</a></p>
         </article>
       </section>
       <section class="exercise-preview" aria-labelledby="exercise-preview-title">
@@ -443,7 +436,7 @@ export class HomeWorkoutApp {
     const translationAssistant = this.draft.languages.length > 1 ? `<div class="translation-assistant"><div><p class="eyebrow">OPTIONAL ONLINE PRE-TRANSLATION</p><h3>Translate with Cloudflare AI</h3><p>When you click “Translate draft”, the plan name, exercise names and instructions in the source language are sent to Cloudflare, an external service provider, for machine translation. Remove personal or confidential information first. Existing text in the target language will be replaced. Check the translation before saving.</p></div><div class="translation-controls"><label>Source language<select name="translation-source">${languageOptions(defaultSourceLanguage)}</select></label><label>Target language<select name="translation-target">${languageOptions(defaultTargetLanguage)}</select></label><button type="button" class="secondary" data-action="translate-plan" ${this.translationBusy ? 'disabled' : ''}>${this.translationBusy ? 'Translating…' : 'Translate draft'}</button></div>${translationReviews ? `<div class="translation-reviews">${translationReviews}</div>` : ''}</div>` : '';
     this.shell(`
       <section class="page-heading"><p class="eyebrow">PLAN STUDIO</p><h1>${editorTitle}</h1><p>${editorIntro}</p></section>
-      <aside class="editor-ai-callout"><div><p class="eyebrow">MIT KI ERSTELLEN · CREATE WITH AI</p><h2>Eine KI kann deinen Plan vorbereiten</h2><p>Kopiere unsere Anleitung in eine KI deiner Wahl und beschreibe dein Wunschtraining. Prüfe den fertigen Plan vor dem Training.</p><p>Give the guide to an AI with your workout preferences, then review the result.</p></div><a class="button-link primary" href="#instructions" data-open-ai-guide>KI-Anleitung öffnen <span>Open AI guide</span></a></aside>
+      <aside class="editor-ai-callout"><div><p class="eyebrow">MIT KI ERSTELLEN · CREATE WITH AI</p><h2>Eine KI kann deinen Plan vorbereiten</h2><p>Kopiere unsere Anleitung in eine KI deiner Wahl und beschreibe dein Wunschtraining. Prüfe den fertigen Plan vor dem Training.</p><p>Give the guide to an AI with your workout preferences, then review the result.</p>${AI_SAFETY_NOTICE}</div><a class="button-link primary" href="#instructions" data-open-ai-guide>KI-Anleitung öffnen <span>Open AI guide</span></a></aside>
       <form class="editor" data-editor>
         <section class="form-section"><h2>01 · Basics</h2><div class="field-grid">
           ${planNameFields}
@@ -654,10 +647,10 @@ export class HomeWorkoutApp {
   private renderInstructions(): void {
     const guideUrl = new URL('/ai-workout-guide.txt', location.origin).href;
     const items = [
-      ['Start', 'Choose one of the permanent bundled routines or one of your own plans, review the summary, then choose START WORKOUT.'], ['Targets', 'For repetition exercises, complete the displayed number of repetitions, then choose Next. For timed exercises, follow the countdown; the app advances automatically when time is up.'], ['Rounds', 'Complete each exercise once per round. Round progress is always visible.'], ['Timers', 'Duration exercises and rests advance automatically using timestamps, even after backgrounding. Use Next to skip a rest.'], ['Pause', 'Pause freezes workout, exercise and rest time together.'], ['Alternatives', 'The selector is labelled “Easier alternatives”. Choose one when needed or keep the original movement.'], ['Own plans', 'Create, reorder and adjust exercises in Plan Studio. Edit a local plan directly or customize a separate copy of a bundled routine.'], ['Import / Export', 'Share versioned JSON files. Every import is validated before preview or start.'], ['Languages', 'Show one or two configured languages side by side. After adding a language, enter its plan name and each exercise name and instruction as free text.'], ['Install the app', 'Android Chrome: menu → Add to home screen → Install. iPhone/iPad Safari: Share → Add to Home Screen. Desktop Edge or Chrome: use the install icon in the address bar or the browser Apps menu.'], ['Offline', 'After the first successful load, the installed PWA, library, images and local plans work offline.']
+      ['Start', 'Choose one of the permanent bundled routines or one of your own plans, review the summary, then choose START WORKOUT.'], ['Targets', 'For repetition exercises, complete the displayed number of repetitions, then choose Next. For timed exercises, follow the countdown; the app advances automatically when time is up.'], ['Rounds', 'Complete each exercise once per round. Round progress is always visible.'], ['Timers', 'Duration exercises and rests advance automatically using timestamps, even after backgrounding. Use Next to skip a rest.'], ['Pause', 'Pause freezes workout, exercise and rest time together.'], ['Alternatives', 'The selector is labelled “Easier alternatives”. Choose one when needed or keep the original movement.'], ['Own plans', 'Create, reorder and adjust exercises in Plan Studio. Edit a local plan directly or customize a separate copy of a bundled routine.'], ['Import / Export', 'Share versioned JSON files. Every import is validated before preview or start.'], ['Languages', 'Show one or two configured languages side by side. After adding a language, enter its plan name and each exercise name and instruction as free text.'], ['Offline', 'This website is designed as a web app and can be installed for offline use on common phones, tablets and computers. Open the app and the exercises you need once while connected; previously loaded content and locally saved plans remain available offline. AI services and translation require an internet connection.<br><strong>Install the app:</strong> On Android in Chrome, open the menu and choose Add to home screen → Install. On iPhone or iPad in Safari, choose Share → Add to Home Screen and enable Open as Web App if offered. On a computer, use the install icon in the Chrome or Edge address bar. If it is not visible, open that browser’s menu and look for Install app or Apps. Detailed steps: <a href="https://support.apple.com/guide/iphone/bookmark-a-website-iphea86e5236/ios">Apple instructions</a> · <a href="https://support.google.com/chrome/answer/9658361?co=GENIE.Platform%3DAndroid&amp;hl=en">Chrome instructions</a>.']
     ];
     this.shell(`<section class="page-heading"><p class="eyebrow">QUICK GUIDE</p><h1>Instructions · Anleitung</h1><p>Everything needed to move confidently, without a coach in the room.</p></section>
-      <section class="ai-plan-guide"><p class="eyebrow">CREATE WITH AI</p><h2>Let an AI prepare your workout plan</h2><p>Give an AI such as ChatGPT the guide link below together with a description of the workout plan you want.</p><div class="copy-field"><code>${escapeHtml(guideUrl)}</code><button class="primary" data-action="copy-ai-guide">Copy link</button></div><p>Ideally, the AI returns a direct link to the validated plan preview. Alternatively, it can create a JSON configuration file that you upload under “Upload / Import”.</p></section>
+      <section class="ai-plan-guide"><p class="eyebrow">CREATE WITH AI</p><h2>Let an AI prepare your workout plan</h2><p>Give an AI such as ChatGPT the guide link below together with a description of the workout plan you want.</p><div class="copy-field"><code>${escapeHtml(guideUrl)}</code><button class="primary" data-action="copy-ai-guide">Copy link</button></div><p>Ideally, the AI returns a direct link to the validated plan preview. Alternatively, it can create a JSON configuration file that you upload under “Upload / Import”.</p>${AI_SAFETY_NOTICE}</section>
       <section class="instruction-list">${items.map(([title, copy], index) => `<article><span>${String(index + 1).padStart(2, '0')}</span><div><h2>${title}</h2><p>${copy}</p></div></article>`).join('')}</section><aside class="safety"><strong>Safety note</strong><p>Train within your ability, stop if you feel pain, and seek qualified medical advice when needed. This app does not diagnose or treat medical conditions.</p></aside>`);
     this.root.querySelector<HTMLButtonElement>('[data-action="copy-ai-guide"]')?.addEventListener('click', (event) => {
       const button = event.currentTarget as HTMLButtonElement;
@@ -665,65 +658,6 @@ export class HomeWorkoutApp {
     });
   }
 
-  private loadIllustrationReviews(): IllustrationReview[] {
-    try {
-      const stored = JSON.parse(localStorage.getItem(ILLUSTRATION_REVIEWS_KEY) ?? '[]') as unknown;
-      if (!Array.isArray(stored)) return [];
-      return stored.filter((entry): entry is IllustrationReview => Boolean(entry)
-        && typeof entry === 'object'
-        && typeof (entry as IllustrationReview).exerciseId === 'string'
-        && typeof (entry as IllustrationReview).comment === 'string'
-        && ((entry as IllustrationReview).status === 'confirmed' || (entry as IllustrationReview).status === 'needs-correction')
-        && typeof (entry as IllustrationReview).reviewedAt === 'string');
-    } catch {
-      return [];
-    }
-  }
-
-  private saveIllustrationReview(review: IllustrationReview): void {
-    const reviews = this.loadIllustrationReviews().filter((entry) => entry.exerciseId !== review.exerciseId || (entry.revision ?? 1) !== review.revision);
-    reviews.push(review);
-    localStorage.setItem(ILLUSTRATION_REVIEWS_KEY, JSON.stringify(reviews));
-  }
-
-  private renderIllustrationReview(): void {
-    const history = this.loadIllustrationReviews();
-    const library = EXERCISE_LIBRARY.filter(({ id }) => CURRENT_REVIEW_ILLUSTRATIONS.has(id));
-    const reviewsByExercise = new Map(history.filter(review => (review.revision ?? 1) === illustrationRevision(review.exerciseId)).map((review) => [review.exerciseId, review]));
-    const nextIndex = library.findIndex((exercise) => !reviewsByExercise.has(exercise.id));
-    if (nextIndex >= 0) this.illustrationReviewIndex = nextIndex;
-    const exercise = library[this.illustrationReviewIndex];
-    const completed = nextIndex === -1;
-    const corrections = library.flatMap(({ id }) => { const review = reviewsByExercise.get(id); return review?.status === 'needs-correction' ? [review] : []; });
-    if (completed || !exercise) {
-      this.shell(`<section class="page-heading"><p class="eyebrow">BILDABNAHME · RUNDE ${REVIEW_ROUND}</p><h1>Review complete</h1><p>${library.length} überarbeitete oder neue Bilder geprüft. ${corrections.length ? `${corrections.length} benötigen weitere Korrekturen.` : 'Alle Bilder dieser Runde sind abgenommen.'}</p></section><section class="illustration-review-summary"><h2>Gespeichertes Feedback</h2>${corrections.length ? `<ul>${corrections.map(({ exerciseId, comment }) => `<li><strong>${escapeHtml(EXERCISES_BY_ID.get(exerciseId)?.translations.en.name ?? exerciseId)}</strong><p>${escapeHtml(comment)}</p></li>`).join('')}</ul>` : '<p>Keine weiteren Korrekturen vermerkt.</p>'}<button type="button" data-action="download-illustration-feedback">Download feedback JSON</button></section>`);
-      this.root.querySelector<HTMLButtonElement>('[data-action="download-illustration-feedback"]')?.addEventListener('click', () => {
-        const blob = new Blob([JSON.stringify(this.loadIllustrationReviews(), null, 2)], { type: 'application/json' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob); link.download = 'home-workout-illustration-review.json'; link.click(); URL.revokeObjectURL(link.href);
-      });
-      return;
-    }
-    const previousReview = [...history].reverse().find(review => review.exerciseId === exercise.id && (review.revision ?? 1) < illustrationRevision(exercise.id));
-    const number = this.illustrationReviewIndex + 1;
-    this.shell(`<section class="illustration-reviewer"><div class="illustration-review-heading"><p class="eyebrow">BILDABNAHME · RUNDE ${REVIEW_ROUND}</p><h1>${number} / ${library.length}</h1><p>${escapeHtml(exercise.translations.en.name)} · ${escapeHtml(exercise.translations.de.name)}</p></div><img src="${escapeHtml(exercise.illustration)}?v=${illustrationRevision(exercise.id)}" alt="${escapeHtml(`${exercise.translations.en.name} · ${exercise.translations.de.name}`)}"><p>${escapeHtml(exercise.translations.de.instructions)}</p>${previousReview?.comment ? `<details><summary>Dein bisheriges Feedback</summary><p>${escapeHtml(previousReview.comment)}</p></details>` : ''}<form data-illustration-review><label>Comment · Kommentar<textarea name="illustration-comment" rows="5" placeholder="Leer lassen, wenn das Bild passt."></textarea></label><p class="review-hint">Weiter speichert deinen Kommentar. Ohne Kommentar ist das Bild abgenommen. Bisheriges Feedback bleibt erhalten.</p><p role="alert" data-review-error></p><button type="submit" class="primary">Next · Weiter</button></form></section>`);
-    this.root.querySelector<HTMLFormElement>('[data-illustration-review]')?.addEventListener('submit', (event) => {
-      event.preventDefault();
-      const form = event.currentTarget;
-      if (!(form instanceof HTMLFormElement)) return;
-      const comment = new FormData(form).get('illustration-comment');
-      const text = typeof comment === 'string' ? comment.trim() : '';
-      try {
-        this.saveIllustrationReview({ exerciseId: exercise.id, comment: text, status: text ? 'needs-correction' : 'confirmed', reviewedAt: new Date().toISOString(), revision: illustrationRevision(exercise.id) });
-      } catch {
-        const error = this.root.querySelector<HTMLElement>('[data-review-error]');
-        if (error) error.textContent = 'Speichern fehlgeschlagen. Dein Kommentar bleibt im Feld. Bitte aktiviere den Browserspeicher und versuche es erneut.';
-        return;
-      }
-      this.illustrationReviewIndex = Math.min(this.illustrationReviewIndex + 1, library.length - 1);
-      this.renderIllustrationReview();
-    });
-  }
 
   private renderLegalNotice(): void {
     this.shell(`<section class="page-heading"><p class="eyebrow">ANBIETERANGABEN</p><h1>Impressum</h1><p>Home Workout ist ein privates, nicht gewerbliches Projekt.</p></section><section class="instruction-list legal-notice"><h2>Anbieter</h2><address>Dr. Dustin Hebecker<br>${__LEGAL_ADDRESS__.length ? __LEGAL_ADDRESS__.map(escapeHtml).join('<br>') : 'Anschrift in dieser Entwicklungsversion nicht hinterlegt.'}</address><h2>Nutzung auf eigene Verantwortung</h2><p>Du entscheidest selbst, ob die Übungen und die gewählte Belastung für dich geeignet sind. Die App bietet allgemeine Trainingsanregungen und ersetzt keine medizinische Beratung oder persönliche Trainingsbetreuung.</p><p>Trainiere innerhalb deiner Möglichkeiten und beende die Übung bei Schmerzen oder Unwohlsein. Kläre bei gesundheitlichen Einschränkungen oder Unsicherheit vor dem Training ärztlich ab, welche Belastung für dich geeignet ist.</p><p>Dieser Hinweis schließt gesetzliche Haftungsansprüche nicht aus.</p><h2>Feedback</h2><p>Fehler gefunden oder eine Idee zur Verbesserung? Nutze das <a href="${APP_CONFIG.githubUrl}/issues">öffentliche Feedback- und Fehlerforum auf GitHub</a>. Bitte veröffentliche dort keine Gesundheitsdaten oder anderen vertraulichen Informationen.</p></section>`);
