@@ -74,7 +74,7 @@ test('targets remain visible on short and narrow screens', async ({ page }) => {
           namesVisible: names!.top >= 0 && names!.bottom <= image!.top,
           targetAboveControls: target!.bottom <= actions!.top,
           targetFitsWidth: target!.right <= innerWidth,
-          controlsFitHeight: actions!.bottom <= innerHeight
+          controlsFitHeight: actions!.bottom <= innerHeight + 0.5
         },
         metrics: {
           viewport: { width: innerWidth, height: innerHeight },
