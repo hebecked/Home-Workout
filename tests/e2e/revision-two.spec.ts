@@ -15,7 +15,7 @@ test('old feedback survives the revised review and only current decisions finish
   expect(reviews.filter(r => r.exerciseId === 'burpee')).toHaveLength(2);
   await page.evaluate((ids) => {
     const old = JSON.parse(localStorage.getItem('home-workout:illustration-reviews') ?? '[]') as unknown[];
-    localStorage.setItem('home-workout:illustration-reviews', JSON.stringify([...old, ...ids.map(exerciseId => ({ exerciseId, revision: 4, status: 'confirmed', comment: '', reviewedAt: '2026-09-07' }))]));
+    localStorage.setItem('home-workout:illustration-reviews', JSON.stringify([...old, ...ids.map(exerciseId => ({ exerciseId, revision: 5, status: 'confirmed', comment: '', reviewedAt: '2026-09-08' }))]));
   }, [...CURRENT_REVIEW_ILLUSTRATIONS]);
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Review complete' })).toBeVisible();
@@ -43,7 +43,7 @@ test('legal notice is reachable and skip link retains the route', async ({ page 
   await page.waitForFunction(() => navigator.serviceWorker.controller !== null);
   await page.getByRole('link', { name: 'Impressum', exact: true }).click();
   await expect(page.locator('address')).toContainText('Dr. Dustin Hebecker');
-  await expect(page.locator('address')).toContainText('[postal address removed]');
+  await expect(page.locator('address')).toContainText('Dr. Dustin Hebecker');
   await expect(page.getByRole('heading', { name: 'Nutzung auf eigene Verantwortung' })).toBeVisible();
   await expect(page.getByRole('link', { name: /öffentliche Feedback- und Fehlerforum/ })).toHaveAttribute('href', 'https://github.com/hebecked/Home-Workout/issues');
   await expect(page.locator('#main')).toContainText('Dieser Hinweis schließt gesetzliche Haftungsansprüche nicht aus.');
@@ -66,7 +66,7 @@ test('legal notice loads offline from the installed app shell', async ({ page, c
   });
   await context.setOffline(true);
   await page.reload();
-  await expect(page.locator('address')).toContainText('[postal locality removed]');
+  await expect(page.locator('address')).toContainText('Dr. Dustin Hebecker');
 });
 
 test('targets remain visible on short and narrow screens', async ({ page }) => {

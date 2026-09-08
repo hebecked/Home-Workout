@@ -1,6 +1,10 @@
 import { defineConfig } from 'vitest/config';
+import { loadEnv } from 'vite';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
+  define: {
+    __LEGAL_ADDRESS__: JSON.stringify((process.env.HW_LEGAL_ADDRESS ?? loadEnv(mode, process.cwd(), 'HW_').HW_LEGAL_ADDRESS ?? '').split('|').filter(Boolean))
+  },
   test: {
     environment: 'node',
     include: ['tests/unit/**/*.test.ts'],
@@ -17,4 +21,4 @@ export default defineConfig({
       }
     }
   }
-});
+}));

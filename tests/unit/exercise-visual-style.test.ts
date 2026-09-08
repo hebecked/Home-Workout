@@ -72,8 +72,8 @@ describe('exercise illustration visual system', () => {
     const knee = points(finish('glute-bridge'), 'leg-0')[1]!;
     expect(Math.abs((hip![1]! - shoulder![1]!) / (hip![0]! - shoulder![0]!) - (knee[1]! - hip![1]!) / (knee[0]! - hip![0]!))).toBeLessThan(.02);
   });
-  it('uses separate burpee panels and keeps accepted pull-up overlays', () => {
-    expect(svgFor('burpee').match(/transform="translate/g)).toHaveLength(4);
+  it('uses four overlapping burpee phases and keeps accepted pull-up overlays', () => {
+    expect(svgFor('burpee').match(/data-burpee-phase=/g)).toHaveLength(4);
     for (const id of ['pull-up', 'chin-up']) {
       expect(svgFor(id)).toContain('<circle cx="160" cy="95"');
       expect(svgFor(id)).toContain('<circle cx="160" cy="55"');

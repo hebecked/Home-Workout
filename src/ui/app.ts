@@ -233,18 +233,19 @@ export class HomeWorkoutApp {
             <span><strong>${this.activePlan.exercises.length}</strong> Exercises · Übungen</span>
           </div>
           <button class="primary start-button" data-action="start">START WORKOUT <span aria-hidden="true">→</span></button>
+          <a class="button-link create-plan-button" href="#editor" data-create-plan>Eigenen Trainingsplan erstellen <span>Create a workout plan →</span></a>
         </article>
       </section>
       <section class="exercise-preview" aria-labelledby="exercise-preview-title">
         <div class="preview-heading"><div><p class="eyebrow">LOCAL ILLUSTRATIONS · LOKALE GRAFIKEN</p><h2 id="exercise-preview-title">Inside this workout · Deine Übungen</h2></div><span>${this.activePlan.exercises.length} illustrated movements</span></div>
         <div class="exercise-preview-grid">${previews}</div>
       </section>
-      <nav class="action-grid" aria-label="Workout options">
+      <section class="plan-options"><div class="plan-options-heading"><p class="eyebrow">MEHR ALS FERTIGE ROUTINEN · MAKE IT YOURS</p><h2>Dein Trainingsplan · Your workout plan</h2><p>Erstelle deinen eigenen Plan, importiere einen KI-Entwurf oder starte einen gespeicherten Plan.</p></div><nav class="action-grid" aria-label="Workout options">
         <a class="action-card" href="#instructions"><span class="action-number">01</span><strong>Instructions · Anleitung</strong><span>How the flow works</span></a>
         <a class="action-card" href="#editor" data-create-plan><span class="action-number">02</span><strong>Create new plan · Neuen Plan</strong><span>Build your own routine</span></a>
         <a class="action-card" href="#import"><span class="action-number">03</span><strong>Upload / Start own plan · Import</strong><span>Import a validated JSON file</span></a>
         <a class="action-card" href="#plans"><span class="action-number">04</span><strong>My Plans · Meine Pläne</strong><span>Saved only on this device</span></a>
-      </nav>
+      </nav></section>
       <div class="github-placeholder">${APP_CONFIG.githubUrl ? `<a href="${escapeHtml(APP_CONFIG.githubUrl)}">GitHub</a>` : '<span>GitHub link · configurable after remote setup</span>'}</div>`);
     this.root.querySelector('[data-action="start"]')?.addEventListener('click', () => this.startWorkout(this.activePlan));
     this.root.querySelector<HTMLSelectElement>('[data-routine-picker]')?.addEventListener('change', (event) => {
@@ -442,6 +443,7 @@ export class HomeWorkoutApp {
     const translationAssistant = this.draft.languages.length > 1 ? `<div class="translation-assistant"><div><p class="eyebrow">OPTIONAL ONLINE PRE-TRANSLATION</p><h3>Translate with Cloudflare AI</h3><p>When you click “Translate draft”, the plan name, exercise names and instructions in the source language are sent to Cloudflare, an external service provider, for machine translation. Remove personal or confidential information first. Existing text in the target language will be replaced. Check the translation before saving.</p></div><div class="translation-controls"><label>Source language<select name="translation-source">${languageOptions(defaultSourceLanguage)}</select></label><label>Target language<select name="translation-target">${languageOptions(defaultTargetLanguage)}</select></label><button type="button" class="secondary" data-action="translate-plan" ${this.translationBusy ? 'disabled' : ''}>${this.translationBusy ? 'Translating…' : 'Translate draft'}</button></div>${translationReviews ? `<div class="translation-reviews">${translationReviews}</div>` : ''}</div>` : '';
     this.shell(`
       <section class="page-heading"><p class="eyebrow">PLAN STUDIO</p><h1>${editorTitle}</h1><p>${editorIntro}</p></section>
+      <aside class="editor-ai-callout"><div><p class="eyebrow">MIT KI ERSTELLEN · CREATE WITH AI</p><h2>Eine KI kann deinen Plan vorbereiten</h2><p>Kopiere unsere Anleitung in eine KI deiner Wahl und beschreibe dein Wunschtraining. Prüfe den fertigen Plan vor dem Training.</p><p>Give the guide to an AI with your workout preferences, then review the result.</p></div><a class="button-link primary" href="#instructions" target="_blank" rel="noopener">KI-Anleitung öffnen <span>Open AI guide ↗ · Neuer Tab</span></a></aside>
       <form class="editor" data-editor>
         <section class="form-section"><h2>01 · Basics</h2><div class="field-grid">
           ${planNameFields}
@@ -723,7 +725,7 @@ export class HomeWorkoutApp {
   }
 
   private renderLegalNotice(): void {
-    this.shell(`<section class="page-heading"><p class="eyebrow">ANBIETERANGABEN</p><h1>Impressum</h1><p>Home Workout ist ein privates, nicht gewerbliches Projekt.</p></section><section class="instruction-list legal-notice"><h2>Anbieter</h2><address>Dr. Dustin Hebecker<br>[postal address removed]<br>[postal locality removed]<br>Deutschland</address><h2>Nutzung auf eigene Verantwortung</h2><p>Du entscheidest selbst, ob die Übungen und die gewählte Belastung für dich geeignet sind. Die App bietet allgemeine Trainingsanregungen und ersetzt keine medizinische Beratung oder persönliche Trainingsbetreuung.</p><p>Trainiere innerhalb deiner Möglichkeiten und beende die Übung bei Schmerzen oder Unwohlsein. Kläre bei gesundheitlichen Einschränkungen oder Unsicherheit vor dem Training ärztlich ab, welche Belastung für dich geeignet ist.</p><p>Dieser Hinweis schließt gesetzliche Haftungsansprüche nicht aus.</p><h2>Feedback</h2><p>Fehler gefunden oder eine Idee zur Verbesserung? Nutze das <a href="${APP_CONFIG.githubUrl}/issues">öffentliche Feedback- und Fehlerforum auf GitHub</a>. Bitte veröffentliche dort keine Gesundheitsdaten oder anderen vertraulichen Informationen.</p></section>`);
+    this.shell(`<section class="page-heading"><p class="eyebrow">ANBIETERANGABEN</p><h1>Impressum</h1><p>Home Workout ist ein privates, nicht gewerbliches Projekt.</p></section><section class="instruction-list legal-notice"><h2>Anbieter</h2><address>Dr. Dustin Hebecker<br>${__LEGAL_ADDRESS__.length ? __LEGAL_ADDRESS__.map(escapeHtml).join('<br>') : 'Anschrift in dieser Entwicklungsversion nicht hinterlegt.'}</address><h2>Nutzung auf eigene Verantwortung</h2><p>Du entscheidest selbst, ob die Übungen und die gewählte Belastung für dich geeignet sind. Die App bietet allgemeine Trainingsanregungen und ersetzt keine medizinische Beratung oder persönliche Trainingsbetreuung.</p><p>Trainiere innerhalb deiner Möglichkeiten und beende die Übung bei Schmerzen oder Unwohlsein. Kläre bei gesundheitlichen Einschränkungen oder Unsicherheit vor dem Training ärztlich ab, welche Belastung für dich geeignet ist.</p><p>Dieser Hinweis schließt gesetzliche Haftungsansprüche nicht aus.</p><h2>Feedback</h2><p>Fehler gefunden oder eine Idee zur Verbesserung? Nutze das <a href="${APP_CONFIG.githubUrl}/issues">öffentliche Feedback- und Fehlerforum auf GitHub</a>. Bitte veröffentliche dort keine Gesundheitsdaten oder anderen vertraulichen Informationen.</p></section>`);
   }
 
   private showResumeDialog(): void {
