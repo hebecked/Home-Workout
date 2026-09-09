@@ -25,10 +25,8 @@ test('desktop editor creates, orders and saves a multilingual plan', async ({ pa
   await page.getByRole('link', { name: /create new plan|neuen Plan/i }).click();
 
   await page.getByLabel(/plan name.*English|English.*plan name/i).fill('Compact Strength');
-  await page.getByRole('button', { name: /add language|Sprache hinzufügen/i }).click();
-  await page.getByLabel(/language code|Sprachcode/i).fill('fr');
-  await page.getByLabel(/language label|Sprachname/i).fill('Français');
-  await page.getByRole('button', { name: /^add$/i }).click();
+  await page.locator('[data-display-language="de"]').uncheck();
+  await page.locator('[data-display-language="fr"]').check();
   await page.getByLabel(/plan name.*Français/i).fill('Force compacte');
   const trainingPhase = page.locator('.phase-editor[data-phase="training"]');
   await trainingPhase.getByRole('button', { name: /add exercise|Übung hinzufügen/i }).click();
@@ -39,19 +37,18 @@ test('desktop editor creates, orders and saves a multilingual plan', async ({ pa
     options: Array.from(group.querySelectorAll('option')).map((option) => option.textContent ?? '')
   })));
   expect(categoryGroups.map((group) => group.label)).toEqual([
-    'Warm-up · Aufwärmen', 'Cardio · Kondition', 'Full body · Ganzkörper', 'Legs · Beine',
-    'Push · Drücken', 'Pull · Ziehen', 'Core · Rumpf', 'Stretching · Dehnen'
+    'Warm-up', 'Cardio', 'Full body', 'Legs', 'Push', 'Pull', 'Core', 'Stretching'
   ]);
-  const legOptions = categoryGroups.find((group) => group.label === 'Legs · Beine')?.options ?? [];
+  const legOptions = categoryGroups.find((group) => group.label === 'Legs')?.options ?? [];
   expect(legOptions).toEqual([...legOptions].sort((left, right) => left.localeCompare(right, 'en', { sensitivity: 'base' })));
-  await page.getByRole('option', { name: /^Squat · Kniebeuge$/i }).click();
+  await page.locator('select[name="exercise-library"]').selectOption('squat');
   await page.getByRole('button', { name: /add selected|Auswahl hinzufügen/i }).click();
 
   await trainingPhase.getByText(/edit translations|Übersetzungen bearbeiten/i).click();
-  await trainingPhase.getByLabel(/Exercise name.*Übungsname/i).last().fill('Squat français');
-  await trainingPhase.getByLabel(/Instructions.*Beschreibung/i).last().fill('Pliez les genoux et gardez les pieds au sol.');
+  await trainingPhase.locator('.translation-editor input[name$="-fr-name"]').fill('Squat français');
+  await trainingPhase.locator('.translation-editor textarea[name$="-fr-instructions"]').fill('Pliez les genoux et gardez les pieds au sol.');
 
-  await expect(page.getByText(/squat|Kniebeuge/i)).toBeVisible();
+  await expect(trainingPhase.locator('.exercise-row-main strong')).toHaveText('Squat');
   await trainingPhase.getByLabel('Minimum', { exact: true }).fill('14');
   await trainingPhase.getByLabel('Maximum', { exact: true }).fill('18');
   await page.getByRole('button', { name: /save locally|lokal speichern/i }).click();
@@ -82,7 +79,7 @@ test('desktop editor creates, orders and saves a multilingual plan', async ({ pa
   const editedTraining = page.locator('.phase-editor[data-phase="training"]');
   await expect(editedTraining.getByLabel('Minimum', { exact: true })).toHaveValue('14');
   await expect(editedTraining.getByLabel('Maximum', { exact: true })).toHaveValue('18');
-  await editedTraining.getByLabel('Rounds · Runden', { exact: true }).fill('2');
+  await editedTraining.getByLabel('Rounds', { exact: true }).fill('2');
   await page.getByRole('button', { name: /save changes|Änderungen speichern/i }).click();
   await page.getByRole('link', { name: /my plans|meine Pläne/i }).click();
   await expect(page.locator('.plan-card').filter({ hasText: 'Compact Strength' })).toContainText(/4 rounds/i);
@@ -93,9 +90,9 @@ test('desktop editor creates, orders and saves a multilingual plan', async ({ pa
   const copyCard = page.locator('.plan-card').filter({ hasText: 'Compact Strength · Copy' });
   await expect(copyCard).toBeVisible();
   await copyCard.getByRole('button', { name: /delete|löschen/i }).click();
-  const deleteDialog = page.getByRole('dialog', { name: /Delete Compact Strength · Copy/i });
+  const deleteDialog = page.getByRole('dialog');
   await expect(deleteDialog).toBeVisible();
-  await deleteDialog.getByRole('button', { name: /delete plan|Plan löschen/i }).click();
+  await deleteDialog.getByRole('button', { name: /^delete$|^Plan löschen$/i }).click();
   await expect(copyCard).toHaveCount(0);
   await expect(page.getByText(/Plan deleted|Plan gelöscht/i)).toBeVisible();
 });
@@ -118,12 +115,10 @@ test('machine translation explains the transfer and requires explicit review bef
   });
   await page.goto('/#editor');
   await page.getByLabel(/plan name.*English|English.*plan name/i).fill('Translation Test');
-  await page.getByRole('button', { name: /add language|Sprache hinzufügen/i }).click();
-  await page.getByLabel(/language code|Sprachcode/i).fill('fr');
-  await page.getByLabel(/language label|Sprachname/i).fill('Français');
-  await page.getByRole('button', { name: /^add$/i }).click();
+  await page.locator('[data-display-language="de"]').uncheck();
+  await page.locator('[data-display-language="fr"]').check();
   await page.locator('.phase-editor[data-phase="training"]').getByRole('button', { name: /add exercise|Übung hinzufügen/i }).click();
-  await page.getByRole('option', { name: /^Squat · Kniebeuge$/i }).click();
+  await page.locator('select[name="exercise-library"]').selectOption('squat');
   await page.getByRole('button', { name: /add selected|Auswahl hinzufügen/i }).click();
 
   await expect(page.getByText(/sent to Cloudflare, an external service provider/i)).toBeVisible();
@@ -151,7 +146,7 @@ test('machine translation explains the transfer and requires explicit review bef
 test('editor rejects zero rounds without changing it to one', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'firefox-desktop', 'Representative editor validation journey');
   await page.goto('/#editor');
-  await page.locator('.phase-editor[data-phase="training"]').getByLabel('Rounds · Runden', { exact: true }).fill('0');
+  await page.locator('.phase-editor[data-phase="training"]').getByLabel('Rounds', { exact: true }).fill('0');
   await page.getByRole('button', { name: /save locally|lokal speichern/i }).click();
   await expect(page.getByRole('status')).toContainText(/rounds must be at least 1|Runden müssen mindestens 1 sein/i);
   const savedPlans = await page.evaluate(() => localStorage.getItem('home-workout:plans'));
@@ -169,7 +164,7 @@ test('phase editor groups warm-up, training and cool-down and can add a block', 
   await page.getByRole('button', { name: /add training block|Trainingsblock hinzufügen/i }).click();
   await expect(page.locator('.phase-editor')).toHaveCount(4);
   const added = page.locator('.phase-editor').nth(2);
-  await added.getByLabel('Kind · Art').selectOption('active-recovery');
+  await added.locator('select[name="phase-2-kind"]').selectOption('active-recovery');
   await added.getByRole('button', { name: /remove phase/i }).click();
   await expect(page.locator('.phase-editor')).toHaveCount(3);
 });

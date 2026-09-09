@@ -460,19 +460,34 @@ export class HomeWorkoutApp {
       : this.editorMode === 'copy'
         ? this.t('editor.copyIntro')
         : this.t('editor.createIntro');
+    const editorExerciseNames = (exerciseId: string, translations?: PlanExercise['translations']): string[] => {
+      const names = this.draft.displayLanguages.map((code) => {
+        const savedName = translations?.[code]?.name;
+        if (savedName?.trim()) return savedName;
+        return isSupportedLocale(code) ? exerciseTranslation(exerciseId, code)?.name : undefined;
+      }).filter((name): name is string => Boolean(name?.trim()));
+      const uniqueNames = [...new Set(names)];
+      if (uniqueNames.length) return uniqueNames;
+      const fallback = translations?.[this.uiLocale]?.name
+        ?? translations?.en?.name
+        ?? Object.values(translations ?? {})[0]?.name
+        ?? exerciseTranslation(exerciseId, this.uiLocale)?.name
+        ?? exerciseId;
+      return [fallback];
+    };
     const exerciseOptions = exerciseCategoryGroups.map(({ category, key }) => {
       const options = EXERCISE_LIBRARY
         .filter((exercise) => exercise.category === category)
         .slice()
-        .sort((left, right) => (exerciseTranslation(left.id, this.uiLocale)?.name ?? left.translations.en.name).localeCompare(exerciseTranslation(right.id, this.uiLocale)?.name ?? right.translations.en.name, this.uiLocale, { sensitivity: 'base' }))
-        .map((exercise) => `<option value="${exercise.id}">${escapeHtml(exerciseTranslation(exercise.id, this.uiLocale)?.name ?? exercise.translations.en.name)}</option>`)
+        .sort((left, right) => editorExerciseNames(left.id, left.translations)[0]!.localeCompare(editorExerciseNames(right.id, right.translations)[0]!, this.uiLocale, { sensitivity: 'base' }))
+        .map((exercise) => `<option value="${exercise.id}">${escapeHtml(editorExerciseNames(exercise.id, exercise.translations).join(' · '))}</option>`)
         .join('');
       return `<optgroup label="${escapeHtml(this.t(key))}">${options}</optgroup>`;
     }).join('');
     let flatIndex = 0;
     const renderExerciseRow = (exercise: PlanExercise, phaseId: string, index: number): string => {
       const formIndex = flatIndex++;
-      const name = exercise.translations.en?.name ?? Object.values(exercise.translations)[0]?.name ?? exercise.exerciseId;
+      const name = editorExerciseNames(exercise.exerciseId, exercise.translations).join(' · ');
       const translationFields = this.draft.languages.map((language) => {
         const copy = exercise.translations[language.code] ?? { name, instructions: '' };
         return `<fieldset><legend>${escapeHtml(language.label)} (${escapeHtml(language.code)})</legend><label>${escapeHtml(this.t('editor.exerciseName'))}<input name="translation-${formIndex}-${escapeHtml(language.code)}-name" value="${escapeHtml(copy.name)}" required></label><label>${escapeHtml(this.t('editor.instructions'))}<textarea name="translation-${formIndex}-${escapeHtml(language.code)}-instructions" rows="3" required>${escapeHtml(copy.instructions)}</textarea></label></fieldset>`;
@@ -504,7 +519,13 @@ export class HomeWorkoutApp {
         <details class="custom-exercise"><summary>${escapeHtml(this.t('editor.createCustom'))}</summary><div class="inline-form"><label>${escapeHtml(this.t('editor.exerciseName'))}<input name="custom-name-${escapeHtml(phase.id)}"></label><label>${escapeHtml(this.t('editor.type'))}<select name="custom-type-${escapeHtml(phase.id)}"><option value="repetitions">${escapeHtml(this.t('editor.repetitions'))}</option><option value="duration">${escapeHtml(this.t('editor.duration'))}</option><option value="untimed">${escapeHtml(this.t('editor.untimed'))}</option></select></label><button type="button" data-action="add-custom" data-phase-id="${escapeHtml(phase.id)}">${escapeHtml(this.t('editor.addCustom'))}</button></div></details>
       </article>`;
     }).join('');
-    const languageChecks = LOCALE_DEFINITIONS.map((language) => `<label class="check"><input type="checkbox" data-display-language="${escapeHtml(language.code)}" ${this.draft.displayLanguages.includes(language.code) ? 'checked' : ''}> ${escapeHtml(language.nativeName)}</label>`).join('');
+    const languageChoices = [
+      ...LOCALE_DEFINITIONS.map(({ code, nativeName }) => ({ code, nativeName })),
+      ...this.draft.languages
+        .filter(({ code }) => !isSupportedLocale(code))
+        .map(({ code, label }) => ({ code, nativeName: label }))
+    ];
+    const languageChecks = languageChoices.map((language) => `<label class="check"><input type="checkbox" data-display-language="${escapeHtml(language.code)}" ${this.draft.displayLanguages.includes(language.code) ? 'checked' : ''}> ${escapeHtml(language.nativeName)}</label>`).join('');
     const planNameFields = this.draft.languages.map((language) => `<label>${escapeHtml(this.t('editor.planName', { language: localeName(language.code) }))}<input name="name-${escapeHtml(language.code)}" value="${escapeHtml(this.draft.name[language.code] ?? '')}" required></label>`).join('');
     const defaultSourceLanguage = this.draft.languages.find(({ code }) => code === 'en')?.code ?? this.draft.languages[0]?.code ?? '';
     const defaultTargetLanguage = [...this.draft.languages].reverse().find(({ code }) => code !== defaultSourceLanguage)?.code ?? '';
@@ -634,15 +655,31 @@ export class HomeWorkoutApp {
         checkbox.checked = true;
         return;
       }
-      for (const code of selected) {
-        if (!this.draft.languages.some((language) => language.code === code)) this.draft.languages.push({ code, label: localeName(code) });
-        if (isSupportedLocale(code)) {
-          this.draft.name[code] ||= routineNames[this.draft.id as keyof typeof routineNames]?.[code] ?? this.draft.name.en ?? Object.values(this.draft.name)[0] ?? 'Workout';
-          for (const exercise of planExercises(this.draft)) {
-            const copy = exerciseTranslation(exercise.exerciseId, code) ?? exercise.translations.en ?? Object.values(exercise.translations)[0];
-            if (copy) exercise.translations[code] = { ...copy };
-          }
-        }
+      const previousLanguages = this.draft.languages;
+      const previousNames = this.draft.name;
+      const fallbackPlanName = previousNames.en ?? previousNames.de ?? Object.values(previousNames)[0] ?? 'Workout';
+      this.draft.languages = selected.map((code) => previousLanguages.find((language) => language.code === code) ?? { code, label: localeName(code) });
+      this.draft.name = Object.fromEntries(selected.map((code) => [
+        code,
+        previousNames[code]
+          ?? (isSupportedLocale(code) ? routineNames[this.draft.id as keyof typeof routineNames]?.[code] : undefined)
+          ?? fallbackPlanName
+      ]));
+      for (const exercise of planExercises(this.draft)) {
+        const previousTranslations = exercise.translations;
+        const fallback = previousTranslations.en ?? previousTranslations.de ?? Object.values(previousTranslations)[0];
+        exercise.translations = Object.fromEntries(selected.map((code) => {
+          const copy = previousTranslations[code]
+            ?? (isSupportedLocale(code) ? exerciseTranslation(exercise.exerciseId, code) : undefined)
+            ?? fallback
+            ?? { name: exercise.exerciseId, instructions: '' };
+          return [code, { ...copy }];
+        }));
+      }
+      if (this.draft.translationMetadata) {
+        const retainedMetadata = Object.fromEntries(Object.entries(this.draft.translationMetadata).filter(([code]) => selected.includes(code)));
+        if (Object.keys(retainedMetadata).length) this.draft.translationMetadata = retainedMetadata;
+        else delete this.draft.translationMetadata;
       }
       this.draft.displayLanguages = selected;
       this.renderEditor();

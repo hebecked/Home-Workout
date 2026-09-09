@@ -18,6 +18,7 @@ test('target follows image without being covered by workout controls', async ({ 
 
 test('legal notice is reachable and skip link retains the route', async ({ page }) => {
   await page.goto('/');
+  await page.getByLabel('Interface language').selectOption('de');
   await page.evaluate(() => navigator.serviceWorker.ready);
   await page.reload();
   await page.waitForFunction(() => navigator.serviceWorker.controller !== null);
@@ -25,7 +26,7 @@ test('legal notice is reachable and skip link retains the route', async ({ page 
   await expect(page.locator('address')).toContainText('Dr. Dustin Hebecker');
   await expect(page.locator('address')).toContainText('Dr. Dustin Hebecker');
   await expect(page.getByRole('heading', { name: 'Nutzung auf eigene Verantwortung' })).toBeVisible();
-  await expect(page.getByRole('link', { name: /öffentliche Feedback- und Fehlerforum/ })).toHaveAttribute('href', 'https://github.com/hebecked/Home-Workout/issues');
+  await expect(page.getByRole('link', { name: /Feedback- und Fehlerforum auf GitHub/i })).toHaveAttribute('href', 'https://github.com/hebecked/Home-Workout/issues');
   await expect(page.locator('#main')).toContainText('Dieser Hinweis schließt gesetzliche Haftungsansprüche nicht aus.');
   await expect(page.locator('.skip-link')).toHaveCount(1);
   await page.locator('.skip-link').focus();

@@ -49,3 +49,26 @@ test('offers all supported training languages while enforcing a maximum of two',
   await expect(page.locator('[data-display-language="hi"]')).toBeChecked();
   await expect(page.locator('[data-display-language]:checked')).toHaveCount(2);
 });
+test('removes deselected plan languages and uses the selected language for exercise names', async ({ page }) => {
+  await page.goto('/#editor');
+
+  await page.locator('[data-display-language="de"]').uncheck();
+  await page.locator('[data-display-language="hi"]').check();
+  await page.locator('[data-display-language="en"]').uncheck();
+
+  await expect(page.locator('[name="name-en"]')).toHaveCount(0);
+  await expect(page.locator('[name="name-de"]')).toHaveCount(0);
+  await expect(page.locator('[name="name-hi"]')).toHaveCount(1);
+
+  const trainingPhase = page.locator('.phase-editor[data-phase="training"]');
+  await trainingPhase.getByRole('button', { name: 'Add exercise' }).click();
+  const picker = page.locator('select[name="exercise-library"]');
+  await expect(picker.locator('option[value="squat"]')).toHaveText('स्क्वाट');
+  await picker.selectOption('squat');
+  await page.getByRole('button', { name: 'Add selected' }).click();
+
+  await expect(trainingPhase.locator('.exercise-row-main strong')).toHaveText('स्क्वाट');
+  await trainingPhase.getByText('Edit translations').click();
+  await expect(trainingPhase.locator('.translation-editor fieldset')).toHaveCount(1);
+  await expect(trainingPhase.locator('.translation-editor legend')).toHaveText(/हिन्दी \(hi\)/);
+});
