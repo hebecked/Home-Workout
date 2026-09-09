@@ -12,12 +12,12 @@ export const ROUTINE_IDS = [
 export type RoutineId = typeof ROUTINE_IDS[number];
 
 const baseRoutineNames: Readonly<Record<RoutineId, LocalizedText>> = {
-  '30-minute-full-body': row('30 Minuten Ganzkörper', '30-minute full body', '30 minuten hele lichaam', '30 minutos de cuerpo completo', 'Corps entier en 30 minutes', 'Всё тело за 30 минут', '30 分钟全身训练', '30분 전신 운동', '30分全身ワークアウト', 'تمرين كامل الجسم لمدة 30 دقيقة'),
-  'gentle-start': row('Sanfter Einstieg', 'Gentle start', 'Rustige start', 'Inicio suave', 'Démarrage en douceur', 'Мягкий старт', '轻松入门', '가벼운 시작', 'やさしいスタート', 'بداية لطيفة'),
-  'full-body-strength': row('Ganzkörper-Kraftaufbau', 'Full-body strength', 'Kracht voor het hele lichaam', 'Fuerza de cuerpo completo', 'Renforcement du corps entier', 'Силовая тренировка всего тела', '全身力量训练', '전신 근력', '全身筋力トレーニング', 'قوة الجسم بالكامل'),
-  'cardio-base': row('Ausdauer-Basis', 'Cardio base', 'Conditiebasis', 'Base de cardio', 'Base cardio', 'Базовая кардиотренировка', '基础有氧训练', '기초 유산소', '有酸素運動の基礎', 'أساس التمارين الهوائية'),
-  'active-circuit': row('Aktiver Zirkel', 'Active circuit', 'Actief circuit', 'Circuito activo', 'Circuit actif', 'Активная круговая тренировка', '活力循环训练', '액티브 서킷', 'アクティブサーキット', 'دائرة نشطة'),
-  'advanced-bodyweight': row('Fortgeschrittenes Körpergewichtstraining', 'Advanced bodyweight', 'Gevorderd trainen met lichaamsgewicht', 'Peso corporal avanzado', 'Poids du corps avancé', 'Продвинутая тренировка с весом тела', '进阶自重训练', '고급 맨몸 운동', '上級自重トレーニング', 'تمارين وزن الجسم المتقدمة')
+  '30-minute-full-body': row('30 Minuten Ganzkörper', '30 Minute Full Body', '30 minuten hele lichaam', '30 minutos de cuerpo completo', 'Corps entier en 30 minutes', 'Всё тело за 30 минут', '30 分钟全身训练', '30분 전신 운동', '30分全身ワークアウト', 'تمرين كامل الجسم لمدة 30 دقيقة'),
+  'gentle-start': row('Sanfter Einstieg', 'Gentle Start', 'Rustige start', 'Inicio suave', 'Démarrage en douceur', 'Мягкий старт', '轻松入门', '가벼운 시작', 'やさしいスタート', 'بداية لطيفة'),
+  'full-body-strength': row('Ganzkörper Kraftaufbau', 'Full Body Strength', 'Kracht voor het hele lichaam', 'Fuerza de cuerpo completo', 'Renforcement du corps entier', 'Силовая тренировка всего тела', '全身力量训练', '전신 근력', '全身筋力トレーニング', 'قوة الجسم بالكامل'),
+  'cardio-base': row('Ausdauer Basis', 'Cardio Base', 'Conditiebasis', 'Base de cardio', 'Base cardio', 'Базовая кардиотренировка', '基础有氧训练', '기초 유산소', '有酸素運動の基礎', 'أساس التمارين الهوائية'),
+  'active-circuit': row('Aktiver Zirkel', 'Active Circuit', 'Actief circuit', 'Circuito activo', 'Circuit actif', 'Активная круговая тренировка', '活力循环训练', '액티브 서킷', 'アクティブサーキット', 'دائرة نشطة'),
+  'advanced-bodyweight': row('Fortgeschrittenes Körpergewicht', 'Advanced Bodyweight', 'Gevorderd trainen met lichaamsgewicht', 'Peso corporal avanzado', 'Poids du corps avancé', 'Продвинутая тренировка с весом тела', '进阶自重训练', '고급 맨몸 운동', '上級自重トレーニング', 'تمارين وزن الجسم المتقدمة')
 };
 
 const addedRoutineNames: Readonly<Record<RoutineId, AddedLocalizedText>> = {

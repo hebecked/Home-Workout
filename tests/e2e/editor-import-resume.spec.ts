@@ -197,7 +197,7 @@ test('duplicating a non-DE/EN local plan preserves its configured languages', as
 
   const sourceCard = page.locator('.plan-card').filter({ hasText: 'Plan corto' });
   await sourceCard.getByRole('button', { name: /duplicate|duplizieren/i }).click();
-  await expect(page.locator('.plan-card').filter({ hasText: 'Plan corto · Copy' })).toBeVisible();
+  await expect(page.locator('.plan-card').filter({ hasText: 'Plan corto · Copia' })).toBeVisible();
 
   const storedRaw = await page.evaluate(() => localStorage.getItem('home-workout:plans') ?? '[]');
   const stored = JSON.parse(storedRaw) as unknown;
@@ -205,7 +205,7 @@ test('duplicating a non-DE/EN local plan preserves its configured languages', as
     importedPlan,
     expect.objectContaining({
       languages: [{ code: 'es', label: 'Español' }],
-      name: { es: 'Plan corto · Copy' }
+      name: { es: 'Plan corto · Copia' }
     })
   ]);
 });
@@ -295,7 +295,7 @@ test('reload offers resume or start over and resume keeps progress', async ({ pa
   const prompt = page.getByRole('dialog', { name: /resume workout|Workout fortsetzen/i });
   await expect(prompt).toBeVisible();
   await prompt.getByRole('button', { name: /resume|fortsetzen/i }).click();
-  await expect(page.getByText(/Exercise 2\s*\/\s*3.*Übung 2\s*\/\s*3/i)).toBeVisible();
+  await expect(page.getByText(/Exercise 2\s*\/\s*3/i)).toBeVisible();
 
   await page.reload();
   await page.getByRole('dialog', { name: /resume workout|Workout fortsetzen/i })

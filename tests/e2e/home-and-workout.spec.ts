@@ -10,10 +10,11 @@ test('home presents the default plan and all primary destinations', async ({ pag
   await expect(page.getByText(/14\s+(exercises|Übungen)/i)).toBeVisible();
   await expect(page.getByLabel(/choose routine|Routine wählen/i)).toHaveValue('30-minute-full-body');
   await expect(page.getByRole('button', { name: /start workout/i })).toBeVisible();
-  await expect(page.getByRole('link', { name: /instructions|Anleitung/i })).toBeVisible();
-  await expect(page.getByRole('link', { name: /create new plan|neuen Plan/i })).toBeVisible();
-  await expect(page.getByRole('link', { name: /upload|own plan|import/i })).toBeVisible();
-  await expect(page.getByRole('link', { name: /my plans|meine Pläne/i })).toBeVisible();
+  const options = page.locator('.plan-options');
+  await expect(options.getByRole('link', { name: /instructions|Anleitung/i })).toBeVisible();
+  await expect(options.getByRole('link', { name: /create new plan|neuen Plan/i })).toBeVisible();
+  await expect(options.getByRole('link', { name: /upload|own plan|import/i })).toBeVisible();
+  await expect(options.getByRole('link', { name: /my plans|meine Pläne/i })).toBeVisible();
 });
 
 test('permanent bundled routines can be selected without replacing the default', async ({ page }) => {
@@ -52,7 +53,7 @@ test('the app stays visibly light when the operating system prefers dark mode', 
   });
 });
 
-test('phone workout journey shows bilingual exercise, controls, pause and rest', async ({ page }, testInfo) => {
+test('phone workout journey shows two-language exercise copy, localized controls, pause and rest', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'chromium-phone', 'Representative smartphone journey');
   await page.clock.install({ time: new Date('2026-01-01T12:00:00Z') });
   await page.goto('/');
@@ -60,7 +61,8 @@ test('phone workout journey shows bilingual exercise, controls, pause and rest',
 
   await expect(page.getByText(/Phase 1\s*\/\s*3/i)).toBeVisible();
   await expect(page.getByText(/Runde 1\s*\/\s*1|Round 1\s*\/\s*1/i)).toBeVisible();
-  await expect(page.getByText(/Exercise 1\s*\/\s*3.*Übung 1\s*\/\s*3/i)).toBeVisible();
+  await expect(page.getByText(/Exercise 1\s*\/\s*3/i)).toBeVisible();
+  await expect(page.locator('.translation')).toHaveCount(2);
   await expect(page.getByRole('img', { name: /marching|Marschieren/i })).toBeVisible();
   await expect(page.getByRole('button', { name: /previous|zurück/i })).toBeVisible();
   await expect(page.getByRole('button', { name: /pause/i })).toBeVisible();
@@ -73,13 +75,13 @@ test('phone workout journey shows bilingual exercise, controls, pause and rest',
   await page.getByRole('button', { name: /resume|fortsetzen/i }).click();
   await page.clock.fastForward(111_000);
   await expect(page.getByText(/Phase 2\s*\/\s*3/i)).toBeVisible();
-  await expect(page.getByText(/Exercise 1\s*\/\s*8.*Übung 1\s*\/\s*8/i)).toBeVisible();
+  await expect(page.getByText(/Exercise 1\s*\/\s*8/i)).toBeVisible();
   await page.getByRole('button', { name: /next|weiter/i }).click();
   await page.getByRole('button', { name: /next|weiter/i }).click();
-  await expect(page.getByText(/Exercise 2\s*\/\s*8.*Übung 2\s*\/\s*8/i)).toBeVisible();
-  const kneeOption = page.getByRole('button', { name: /Knee Push-up.*Knie-Liegestütz/i });
+  await expect(page.getByText(/Exercise 2\s*\/\s*8/i)).toBeVisible();
+  const kneeOption = page.getByRole('button', { name: /Knee Push-up/i });
   await expect(kneeOption).toBeVisible();
-  await expect(page.getByText(/Easier alternatives.*Leichtere Alternativen/i)).toBeVisible();
+  await expect(page.getByText(/Alternatives/i).first()).toBeVisible();
   await kneeOption.click();
   await expect(kneeOption).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByRole('img', { name: /Knee Push-up|Knie-Liegestütz/i })).toBeVisible();

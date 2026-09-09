@@ -1,6 +1,6 @@
-import type { MessageKey } from '../base-messages';
+import type { CoreMessageKey } from '../base-messages';
 
-export const hiMessages: Record<MessageKey, string> = {
+export const hiMessages: Record<CoreMessageKey, string> = {
   "app.name": "होम वर्कआउट",
   "language.label": "इंटरफ़ेस भाषा",
   "language.changed": "भाषा बदल गई",
@@ -12,7 +12,7 @@ export const hiMessages: Record<MessageKey, string> = {
   "nav.legal": "कानूनी नोट",
   "footer.privacy": "डिजाइन द्वारा निजी · ऑफ़लाइन तैयार",
   "button.start": "प्रारंभ",
-  "button.startWorkout": "प्रारंभ workout",
+  "button.startWorkout": "वर्कआउट शुरू करें",
   "button.backHome": "वापस घर",
   "button.cancel": "रद्द",
   "button.close": "बंद",

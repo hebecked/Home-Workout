@@ -11,7 +11,7 @@ async function startWorkout(page: Page): Promise<void> {
 async function confirmWorkoutExit(page: Page): Promise<void> {
   const confirmation = page.getByRole('dialog', { name: exitDialogName });
   await expect(confirmation).toBeVisible();
-  await expect(confirmation.getByRole('button', { name: /cancel|abbrechen|keep workout|training fortsetzen/i })).toBeVisible();
+  await expect(confirmation.getByRole('button', { name: /cancel|continue workout|abbrechen|keep workout|training fortsetzen/i })).toBeVisible();
   await confirmation.getByRole('button', {
     name: /^(end workout|training beenden|workout abbrechen|beenden)$/i
   }).click();
@@ -55,12 +55,7 @@ test('home shows multiple visible exercise previews backed by local SVG assets',
   }
 
   const previewSection = page.getByRole('region', { name: /inside this workout|deine Übungen/i });
-  for (const category of [
-    /^Legs\s*[·/]\s*Beine$/i,
-    /^Arms\s*[·/]\s*Oberkörper$/i,
-    /^Core\s*[·/]\s*Rumpf$/i,
-    /^Cardio\s*[·/]\s*Kondition$/i
-  ]) {
+  for (const category of [/^Legs$/i, /^Push$/i, /^Pull$/i, /^Core$/i, /^Cardio$/i]) {
     await expect(
       previewSection.getByText(category).first(),
       `the home preview explains category ${category.source}`

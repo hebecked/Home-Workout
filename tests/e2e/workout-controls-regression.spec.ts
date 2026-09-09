@@ -19,7 +19,7 @@ test('workout controls remain reliable while the render timer is running', async
   await page.goto('/');
   await page.getByRole('button', { name: /start workout/i }).click();
 
-  await expect(page.getByText(/^Marching in Place$/i)).toBeVisible();
+  await expect(page.getByRole('heading', { name: /^Marching in Place$/i })).toBeVisible();
   await pressAcrossRenderTick(page, page.getByRole('button', { name: /next|weiter/i }));
   await expect(page.locator('.phase-pill')).toHaveText(/rest|pause/i);
 
@@ -27,7 +27,7 @@ test('workout controls remain reliable while the render timer is running', async
   // render tick to settle the state machine onto the next exercise.
   await page.clock.setSystemTime(new Date('2026-01-01T12:00:01Z'));
   await page.clock.runFor(550);
-  await expect(page.getByText(/^Arm Circles$/i)).toBeVisible();
+  await expect(page.getByRole('heading', { name: /^Arm Circles$/i })).toBeVisible();
 
   await pressAcrossRenderTick(page, page.getByRole('button', { name: /^pause$/i }));
   await expect(page.getByText(/paused|pausiert/i)).toBeVisible();
@@ -38,7 +38,7 @@ test('workout controls remain reliable while the render timer is running', async
   await expect(page.locator('[data-workout-total]')).toContainText(/Total\s+00:/i);
 
   await pressAcrossRenderTick(page, page.getByRole('button', { name: /previous|zurück/i }));
-  await expect(page.getByText(/^Marching in Place$/i)).toBeVisible();
+  await expect(page.getByRole('heading', { name: /^Marching in Place$/i })).toBeVisible();
 });
 
 test('Next skips an active rest and repetition targets do not render a tap counter', async ({ page }, testInfo) => {
@@ -49,14 +49,14 @@ test('Next skips an active rest and repetition targets do not render a tap count
 
   await page.clock.setSystemTime(new Date('2026-01-01T12:01:51Z'));
   await page.clock.runFor(550);
-  await expect(page.getByText(/^Squat$/i)).toBeVisible();
+  await expect(page.getByRole('heading', { name: /^Squat$/i })).toBeVisible();
 
   await page.getByRole('button', { name: /next|weiter/i }).click();
   await expect(page.locator('.phase-pill')).toHaveText(/rest|pause/i);
   await expect(page.getByText(/00:20/)).toBeVisible();
 
   await page.getByRole('button', { name: /next|weiter/i }).click();
-  await expect(page.getByText(/^Push-up$/i)).toBeVisible();
+  await expect(page.getByRole('heading', { name: /^Push-up$/i })).toBeVisible();
   await expect(page.getByText(/rest|pause/i)).toHaveCount(0);
 
   await expect(page.getByText(/6–15/)).toBeVisible();

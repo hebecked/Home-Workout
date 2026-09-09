@@ -32,6 +32,10 @@ a { color: inherit; }
 .brand-mark { width: 42px; height: 42px; display: grid; place-items: center; background: var(--accent); color: #fff; font-size: .8rem; letter-spacing: .08em; box-shadow: 5px 5px 0 #dce3ff; }
 .site-header nav { display: flex; gap: clamp(.75rem, 3vw, 2rem); }
 .site-header nav a { font-size: .85rem; text-decoration: none; font-weight: 700; }
+.header-actions { display: flex; align-items: center; gap: clamp(.65rem, 2vw, 1.5rem); }
+.language-picker { display: inline-flex; align-items: center; gap: .4rem; color: var(--muted); font-size: .75rem; font-weight: 750; }
+.language-picker select { min-height: 42px; max-width: 10rem; border: 1px solid var(--line); background: var(--surface); color: var(--ink); padding: .45rem .6rem; }
+[dir="rtl"] .brand-mark { box-shadow: -5px 5px 0 #dce3ff; }
 main { min-height: calc(100vh - 150px); }
 footer { border-top: 1px solid var(--line); padding: 1.5rem clamp(1rem, 4vw, 4rem); display: flex; justify-content: space-between; gap: 1rem; color: var(--muted); font-size: .78rem; }
 .home-grid { display: grid; grid-template-columns: minmax(0, .8fr) minmax(320px, 1.2fr); gap: clamp(2rem, 6vw, 7rem); align-items: end; padding: clamp(3rem, 9vw, 8rem) clamp(1rem, 7vw, 7rem) clamp(2rem, 5vw, 4rem); }
@@ -246,6 +250,9 @@ dialog h2 { font-size: 2.2rem; letter-spacing: -.04em; }
 
 @media (max-width: 520px) {
   .site-header { min-height: 68px; padding-block: .65rem; }
+  .brand > span:last-child, .language-picker > span { display: none; }
+  .header-actions { gap: .4rem; }
+  .language-picker select { max-width: 7.6rem; min-height: 40px; padding-inline: .35rem; }
   .workout-screen { height: calc(100vh - 68px); height: calc(100dvh - 68px); }
   .site-header nav a { font-size: .75rem; }
   .home-grid { padding-top: 3rem; }

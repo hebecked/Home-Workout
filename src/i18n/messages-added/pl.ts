@@ -1,6 +1,6 @@
-import type { MessageKey } from '../base-messages';
+import type { CoreMessageKey } from '../base-messages';
 
-export const plMessages: Record<MessageKey, string> = {
+export const plMessages: Record<CoreMessageKey, string> = {
   "app.name": "Home Workout",
   "language.label": "Język interfejsu",
   "language.changed": "Zmiana języka",

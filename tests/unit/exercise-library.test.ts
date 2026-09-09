@@ -21,7 +21,7 @@ const requiredIds = [
 
 describe('built-in exercise library', () => {
   it('keeps every supported exercise in the AI guide in sync with the library', () => {
-    const guide = readFileSync(resolve(process.cwd(), 'public', 'ai-workout-guide.txt'), 'utf8');
+    const guide = readFileSync(resolve(process.cwd(), 'public', 'ai-workout-guide.txt'), 'utf8').replace(/\r\n/g, '\n');
     const supportedSection = guide.split('SUPPORTED EXERCISE IDS\n')[1]?.split('\n\nIf no supported exercise fits')[0] ?? '';
     const guideIds = [...supportedSection.matchAll(/^[a-z-]+: (.+)$/gm)]
       .flatMap((match) => match[1]!.split(', '));

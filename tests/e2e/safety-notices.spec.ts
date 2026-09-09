@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 
 test('safety guidance is visible and the retired review does not erase local feedback', async ({ page }) => {
   await page.goto('/');
-  await expect(page.locator('.home-safety')).toContainText('Schmerzen');
+  await expect(page.locator('.home-safety')).toContainText('pain');
   await expect(page.locator('a[href="#review"]')).toHaveCount(0);
   await page.evaluate(() => localStorage.setItem('home-workout:illustration-reviews', '[]'));
   await page.goto('/#review');
@@ -10,9 +10,9 @@ test('safety guidance is visible and the retired review does not erase local fee
   await expect(page.locator('[data-illustration-review]')).toHaveCount(0);
   expect(await page.evaluate(() => localStorage.getItem('home-workout:illustration-reviews'))).toBe('[]');
   await page.locator('.create-plan-button').click();
-  await expect(page.locator('.editor-ai-callout .ai-safety-note')).toContainText('keine gesundheitliche Freigabe');
+  await expect(page.locator('.editor-ai-callout .ai-safety-note')).toContainText('technical compatibility');
   await page.locator('[data-open-ai-guide]').click();
-  await expect(page.locator('.ai-plan-guide .ai-safety-note')).toContainText('Gesetzliche Haftungsansprüche bleiben unberührt');
+  await expect(page.locator('.ai-plan-guide .ai-safety-note')).toContainText('Statutory liability rights remain unaffected');
   await expect(page.locator('.instruction-list article')).toHaveCount(10);
   const offline = page.locator('.instruction-list article').filter({ has: page.getByRole('heading', { name: 'Offline', exact: true }) });
   await expect(offline.locator('.instruction-list article')).toHaveCount(0);

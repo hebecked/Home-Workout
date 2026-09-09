@@ -5,7 +5,7 @@ test('home exposes custom plans and editor offers AI guidance without leaving th
   await page.goto('/');
   await expect(page.locator('.plan-options .action-card')).toHaveCount(4);
   expect(await page.locator('.plan-options .action-card').evaluateAll(cards => new Set(cards.map(card => { const style = getComputedStyle(card); return style.borderColor + style.borderWidth; })).size)).toBe(1);
-  await expect(page.locator('.start-button')).toHaveText('START WORKOUT');
+  await expect(page.locator('.start-button')).toHaveText(/start workout/i);
   await expect(page.locator('.start-button')).toHaveCSS('justify-content', 'center');
   const create = page.locator('.create-plan-button');
   await expect(create).toBeVisible();

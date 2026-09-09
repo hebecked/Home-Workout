@@ -11,9 +11,20 @@ import { clearWorkoutSession, deletePlan, loadPlans, loadWorkoutSession, savePla
 import { planExercises, validateWorkoutPlan, type PlanExercise, type WorkoutPlan, type WorkoutPhaseKind } from '../core/plan-schema';
 import { translatePlanDraft } from '../core/translation';
 import { createWorkoutSession, dispatchWorkout, getWorkoutSnapshot, type WorkoutSession } from '../core/workout-engine';
+import {
+  applyDocumentLocale,
+  exerciseTranslation,
+  isSupportedLocale,
+  LOCALE_DEFINITIONS,
+  persistLocale,
+  readStoredLocale,
+  routineNames,
+  translator,
+  type SupportedLocale,
+  type Translator
+} from '../i18n';
 
 const APP_CONFIG: { githubUrl: string } = { githubUrl: 'https://github.com/hebecked/Home-Workout' };
-const AI_SAFETY_NOTICE = '<div class="ai-safety-note"><p>Die Importprüfung kontrolliert die technische Verwendbarkeit des Plans – sie ist keine gesundheitliche Freigabe. Du nutzt KI-generierte Trainingspläne in eigener Verantwortung. Prüfe Übungen, Umfang und Belastung vor dem Training und kläre gesundheitliche Unsicherheiten ärztlich. Gesetzliche Haftungsansprüche bleiben unberührt.</p><p>The import check validates technical compatibility, not whether a workout is safe for your health. Review AI-generated exercises and workload before training; seek medical advice if unsure about your health. Statutory liability rights remain unaffected.</p></div>';
 const escapeHtml = (value: string): string => value.replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[character]!);
 const formatClock = (milliseconds: number): string => {
   const seconds = Math.max(0, Math.ceil(milliseconds / 1000));
@@ -34,7 +45,7 @@ const createEmptyDraft = (): WorkoutPlan => {
     }))
   };
 };
-const planTitle = (plan: WorkoutPlan): string => plan.name.en ?? Object.values(plan.name)[0] ?? 'Workout';
+const planTitle = (plan: WorkoutPlan, locale: SupportedLocale = 'en'): string => routineNames[plan.id as keyof typeof routineNames]?.[locale] ?? plan.name[locale] ?? plan.name.en ?? Object.values(plan.name)[0] ?? 'Workout';
 const estimatedMinutes = (plan: WorkoutPlan): number => {
   const seconds = plan.phases.reduce((planTotal, phase) => {
     const exerciseSeconds = phase.exercises.reduce((total, exercise) => {
@@ -47,29 +58,31 @@ const estimatedMinutes = (plan: WorkoutPlan): number => {
   }, 0);
   return Math.max(5, Math.round(seconds / 60));
 };
-const phaseLabel = (kind: WorkoutPhaseKind): string => ({
-  'warm-up': 'Warm-up · Aufwärmen', training: 'Training',
-  'active-recovery': 'Active recovery · Aktive Erholung', 'cool-down': 'Cool-down · Dehnen'
+const phaseLabel = (kind: WorkoutPhaseKind, t: Translator): string => ({
+  'warm-up': t('category.warmUp'), training: t('phase.training'),
+  'active-recovery': t('phase.activeRecovery'), 'cool-down': t('phase.coolDown')
 })[kind];
+const aiSafetyNotice = (t: Translator): string => `<div class="ai-safety-note"><p>${escapeHtml(t('ai.safety'))}</p></div>`;
+const localeName = (code: string): string => LOCALE_DEFINITIONS.find((locale) => locale.code === code)?.nativeName ?? code;
 const totalRounds = (plan: WorkoutPlan): number => plan.phases.reduce((total, phase) => total + phase.rounds, 0);
-const previewCategory = (category: string | undefined): { className: string; label: string } | null => {
-  if (category === 'legs') return { className: 'legs', label: 'Legs · Beine' };
-  if (category === 'push' || category === 'pull') return { className: 'arms', label: 'Arms · Oberkörper' };
-  if (category === 'core') return { className: 'core', label: 'Core · Rumpf' };
-  if (category === 'cardio' || category === 'full-body') return { className: 'cardio', label: 'Cardio · Kondition' };
-  if (category === 'warm-up') return { className: 'warm-up', label: 'Warm-up · Aufwärmen' };
-  if (category === 'stretch') return { className: 'stretch', label: 'Stretch · Dehnen' };
+const previewCategory = (category: string | undefined, t: Translator): { className: string; label: string } | null => {
+  if (category === 'legs') return { className: 'legs', label: t('category.legs') };
+  if (category === 'push' || category === 'pull') return { className: 'arms', label: t(category === 'push' ? 'category.push' : 'category.pull') };
+  if (category === 'core') return { className: 'core', label: t('category.core') };
+  if (category === 'cardio' || category === 'full-body') return { className: 'cardio', label: t(category === 'cardio' ? 'category.cardio' : 'category.fullBody') };
+  if (category === 'warm-up') return { className: 'warm-up', label: t('category.warmUp') };
+  if (category === 'stretch') return { className: 'stretch', label: t('category.stretch') };
   return null;
 };
 const exerciseCategoryGroups = [
-  { category: 'warm-up', label: 'Warm-up · Aufwärmen' },
-  { category: 'cardio', label: 'Cardio · Kondition' },
-  { category: 'full-body', label: 'Full body · Ganzkörper' },
-  { category: 'legs', label: 'Legs · Beine' },
-  { category: 'push', label: 'Push · Drücken' },
-  { category: 'pull', label: 'Pull · Ziehen' },
-  { category: 'core', label: 'Core · Rumpf' },
-  { category: 'stretch', label: 'Stretching · Dehnen' }
+  { category: 'warm-up', key: 'category.warmUp' },
+  { category: 'cardio', key: 'category.cardio' },
+  { category: 'full-body', key: 'category.fullBody' },
+  { category: 'legs', key: 'category.legs' },
+  { category: 'push', key: 'category.push' },
+  { category: 'pull', key: 'category.pull' },
+  { category: 'core', key: 'category.core' },
+  { category: 'stretch', key: 'category.stretch' }
 ] as const;
 
 export class HomeWorkoutApp {
@@ -78,14 +91,21 @@ export class HomeWorkoutApp {
   private draft: WorkoutPlan = createEmptyDraft();
   private editorMode: 'create' | 'edit' | 'copy' = 'create';
   private tickHandle: number | null = null;
-  private languageFormVisible = false;
   private exercisePickerPhaseId: string | null = null;
   private translationBusy = false;
   private readonly exerciseOverrides = new Map<string, string>();
   private importPreview: WorkoutPlan | null = null;
   private notice = '';
+  private uiLocale: SupportedLocale;
+  private t: Translator;
 
-  constructor(private readonly root: HTMLElement) {}
+  constructor(private readonly root: HTMLElement) {
+    this.uiLocale = readStoredLocale(localStorage, navigator.languages);
+    this.t = translator(this.uiLocale);
+    applyDocumentLocale(document.documentElement, this.uiLocale);
+    const skipLink = document.querySelector<HTMLAnchorElement>('.skip-link');
+    if (skipLink) skipLink.textContent = this.t('skip.main');
+  }
 
   start(): void {
     document.querySelector<HTMLAnchorElement>('.skip-link')?.addEventListener('click', (event) => {
@@ -105,10 +125,10 @@ export class HomeWorkoutApp {
     if (payload === null) return false;
     try {
       this.importPreview = importPlanUrlPayload(payload);
-      this.notice = 'AI plan loaded · KI-Plan geladen';
+      this.notice = this.t('import.loaded');
     } catch (error) {
       this.importPreview = null;
-      this.notice = error instanceof Error ? error.message : 'Invalid workout link';
+      this.notice = error instanceof Error ? error.message : this.t('error.invalidLink');
     }
     history.replaceState(null, '', `${location.pathname}#import`);
     return true;
@@ -124,7 +144,6 @@ export class HomeWorkoutApp {
     this.draft = createEmptyDraft();
     this.editorMode = 'create';
     this.notice = '';
-    this.languageFormVisible = false;
     this.exercisePickerPhaseId = null;
   }
 
@@ -135,12 +154,11 @@ export class HomeWorkoutApp {
       this.draft.id = createPlanId();
       this.draft.name = {
         ...this.draft.name,
-        de: `${this.draft.name.de ?? planTitle(plan)} · Kopie`,
-        en: `${this.draft.name.en ?? planTitle(plan)} · Custom`
+        de: `${this.draft.name.de ?? planTitle(plan, 'de')} · Kopie`,
+        en: `${this.draft.name.en ?? planTitle(plan, 'en')} · Custom`
       };
     }
-    this.notice = asCopy ? 'An editable copy was created. The source routine remains unchanged. · Eine bearbeitbare Kopie wurde erstellt.' : '';
-    this.languageFormVisible = false;
+    this.notice = asCopy ? this.t('editor.copyCreated') : '';
     this.exercisePickerPhaseId = null;
     if (this.route() === 'editor') this.render();
     else location.hash = 'editor';
@@ -148,14 +166,16 @@ export class HomeWorkoutApp {
 
   private shell(content: string): void {
     this.root.classList.toggle('workout-active', this.route() === 'workout' && this.session !== null && this.session.phase !== 'completed');
-    const savedPlansLabel = this.route() === 'home' ? 'Saved routines' : 'My Plans · Meine Pläne';
+    const savedPlansLabel = this.route() === 'home' ? this.t('nav.savedRoutines') : this.t('nav.plans');
+    const localeOptions = LOCALE_DEFINITIONS.map(({ code, nativeName }) => `<option value="${code}" ${code === this.uiLocale ? 'selected' : ''}>${escapeHtml(nativeName)}</option>`).join('');
+    const localePicker = `<label class="language-picker"><span aria-hidden="true">文/A</span><select data-ui-locale aria-label="${escapeHtml(this.t('language.label'))}">${localeOptions}</select></label>`;
     this.root.innerHTML = `
       <header class="site-header">
-        <a href="#home" class="brand" aria-label="Home Workout"><span class="brand-mark">HW</span><span>Home Workout</span></a>
-        ${this.route() === 'workout' && this.session?.phase !== 'completed' ? '<button class="workout-exit" data-action="abort" aria-label="End workout · Training beenden"><span aria-hidden="true">×</span> Beenden</button>' : `<nav aria-label="Primary"><a href="#instructions" aria-label="Workout guide">Instructions</a><a href="#plans" aria-label="${savedPlansLabel}">My Plans</a></nav>`}
+        <a href="#home" class="brand" aria-label="${escapeHtml(this.t('app.name'))}"><span class="brand-mark">HW</span><span>${escapeHtml(this.t('app.name'))}</span></a>
+        <div class="header-actions">${this.route() === 'workout' && this.session?.phase !== 'completed' ? `<button class="workout-exit" data-action="abort" aria-label="${escapeHtml(this.t('button.endWorkout'))}"><span aria-hidden="true">×</span> ${escapeHtml(this.t('button.endWorkout'))}</button>` : `<nav aria-label="${escapeHtml(this.t('nav.primary'))}"><a href="#instructions">${escapeHtml(this.t('nav.instructions'))}</a><a href="#plans" aria-label="${escapeHtml(savedPlansLabel)}">${escapeHtml(this.t('nav.plans'))}</a></nav>`}${localePicker}</div>
       </header>
       <main id="main" tabindex="-1">${content}</main>
-      <footer><span>Private by design · Offline ready</span><a href="#impressum">Impressum</a><span>PolyForm Perimeter 1.0.0</span></footer>`;
+      <footer><span>${escapeHtml(this.t('footer.privacy'))}</span><a href="#impressum">${escapeHtml(this.t('nav.legal'))}</a><span>PolyForm Perimeter 1.0.0</span></footer>`;
     this.root.querySelector<HTMLAnchorElement>('.brand')?.addEventListener('click', (event) => {
       if (this.route() !== 'workout' || !this.session) return;
       event.preventDefault();
@@ -164,6 +184,18 @@ export class HomeWorkoutApp {
     for (const link of this.root.querySelectorAll<HTMLAnchorElement>('[data-create-plan]')) {
       link.addEventListener('click', () => this.openNewPlan());
     }
+    this.root.querySelector<HTMLSelectElement>('[data-ui-locale]')?.addEventListener('change', (event) => {
+      const locale = (event.currentTarget as HTMLSelectElement).value;
+      if (!isSupportedLocale(locale)) return;
+      this.uiLocale = locale;
+      this.t = translator(locale);
+      persistLocale(localStorage, locale);
+      applyDocumentLocale(document.documentElement, locale);
+      const skipLink = document.querySelector<HTMLAnchorElement>('.skip-link');
+      if (skipLink) skipLink.textContent = this.t('skip.main');
+      this.notice = this.t('language.changed');
+      this.render();
+    });
   }
 
   private render(): void {
@@ -204,63 +236,63 @@ export class HomeWorkoutApp {
 
       const total = this.root.querySelector<HTMLElement>('[data-workout-total]');
       const countdown = this.root.querySelector<HTMLElement>('[data-workout-countdown]');
-      if (total) total.textContent = `Total ${formatClock(snapshot.elapsedWorkoutMs)}`;
+      if (total) total.textContent = this.t('status.total', { time: formatClock(snapshot.elapsedWorkoutMs) });
       if (countdown && typeof snapshot.remainingMs === 'number') countdown.textContent = formatClock(snapshot.remainingMs);
       if (snapshot.phase !== 'completed' && !snapshot.paused) this.scheduleWorkoutTick();
     }, 500);
   }
 
   private renderHome(): void {
-    const title = planTitle(this.activePlan);
+    const title = planTitle(this.activePlan, this.uiLocale);
     const savedPlans = loadPlans(localStorage);
     const routineOptions = [
-      `<optgroup label="Bundled routines · Standardroutinen">${BUILT_IN_WORKOUTS.map((plan) => `<option value="${escapeHtml(plan.id)}" ${plan.id === this.activePlan.id ? 'selected' : ''}>${escapeHtml(planTitle(plan))}</option>`).join('')}</optgroup>`,
-      savedPlans.length ? `<optgroup label="My plans · Meine Pläne">${savedPlans.map((plan) => `<option value="${escapeHtml(plan.id)}" ${plan.id === this.activePlan.id ? 'selected' : ''}>${escapeHtml(planTitle(plan))}</option>`).join('')}</optgroup>` : ''
+      `<optgroup label="${escapeHtml(this.t('home.bundledRoutines'))}">${BUILT_IN_WORKOUTS.map((plan) => `<option value="${escapeHtml(plan.id)}" ${plan.id === this.activePlan.id ? 'selected' : ''}>${escapeHtml(planTitle(plan, this.uiLocale))}</option>`).join('')}</optgroup>`,
+      savedPlans.length ? `<optgroup label="${escapeHtml(this.t('home.myPlans'))}">${savedPlans.map((plan) => `<option value="${escapeHtml(plan.id)}" ${plan.id === this.activePlan.id ? 'selected' : ''}>${escapeHtml(planTitle(plan, this.uiLocale))}</option>`).join('')}</optgroup>` : ''
     ].join('');
     const activeExercises = planExercises(this.activePlan);
     const previews = activeExercises.map((exercise, index) => {
       const definition = EXERCISES_BY_ID.get(exercise.exerciseId);
-      const englishName = exercise.translations.en?.name ?? Object.values(exercise.translations)[0]?.name ?? exercise.exerciseId;
-      const germanName = exercise.translations.de?.name;
-      const category = previewCategory(definition?.category);
+      const localized = isBuiltInWorkout(this.activePlan.id) ? exerciseTranslation(exercise.exerciseId, this.uiLocale) : undefined;
+      const exerciseName = localized?.name ?? exercise.translations[this.uiLocale]?.name ?? exercise.translations.en?.name ?? Object.values(exercise.translations)[0]?.name ?? exercise.exerciseId;
+      const category = previewCategory(definition?.category, this.t);
       return `<article class="exercise-preview-card">
         <span class="preview-number">${String(index + 1).padStart(2, '0')}</span>
-        <img src="${definition?.illustration ?? '/icon.svg'}" alt="${escapeHtml([englishName, germanName].filter(Boolean).join(' · '))}" loading="eager">
-        <div>${category ? `<span class="preview-category ${category.className}">${category.label}</span>` : ''}<strong>${escapeHtml(englishName)}</strong>${germanName ? `<span>${escapeHtml(germanName)}</span>` : ''}</div>
+        <img src="${definition?.illustration ?? '/icon.svg'}" alt="${escapeHtml(exerciseName)}" loading="eager">
+        <div>${category ? `<span class="preview-category ${category.className}">${escapeHtml(category.label)}</span>` : ''}<strong>${escapeHtml(exerciseName)}</strong></div>
       </article>`;
     }).join('');
     this.shell(`
       <section class="home-grid">
         <div class="intro-block">
-          <p class="eyebrow">MOVE WELL · AT HOME</p>
-          <h1>Home Workout</h1>
-          <p class="lede">A calm, multilingual workout companion. No account, no tracking, no noise.</p>
+          <p class="eyebrow">${escapeHtml(this.t('home.eyebrow'))}</p>
+          <h1>${escapeHtml(this.t('app.name'))}</h1>
+          <p class="lede">${escapeHtml(this.t('home.lede'))}</p>
         </div>
         <article class="workout-card">
-          <div class="card-topline"><span>READY WHEN YOU ARE</span><span>≈ ${estimatedMinutes(this.activePlan)} min</span></div>
-          <label class="routine-picker">Choose routine · Routine wählen<select data-routine-picker>${routineOptions}</select></label>
+          <div class="card-topline"><span>${escapeHtml(this.t('home.ready'))}</span><span>${escapeHtml(this.t('home.minutes', { count: estimatedMinutes(this.activePlan) }))}</span></div>
+          <label class="routine-picker">${escapeHtml(this.t('home.chooseRoutine'))}<select data-routine-picker>${routineOptions}</select></label>
           <h2>${escapeHtml(title)}</h2>
-          <div class="plan-stats" aria-label="Workout summary">
-            <span><strong>${this.activePlan.phases.length}</strong> Phases · Phasen</span>
-            <span><strong>${totalRounds(this.activePlan)}</strong> Rounds · Runden</span>
-            <span><strong>${activeExercises.length}</strong> Exercises · Übungen</span>
+          <div class="plan-stats" aria-label="${escapeHtml(this.t('home.summary'))}">
+            <span>${escapeHtml(this.t('home.phases', { count: this.activePlan.phases.length }))}</span>
+            <span>${escapeHtml(this.t('home.rounds', { count: totalRounds(this.activePlan) }))}</span>
+            <span>${escapeHtml(this.t('home.exercises', { count: activeExercises.length }))}</span>
           </div>
-          <button class="primary start-button" data-action="start">START WORKOUT</button>
-          <a class="button-link create-plan-button" href="#editor" data-create-plan>Eigenen Trainingsplan erstellen <span>Create a workout plan →</span></a>
-          <p class="home-safety">Trainiere innerhalb deiner Möglichkeiten und höre bei Schmerzen oder Unwohlsein auf. Kläre gesundheitliche Unsicherheiten vorab ärztlich. Die App ersetzt keine medizinische Beratung. <a href="#impressum">Weitere Hinweise</a></p>
+          <button class="primary start-button" data-action="start">${escapeHtml(this.t('button.startWorkout'))}</button>
+          <a class="button-link create-plan-button" href="#editor" data-create-plan>${escapeHtml(this.t('home.createPlan'))}</a>
+          <p class="home-safety">${escapeHtml(this.t('home.safety'))} <a href="#impressum">${escapeHtml(this.t('home.moreSafety'))}</a></p>
         </article>
       </section>
       <section class="exercise-preview" aria-labelledby="exercise-preview-title">
-        <div class="preview-heading"><div><p class="eyebrow">LOCAL ILLUSTRATIONS · LOKALE GRAFIKEN</p><h2 id="exercise-preview-title">Inside this workout · Deine Übungen</h2></div><span>${activeExercises.length} illustrated movements</span></div>
+        <div class="preview-heading"><div><p class="eyebrow">${escapeHtml(this.t('home.localIllustrations'))}</p><h2 id="exercise-preview-title">${escapeHtml(this.t('home.insideWorkout'))}</h2></div><span>${escapeHtml(this.t('home.illustratedMovements', { count: activeExercises.length }))}</span></div>
         <div class="exercise-preview-grid">${previews}</div>
       </section>
-      <section class="plan-options"><div class="plan-options-heading"><p class="eyebrow">MEHR ALS FERTIGE ROUTINEN · MAKE IT YOURS</p><h2>Dein Trainingsplan · Your workout plan</h2><p>Erstelle deinen eigenen Plan, importiere einen KI-Entwurf oder starte einen gespeicherten Plan.</p></div><nav class="action-grid" aria-label="Workout options">
-        <a class="action-card" href="#instructions"><span class="action-number">01</span><strong>Instructions · Anleitung</strong><span>How the flow works</span></a>
-        <a class="action-card" href="#editor" data-create-plan><span class="action-number">02</span><strong>Create new plan · Neuen Plan</strong><span>Build your own routine</span></a>
-        <a class="action-card" href="#import"><span class="action-number">03</span><strong>Upload / Start own plan · Import</strong><span>Import a validated JSON file</span></a>
-        <a class="action-card" href="#plans"><span class="action-number">04</span><strong>My Plans · Meine Pläne</strong><span>Saved only on this device</span></a>
+      <section class="plan-options"><div class="plan-options-heading"><p class="eyebrow">${escapeHtml(this.t('home.makeItYours'))}</p><h2>${escapeHtml(this.t('home.planOptionsTitle'))}</h2><p>${escapeHtml(this.t('home.planOptionsCopy'))}</p></div><nav class="action-grid" aria-label="${escapeHtml(this.t('home.summary'))}">
+        <a class="action-card" href="#instructions"><span class="action-number">01</span><strong>${escapeHtml(this.t('nav.instructions'))}</strong><span>${escapeHtml(this.t('home.optionInstructions'))}</span></a>
+        <a class="action-card" href="#editor" data-create-plan><span class="action-number">02</span><strong>${escapeHtml(this.t('editor.createTitle'))}</strong><span>${escapeHtml(this.t('home.optionCreate'))}</span></a>
+        <a class="action-card" href="#import"><span class="action-number">03</span><strong>${escapeHtml(this.t('import.title'))}</strong><span>${escapeHtml(this.t('home.optionImport'))}</span></a>
+        <a class="action-card" href="#plans"><span class="action-number">04</span><strong>${escapeHtml(this.t('nav.plans'))}</strong><span>${escapeHtml(this.t('home.optionSaved'))}</span></a>
       </nav></section>
-      <div class="github-placeholder">${APP_CONFIG.githubUrl ? `<a href="${escapeHtml(APP_CONFIG.githubUrl)}">GitHub</a>` : '<span>GitHub link · configurable after remote setup</span>'}</div>`);
+      <div class="github-placeholder">${APP_CONFIG.githubUrl ? `<a href="${escapeHtml(APP_CONFIG.githubUrl)}">GitHub</a>` : '<span>GitHub</span>'}</div>`);
     this.root.querySelector('[data-action="start"]')?.addEventListener('click', () => this.startWorkout(this.activePlan));
     this.root.querySelector<HTMLSelectElement>('[data-routine-picker]')?.addEventListener('change', (event) => {
       const plan = this.findPlan((event.currentTarget as HTMLSelectElement).value);
@@ -287,10 +319,10 @@ export class HomeWorkoutApp {
     dialog.dataset.abortDialog = '';
     dialog.setAttribute('aria-labelledby', 'abort-workout-title');
     dialog.innerHTML = `<form method="dialog">
-      <p class="eyebrow">END SESSION · TRAINING BEENDEN</p>
-      <h2 id="abort-workout-title">End workout · Training beenden?</h2>
-      <p>Your current progress will be cleared and you will return to the start page.<br>Dein aktueller Fortschritt wird gelöscht und du kehrst zur Startseite zurück.</p>
-      <div class="dialog-actions"><button value="cancel" autofocus>Continue workout · Training fortsetzen</button><button class="danger" value="abort" aria-label="Training beenden">End workout · Training beenden</button></div>
+      <p class="eyebrow">${escapeHtml(this.t('button.endWorkout'))}</p>
+      <h2 id="abort-workout-title">${escapeHtml(this.t('dialog.endTitle'))}</h2>
+      <p>${escapeHtml(this.t('dialog.endCopy'))}</p>
+      <div class="dialog-actions"><button value="cancel" autofocus>${escapeHtml(this.t('dialog.continueWorkout'))}</button><button class="danger" value="abort" aria-label="${escapeHtml(this.t('button.endWorkout'))}">${escapeHtml(this.t('button.endWorkout'))}</button></div>
     </form>`;
     document.body.append(dialog);
     dialog.addEventListener('close', () => {
@@ -311,10 +343,10 @@ export class HomeWorkoutApp {
     dialog.dataset.deletePlanDialog = '';
     dialog.setAttribute('aria-labelledby', 'delete-plan-title');
     dialog.innerHTML = `<form method="dialog">
-      <p class="eyebrow">LOCAL PLAN · LOKALER PLAN</p>
-      <h2 id="delete-plan-title">Delete ${escapeHtml(planTitle(plan))}?</h2>
-      <p>This removes the plan from this browser. Bundled routines are never affected.<br>Der Plan wird aus diesem Browser gelöscht. Standardroutinen bleiben unverändert.</p>
-      <div class="dialog-actions"><button value="cancel" autofocus>Cancel · Abbrechen</button><button class="danger" value="delete">Delete plan · Plan löschen</button></div>
+      <p class="eyebrow">${escapeHtml(this.t('plans.onDevice'))}</p>
+      <h2 id="delete-plan-title">${escapeHtml(this.t('plans.deleteTitle', { name: planTitle(plan, this.uiLocale) }))}</h2>
+      <p>${escapeHtml(this.t('plans.deleteCopy'))}</p>
+      <div class="dialog-actions"><button value="cancel" autofocus>${escapeHtml(this.t('button.cancel'))}</button><button class="danger" value="delete">${escapeHtml(this.t('button.delete'))}</button></div>
     </form>`;
     document.body.append(dialog);
     dialog.addEventListener('close', () => {
@@ -325,7 +357,7 @@ export class HomeWorkoutApp {
           clearWorkoutSession(localStorage);
           this.session = null;
         }
-        this.notice = 'Plan deleted · Plan gelöscht';
+        this.notice = this.t('plans.deleted');
         this.renderPlans();
       }
       dialog.remove();
@@ -347,49 +379,52 @@ export class HomeWorkoutApp {
     const languages = this.activePlan.displayLanguages;
     const isTransition = snapshot.phase === 'phase-transition';
     const isRest = snapshot.phase === 'exercise-rest' || snapshot.phase === 'round-rest' || isTransition;
-    const statusLabel = snapshot.phase === 'round-rest' ? 'Round rest · Rundenpause' : snapshot.phase === 'exercise-rest' ? 'Rest · Pause' : isTransition ? 'Phase transition · Phasenwechsel' : snapshot.phase === 'completed' ? 'Workout complete' : 'Current exercise';
-    const target = exercise.type === 'duration' ? formatClock(snapshot.remainingMs ?? 0) : 'min' in exercise.target ? `${exercise.target.min}–${exercise.target.max}${exercise.target.unit === 'per-side' ? ' / side' : ''}` : 'Next when ready · Weiter, wenn bereit';
+    const statusLabel = snapshot.phase === 'round-rest' ? this.t('phase.roundRest') : snapshot.phase === 'exercise-rest' || isTransition ? this.t('phase.exerciseRest') : snapshot.phase === 'completed' ? this.t('phase.complete') : this.t('phase.currentExercise');
+    const target = exercise.type === 'duration' ? formatClock(snapshot.remainingMs ?? 0) : 'min' in exercise.target ? `${exercise.target.min}–${exercise.target.max}${exercise.target.unit === 'per-side' ? ` ${this.t('workout.perSide')}` : ''}` : this.t('button.next');
     const translations = languages.map((code) => {
-      const copy = selectedExerciseId === exercise.exerciseId
-        ? exercise.translations[code]
-        : definition?.translations[code as 'de' | 'en'] ?? exercise.translations[code];
-      return copy ? `<div class="translation"><span>${escapeHtml(this.activePlan.languages.find((language) => language.code === code)?.label ?? code)}</span><p>${escapeHtml(copy.instructions)}</p></div>` : '';
+      const catalogueCopy = isSupportedLocale(code) ? exerciseTranslation(selectedExerciseId, code) : undefined;
+      const copy = isBuiltInWorkout(this.activePlan.id) || selectedExerciseId !== exercise.exerciseId
+        ? catalogueCopy ?? exercise.translations[code]
+        : exercise.translations[code] ?? catalogueCopy;
+      return copy ? `<div class="translation"><span>${escapeHtml(localeName(code))}</span><p>${escapeHtml(copy.instructions)}</p></div>` : '';
     }).join('');
-    const displayNames = languages.map((code) => selectedExerciseId === exercise.exerciseId
-      ? exercise.translations[code]?.name
-      : definition?.translations[code as 'de' | 'en']?.name ?? exercise.translations[code]?.name).filter((name): name is string => Boolean(name));
+    const displayNames = languages.map((code) => {
+      const catalogueCopy = isSupportedLocale(code) ? exerciseTranslation(selectedExerciseId, code) : undefined;
+      return isBuiltInWorkout(this.activePlan.id) || selectedExerciseId !== exercise.exerciseId
+        ? catalogueCopy?.name ?? exercise.translations[code]?.name
+        : exercise.translations[code]?.name ?? catalogueCopy?.name;
+    }).filter((name): name is string => Boolean(name));
     const imageName = displayNames.join(' / ');
     const alternativeIds = [exercise.exerciseId, ...exercise.alternativeExerciseIds]
       .filter((id, index, ids) => ids.indexOf(id) === index && EXERCISES_BY_ID.has(id));
-    const alternatives = !isRest && alternativeIds.length > 1 ? `<div class="alternative-chooser" aria-label="Easier alternatives · Leichtere Alternativen">
-      <span>Easier alternatives · Leichtere Alternativen</span>
-      <p>Choose an easier version for this exercise, or keep the original. · Wähle eine leichtere Variante oder bleibe beim Original.</p>
+    const alternatives = !isRest && alternativeIds.length > 1 ? `<div class="alternative-chooser" aria-label="${escapeHtml(this.t('help.alternativesTitle'))}">
+      <span>${escapeHtml(this.t('help.alternativesTitle'))}</span>
+      <p>${escapeHtml(this.t('help.alternativesCopy'))}</p>
       <div>${alternativeIds.map((id) => {
-        const option = EXERCISES_BY_ID.get(id)!;
-        const original = id === exercise.exerciseId ? 'Original · ' : '';
-        return `<button type="button" data-alternative="${escapeHtml(id)}" aria-pressed="${id === selectedExerciseId}">${original}${escapeHtml(option.translations.en.name)} · ${escapeHtml(option.translations.de.name)}</button>`;
+        const optionName = exerciseTranslation(id, this.uiLocale)?.name ?? EXERCISES_BY_ID.get(id)!.translations.en.name;
+        return `<button type="button" data-alternative="${escapeHtml(id)}" aria-pressed="${id === selectedExerciseId}">${escapeHtml(optionName)}</button>`;
       }).join('')}</div>
     </div>` : '';
 
     this.shell(`
       <section class="workout-screen ${isRest ? 'is-rest' : ''}">
         <div class="workout-content">
-          <div class="workout-status"><span>Phase ${snapshot.phaseIndex + 1} / ${this.activePlan.phases.length} · ${phaseLabel(workoutPhase.kind)}</span><span>Round ${snapshot.roundIndex + 1} / ${workoutPhase.rounds} · Runde ${snapshot.roundIndex + 1} / ${workoutPhase.rounds}</span><span data-round-exercise-progress>Exercise ${snapshot.exerciseIndex + 1} / ${workoutPhase.exercises.length} · Übung ${snapshot.exerciseIndex + 1} / ${workoutPhase.exercises.length}</span><span data-workout-total>Total ${formatClock(snapshot.elapsedWorkoutMs)}</span></div>
-          <div class="phase-pill">${statusLabel}${snapshot.paused ? ' · Paused · Pausiert' : ''}</div>
-          ${snapshot.phase === 'completed' ? `<div class="completion"><p class="eyebrow">DONE</p><h1>Workout complete</h1><p>You made time to move. That is enough for today.</p><button class="primary" data-action="finish">Back home</button></div>` : `
-            ${isTransition ? `<div class="completion phase-transition-card"><p class="eyebrow">NEXT PHASE · NÄCHSTE PHASE</p><h1>${escapeHtml(phaseLabel(this.activePlan.phases[snapshot.phaseIndex + 1]!.kind))}</h1><p>Take a moment to reset. The next phase starts automatically.</p><strong data-workout-countdown>${formatClock(snapshot.remainingMs ?? 0)}</strong></div>` : `<div class="exercise-layout">
+          <div class="workout-status"><span>${escapeHtml(this.t('phase.label', { current: snapshot.phaseIndex + 1, total: this.activePlan.phases.length }))} · ${escapeHtml(phaseLabel(workoutPhase.kind, this.t))}</span><span>${escapeHtml(this.t('status.round', { current: snapshot.roundIndex + 1, total: workoutPhase.rounds }))}</span><span data-round-exercise-progress>${escapeHtml(this.t('status.exercise', { current: snapshot.exerciseIndex + 1, total: workoutPhase.exercises.length }))}</span><span data-workout-total>${escapeHtml(this.t('status.total', { time: formatClock(snapshot.elapsedWorkoutMs) }))}</span></div>
+          <div class="phase-pill">${escapeHtml(statusLabel)}${snapshot.paused ? ` · ${escapeHtml(this.t('status.paused'))}` : ''}</div>
+          ${snapshot.phase === 'completed' ? `<div class="completion"><p class="eyebrow">${escapeHtml(this.t('phase.complete'))}</p><h1>${escapeHtml(this.t('phase.complete'))}</h1><p>${escapeHtml(this.t('workout.completeCopy'))}</p><button class="primary" data-action="finish">${escapeHtml(this.t('button.backHome'))}</button></div>` : `
+            ${isTransition ? `<div class="completion phase-transition-card"><p class="eyebrow">${escapeHtml(this.t('button.next'))}</p><h1>${escapeHtml(phaseLabel(this.activePlan.phases[snapshot.phaseIndex + 1]!.kind, this.t))}</h1><p>${escapeHtml(this.t('workout.restCopy'))}</p><strong data-workout-countdown>${formatClock(snapshot.remainingMs ?? 0)}</strong></div>` : `<div class="exercise-layout">
               <div class="exercise-visual-column"><div class="workout-exercise-heading">${displayNames.map(name => `<h2>${escapeHtml(name)}</h2>`).join('')}</div><div class="exercise-visual"><img src="${definition?.illustration ?? '/icon.svg'}?v=${illustrationRevision(selectedExerciseId)}" alt="${escapeHtml(imageName)}"></div>
-              <div class="target-block"><span>${isRest ? 'READY IN' : exercise.type === 'duration' ? 'TIME LEFT' : 'TARGET'}</span><strong ${isRest || exercise.type === 'duration' ? 'data-workout-countdown' : ''}>${isRest ? formatClock(snapshot.remainingMs ?? 0) : target}</strong></div></div>
-              <div class="exercise-copy">${isRest ? `<p class="rest-label">Rest. Next starts automatically.</p>` : translations}</div>
+              <div class="target-block"><span>${escapeHtml(isRest ? this.t('workout.readyIn') : exercise.type === 'duration' ? this.t('workout.timeLeft') : this.t('workout.target'))}</span><strong ${isRest || exercise.type === 'duration' ? 'data-workout-countdown' : ''}>${isRest ? formatClock(snapshot.remainingMs ?? 0) : escapeHtml(target)}</strong></div></div>
+              <div class="exercise-copy">${isRest ? `<p class="rest-label">${escapeHtml(this.t('workout.restCopy'))}</p>` : translations}</div>
             </div>`}
             ${alternatives}`}
         </div>
         ${snapshot.phase === 'completed' ? '' : `
           <div class="workout-actions">
             <div class="workout-controls">
-              <button data-action="previous" aria-label="Previous · Zurück">← <span>Previous</span></button>
-              <button class="pause" data-action="pause" aria-label="${snapshot.paused ? 'Resume · Fortsetzen' : 'Pause'}">${snapshot.paused ? '▶' : 'Ⅱ'}</button>
-              <button data-action="next" aria-label="Next · Weiter"><span>Next</span> →</button>
+              <button data-action="previous" aria-label="${escapeHtml(this.t('button.previous'))}">← <span>${escapeHtml(this.t('button.previous'))}</span></button>
+              <button class="pause" data-action="pause" aria-label="${escapeHtml(snapshot.paused ? this.t('button.resume') : this.t('button.pause'))}">${snapshot.paused ? '▶' : 'Ⅱ'}</button>
+              <button data-action="next" aria-label="${escapeHtml(this.t('button.next'))}"><span>${escapeHtml(this.t('button.next'))}</span> →</button>
             </div>
           </div>`}
       </section>`);
@@ -419,20 +454,20 @@ export class HomeWorkoutApp {
   }
 
   private renderEditor(): void {
-    const editorTitle = this.editorMode === 'edit' ? 'Edit plan · Plan bearbeiten' : this.editorMode === 'copy' ? 'Customize routine · Routine anpassen' : 'Create new plan';
+    const editorTitle = this.editorMode === 'edit' ? this.t('editor.editTitle') : this.editorMode === 'copy' ? this.t('editor.copyTitle') : this.t('editor.createTitle');
     const editorIntro = this.editorMode === 'edit'
-      ? 'Changes update this local plan. Bundled routines remain untouched.'
+      ? this.t('editor.editIntro')
       : this.editorMode === 'copy'
-        ? 'This editable copy is independent from the permanent bundled routine.'
-        : 'Build a routine that speaks your language and fits your room.';
-    const exerciseOptions = exerciseCategoryGroups.map(({ category, label }) => {
+        ? this.t('editor.copyIntro')
+        : this.t('editor.createIntro');
+    const exerciseOptions = exerciseCategoryGroups.map(({ category, key }) => {
       const options = EXERCISE_LIBRARY
         .filter((exercise) => exercise.category === category)
         .slice()
-        .sort((left, right) => left.translations.en.name.localeCompare(right.translations.en.name, 'en', { sensitivity: 'base' }))
-        .map((exercise) => `<option value="${exercise.id}">${escapeHtml(exercise.translations.en.name)} · ${escapeHtml(exercise.translations.de.name)}</option>`)
+        .sort((left, right) => (exerciseTranslation(left.id, this.uiLocale)?.name ?? left.translations.en.name).localeCompare(exerciseTranslation(right.id, this.uiLocale)?.name ?? right.translations.en.name, this.uiLocale, { sensitivity: 'base' }))
+        .map((exercise) => `<option value="${exercise.id}">${escapeHtml(exerciseTranslation(exercise.id, this.uiLocale)?.name ?? exercise.translations.en.name)}</option>`)
         .join('');
-      return `<optgroup label="${label}">${options}</optgroup>`;
+      return `<optgroup label="${escapeHtml(this.t(key))}">${options}</optgroup>`;
     }).join('');
     let flatIndex = 0;
     const renderExerciseRow = (exercise: PlanExercise, phaseId: string, index: number): string => {
@@ -440,46 +475,61 @@ export class HomeWorkoutApp {
       const name = exercise.translations.en?.name ?? Object.values(exercise.translations)[0]?.name ?? exercise.exerciseId;
       const translationFields = this.draft.languages.map((language) => {
         const copy = exercise.translations[language.code] ?? { name, instructions: '' };
-        return `<fieldset><legend>${escapeHtml(language.label)} (${escapeHtml(language.code)})</legend><label>Exercise name · Übungsname<input name="translation-${formIndex}-${escapeHtml(language.code)}-name" value="${escapeHtml(copy.name)}" required></label><label>Instructions · Beschreibung<textarea name="translation-${formIndex}-${escapeHtml(language.code)}-instructions" rows="3" required>${escapeHtml(copy.instructions)}</textarea></label></fieldset>`;
+        return `<fieldset><legend>${escapeHtml(language.label)} (${escapeHtml(language.code)})</legend><label>${escapeHtml(this.t('editor.exerciseName'))}<input name="translation-${formIndex}-${escapeHtml(language.code)}-name" value="${escapeHtml(copy.name)}" required></label><label>${escapeHtml(this.t('editor.instructions'))}<textarea name="translation-${formIndex}-${escapeHtml(language.code)}-instructions" rows="3" required>${escapeHtml(copy.instructions)}</textarea></label></fieldset>`;
       }).join('');
       const targetFields = exercise.type === 'duration' && 'seconds' in exercise.target
-        ? `<label>Seconds · Sekunden<input name="target-${formIndex}-seconds" type="number" min="1" max="7200" value="${exercise.target.seconds}"></label>`
+        ? `<label>${escapeHtml(this.t('editor.seconds'))}<input name="target-${formIndex}-seconds" type="number" min="1" max="7200" value="${exercise.target.seconds}"></label>`
         : 'min' in exercise.target
-          ? `<label>Minimum<input name="target-${formIndex}-min" type="number" min="1" max="1000" value="${exercise.target.min}"></label><label>Maximum<input name="target-${formIndex}-max" type="number" min="1" max="1000" value="${exercise.target.max}"></label><label>Count · Zählweise<select name="target-${formIndex}-unit"><option value="repetitions" ${exercise.target.unit === 'repetitions' ? 'selected' : ''}>Total repetitions · Gesamt</option><option value="per-side" ${exercise.target.unit === 'per-side' ? 'selected' : ''}>Per side · Pro Seite</option></select></label>`
-          : '<span>Manual advance · Manuell weiter</span>';
-      return `<li data-exercise-row="${formIndex}"><span class="order">${String(index + 1).padStart(2, '0')}</span><div class="exercise-row-main"><strong>${escapeHtml(name)}</strong><div class="target-fields">${targetFields}</div><details class="translation-editor"><summary>Edit translations · Übersetzungen bearbeiten</summary>${translationFields}</details></div><span class="row-actions"><button type="button" data-move="up" data-phase-id="${escapeHtml(phaseId)}" data-id="${escapeHtml(exercise.id)}" aria-label="Move ${escapeHtml(name)} up">↑</button><button type="button" data-move="down" data-phase-id="${escapeHtml(phaseId)}" data-id="${escapeHtml(exercise.id)}" aria-label="Move ${escapeHtml(name)} down">↓</button><button type="button" data-remove="${escapeHtml(exercise.id)}" data-phase-id="${escapeHtml(phaseId)}" aria-label="Remove ${escapeHtml(name)}">Remove</button></span></li>`;
+          ? `<label>${escapeHtml(this.t('editor.minimum'))}<input name="target-${formIndex}-min" type="number" min="1" max="1000" value="${exercise.target.min}"></label><label>${escapeHtml(this.t('editor.maximum'))}<input name="target-${formIndex}-max" type="number" min="1" max="1000" value="${exercise.target.max}"></label><label>${escapeHtml(this.t('editor.countMode'))}<select name="target-${formIndex}-unit"><option value="repetitions" ${exercise.target.unit === 'repetitions' ? 'selected' : ''}>${escapeHtml(this.t('editor.totalRepetitions'))}</option><option value="per-side" ${exercise.target.unit === 'per-side' ? 'selected' : ''}>${escapeHtml(this.t('editor.perSide'))}</option></select></label>`
+          : `<span>${escapeHtml(this.t('button.next'))}</span>`;
+      return `<li data-exercise-row="${formIndex}"><span class="order">${String(index + 1).padStart(2, '0')}</span><div class="exercise-row-main"><strong>${escapeHtml(name)}</strong><div class="target-fields">${targetFields}</div><details class="translation-editor"><summary>${escapeHtml(this.t('editor.editTranslations'))}</summary>${translationFields}</details></div><span class="row-actions"><button type="button" data-move="up" data-phase-id="${escapeHtml(phaseId)}" data-id="${escapeHtml(exercise.id)}" aria-label="${escapeHtml(this.t('editor.moveUp', { name }))}">↑</button><button type="button" data-move="down" data-phase-id="${escapeHtml(phaseId)}" data-id="${escapeHtml(exercise.id)}" aria-label="${escapeHtml(this.t('editor.moveDown', { name }))}">↓</button><button type="button" data-remove="${escapeHtml(exercise.id)}" data-phase-id="${escapeHtml(phaseId)}" aria-label="${escapeHtml(this.t('editor.removeExercise', { name }))}">${escapeHtml(this.t('button.remove'))}</button></span></li>`;
     };
     const phaseSections = this.draft.phases.map((phase, phaseIndex) => {
       const rows = phase.exercises.map((exercise, index) => renderExerciseRow(exercise, phase.id, index)).join('');
-      const picker = this.exercisePickerPhaseId === phase.id ? `<div class="inline-form"><label>Select exercise<select name="exercise-library" size="5">${exerciseOptions}</select></label><button type="button" data-action="add-selected" data-phase-id="${escapeHtml(phase.id)}">Add selected · Auswahl hinzufügen</button></div>` : '';
-      return `<article class="phase-editor" data-phase="${escapeHtml(phase.id)}"><div class="section-heading"><div><p class="eyebrow">PHASE ${phaseIndex + 1}</p><h3>${escapeHtml(phaseLabel(phase.kind))}</h3></div><span class="row-actions"><button type="button" data-move-phase="up" data-phase-id="${escapeHtml(phase.id)}" aria-label="Move phase up">↑</button><button type="button" data-move-phase="down" data-phase-id="${escapeHtml(phase.id)}" aria-label="Move phase down">↓</button>${phase.kind === 'training' && this.draft.phases.filter(({ kind }) => kind === 'training').length === 1 ? '' : `<button type="button" data-remove-phase="${escapeHtml(phase.id)}">Remove phase</button>`}</span></div><div class="field-grid phase-settings"><label>Kind · Art<select name="phase-${phaseIndex}-kind"><option value="warm-up" ${phase.kind === 'warm-up' ? 'selected' : ''}>Warm-up · Aufwärmen</option><option value="training" ${phase.kind === 'training' ? 'selected' : ''}>Training</option><option value="active-recovery" ${phase.kind === 'active-recovery' ? 'selected' : ''}>Active recovery · Aktive Erholung</option><option value="cool-down" ${phase.kind === 'cool-down' ? 'selected' : ''}>Cool-down · Dehnen</option></select></label><label>Rounds · Runden<input name="phase-${phaseIndex}-rounds" type="number" min="1" max="20" value="${phase.rounds}"></label><label>Rest between exercises (seconds)<input name="phase-${phaseIndex}-rest-exercises" type="number" min="0" value="${phase.restBetweenExercises}"></label><label>Rest between rounds (seconds)<input name="phase-${phaseIndex}-rest-rounds" type="number" min="0" value="${phase.restBetweenRounds}"></label><label>Rest after phase (seconds)<input name="phase-${phaseIndex}-rest-after" type="number" min="0" value="${phase.restAfterPhase}"></label></div><button type="button" class="secondary" data-action="show-exercises" data-phase-id="${escapeHtml(phase.id)}">Add exercise · Übung hinzufügen</button>${picker}<ol class="exercise-list">${rows || '<li class="empty">No exercises yet. Add one from the library.</li>'}</ol><details class="custom-exercise"><summary>Create a custom exercise</summary><div class="inline-form"><label>Exercise name<input name="custom-name-${escapeHtml(phase.id)}"></label><label>Type<select name="custom-type-${escapeHtml(phase.id)}"><option value="repetitions">Repetitions · Wiederholungen</option><option value="duration">Duration · Zeit</option><option value="untimed">Untimed · Ohne Timer</option></select></label><button type="button" data-action="add-custom" data-phase-id="${escapeHtml(phase.id)}">Add custom exercise</button></div></details></article>`;
+      const picker = this.exercisePickerPhaseId === phase.id ? `<div class="inline-form"><label>${escapeHtml(this.t('editor.selectExercise'))}<select name="exercise-library" size="5">${exerciseOptions}</select></label><button type="button" data-action="add-selected" data-phase-id="${escapeHtml(phase.id)}">${escapeHtml(this.t('editor.addSelected'))}</button></div>` : '';
+      const label = phaseLabel(phase.kind, this.t);
+      return `<article class="phase-editor" data-phase="${escapeHtml(phase.id)}">
+        <div class="section-heading"><div><p class="eyebrow">${escapeHtml(this.t('phase.label', { current: phaseIndex + 1, total: this.draft.phases.length }))}</p><h3>${escapeHtml(label)}</h3></div>
+          <span class="row-actions"><button type="button" data-move-phase="up" data-phase-id="${escapeHtml(phase.id)}" aria-label="${escapeHtml(this.t('editor.moveUp', { name: label }))}">↑</button><button type="button" data-move-phase="down" data-phase-id="${escapeHtml(phase.id)}" aria-label="${escapeHtml(this.t('editor.moveDown', { name: label }))}">↓</button>${phase.kind === 'training' && this.draft.phases.filter(({ kind }) => kind === 'training').length === 1 ? '' : `<button type="button" data-remove-phase="${escapeHtml(phase.id)}">${escapeHtml(this.t('editor.removePhase'))}</button>`}</span>
+        </div>
+        <div class="field-grid phase-settings">
+          <label>${escapeHtml(this.t('editor.type'))}<select name="phase-${phaseIndex}-kind"><option value="warm-up" ${phase.kind === 'warm-up' ? 'selected' : ''}>${escapeHtml(this.t('category.warmUp'))}</option><option value="training" ${phase.kind === 'training' ? 'selected' : ''}>${escapeHtml(this.t('phase.training'))}</option><option value="active-recovery" ${phase.kind === 'active-recovery' ? 'selected' : ''}>${escapeHtml(this.t('phase.activeRecovery'))}</option><option value="cool-down" ${phase.kind === 'cool-down' ? 'selected' : ''}>${escapeHtml(this.t('phase.coolDown'))}</option></select></label>
+          <label>${escapeHtml(this.t('editor.rounds'))}<input name="phase-${phaseIndex}-rounds" type="number" min="1" max="20" value="${phase.rounds}"></label>
+          <label>${escapeHtml(this.t('editor.restExercises'))}<input name="phase-${phaseIndex}-rest-exercises" type="number" min="0" value="${phase.restBetweenExercises}"></label>
+          <label>${escapeHtml(this.t('editor.restRounds'))}<input name="phase-${phaseIndex}-rest-rounds" type="number" min="0" value="${phase.restBetweenRounds}"></label>
+          <label>${escapeHtml(this.t('editor.restAfterPhase'))}<input name="phase-${phaseIndex}-rest-after" type="number" min="0" value="${phase.restAfterPhase}"></label>
+        </div>
+        <button type="button" class="secondary" data-action="show-exercises" data-phase-id="${escapeHtml(phase.id)}">${escapeHtml(this.t('editor.addExercise'))}</button>${picker}
+        <ol class="exercise-list">${rows || `<li class="empty">${escapeHtml(this.t('editor.noneExercises'))}</li>`}</ol>
+        <details class="custom-exercise"><summary>${escapeHtml(this.t('editor.createCustom'))}</summary><div class="inline-form"><label>${escapeHtml(this.t('editor.exerciseName'))}<input name="custom-name-${escapeHtml(phase.id)}"></label><label>${escapeHtml(this.t('editor.type'))}<select name="custom-type-${escapeHtml(phase.id)}"><option value="repetitions">${escapeHtml(this.t('editor.repetitions'))}</option><option value="duration">${escapeHtml(this.t('editor.duration'))}</option><option value="untimed">${escapeHtml(this.t('editor.untimed'))}</option></select></label><button type="button" data-action="add-custom" data-phase-id="${escapeHtml(phase.id)}">${escapeHtml(this.t('editor.addCustom'))}</button></div></details>
+      </article>`;
     }).join('');
-    const languageChecks = this.draft.languages.map((language) => `<label class="check"><input type="checkbox" data-display-language="${escapeHtml(language.code)}" ${this.draft.displayLanguages.includes(language.code) ? 'checked' : ''}> ${escapeHtml(language.label)}</label>`).join('');
-    const planNameFields = this.draft.languages.map((language) => `<label>Plan name · Planname (${escapeHtml(language.label)})<input name="name-${escapeHtml(language.code)}" value="${escapeHtml(this.draft.name[language.code] ?? '')}" required></label>`).join('');
+    const languageChecks = LOCALE_DEFINITIONS.map((language) => `<label class="check"><input type="checkbox" data-display-language="${escapeHtml(language.code)}" ${this.draft.displayLanguages.includes(language.code) ? 'checked' : ''}> ${escapeHtml(language.nativeName)}</label>`).join('');
+    const planNameFields = this.draft.languages.map((language) => `<label>${escapeHtml(this.t('editor.planName', { language: localeName(language.code) }))}<input name="name-${escapeHtml(language.code)}" value="${escapeHtml(this.draft.name[language.code] ?? '')}" required></label>`).join('');
     const defaultSourceLanguage = this.draft.languages.find(({ code }) => code === 'en')?.code ?? this.draft.languages[0]?.code ?? '';
     const defaultTargetLanguage = [...this.draft.languages].reverse().find(({ code }) => code !== defaultSourceLanguage)?.code ?? '';
     const languageOptions = (selected: string): string => this.draft.languages.map((language) => `<option value="${escapeHtml(language.code)}" ${language.code === selected ? 'selected' : ''}>${escapeHtml(language.label)} (${escapeHtml(language.code)})</option>`).join('');
     const translationReviews = Object.entries(this.draft.translationMetadata ?? {}).map(([code, metadata]) => {
       const label = this.draft.languages.find((language) => language.code === code)?.label ?? code;
-      return `<label class="translation-review"><input type="checkbox" data-review-translation="${escapeHtml(code)}" ${metadata.reviewStatus === 'reviewed' ? 'checked' : ''}><span><strong>${escapeHtml(label)}: machine translated</strong><small>Source: ${escapeHtml(metadata.sourceLanguage)} · Provider: ${escapeHtml(metadata.provider)} · ${metadata.reviewStatus === 'reviewed' ? 'Reviewed' : 'Review required before saving'}</small></span></label>`;
+      const status = metadata.reviewStatus === 'reviewed' ? this.t('translation.reviewed') : this.t('translation.reviewRequired');
+      return `<label class="translation-review"><input type="checkbox" data-review-translation="${escapeHtml(code)}" ${metadata.reviewStatus === 'reviewed' ? 'checked' : ''}><span><strong>${escapeHtml(this.t('translation.machineTranslated', { language: label }))}</strong><small>${escapeHtml(this.t('translation.sourceProvider', { source: metadata.sourceLanguage, provider: metadata.provider, status }))}</small></span></label>`;
     }).join('');
-    const translationAssistant = this.draft.languages.length > 1 ? `<div class="translation-assistant"><div><p class="eyebrow">OPTIONAL ONLINE PRE-TRANSLATION</p><h3>Translate with Cloudflare AI</h3><p>When you click “Translate draft”, the plan name, exercise names and instructions in the source language are sent to Cloudflare, an external service provider, for machine translation. Remove personal or confidential information first. Existing text in the target language will be replaced. Check the translation before saving.</p></div><div class="translation-controls"><label>Source language<select name="translation-source">${languageOptions(defaultSourceLanguage)}</select></label><label>Target language<select name="translation-target">${languageOptions(defaultTargetLanguage)}</select></label><button type="button" class="secondary" data-action="translate-plan" ${this.translationBusy ? 'disabled' : ''}>${this.translationBusy ? 'Translating…' : 'Translate draft'}</button></div>${translationReviews ? `<div class="translation-reviews">${translationReviews}</div>` : ''}</div>` : '';
+    const translationAssistant = this.draft.languages.length > 1 ? `<div class="translation-assistant"><div><p class="eyebrow">${escapeHtml(this.t('translation.eyebrow'))}</p><h3>${escapeHtml(this.t('translation.title'))}</h3><p>${escapeHtml(this.t('translation.privacy'))}</p></div><div class="translation-controls"><label>${escapeHtml(this.t('translation.source'))}<select name="translation-source">${languageOptions(defaultSourceLanguage)}</select></label><label>${escapeHtml(this.t('translation.target'))}<select name="translation-target">${languageOptions(defaultTargetLanguage)}</select></label><button type="button" class="secondary" data-action="translate-plan" ${this.translationBusy ? 'disabled' : ''}>${escapeHtml(this.translationBusy ? this.t('translation.translating') : this.t('translation.translateDraft'))}</button></div>${translationReviews ? `<div class="translation-reviews">${translationReviews}</div>` : ''}</div>` : '';
     this.shell(`
-      <section class="page-heading"><p class="eyebrow">PLAN STUDIO</p><h1>${editorTitle}</h1><p>${editorIntro}</p></section>
-      <aside class="editor-ai-callout"><div><p class="eyebrow">MIT KI ERSTELLEN · CREATE WITH AI</p><h2>Eine KI kann deinen Plan vorbereiten</h2><p>Kopiere unsere Anleitung in eine KI deiner Wahl und beschreibe dein Wunschtraining. Prüfe den fertigen Plan vor dem Training.</p><p>Give the guide to an AI with your workout preferences, then review the result.</p>${AI_SAFETY_NOTICE}</div><a class="button-link primary" href="#instructions" data-open-ai-guide>KI-Anleitung öffnen <span>Open AI guide</span></a></aside>
+      <section class="page-heading"><p class="eyebrow">${escapeHtml(this.t('editor.eyebrow'))}</p><h1>${escapeHtml(editorTitle)}</h1><p>${escapeHtml(editorIntro)}</p></section>
+      <aside class="editor-ai-callout"><div><p class="eyebrow">${escapeHtml(this.t('editor.aiEyebrow'))}</p><h2>${escapeHtml(this.t('editor.aiTitle'))}</h2><p>${escapeHtml(this.t('editor.aiCopy'))}</p>${aiSafetyNotice(this.t)}</div><a class="button-link primary" href="#instructions" data-open-ai-guide>${escapeHtml(this.t('editor.openAiGuide'))}</a></aside>
       <form class="editor" data-editor>
-        <section class="form-section"><h2>01 · Basics</h2><div class="field-grid">
+        <section class="form-section"><h2>${escapeHtml(this.t('editor.basics'))}</h2><div class="field-grid">
           ${planNameFields}
         </div></section>
-        <section class="form-section"><div class="section-heading"><h2>02 · Languages</h2><button type="button" class="secondary" data-action="show-language">Add language · Sprache hinzufügen</button></div>
-          <div class="check-row"><span>Visible side by side (max. 2)</span>${languageChecks}</div>
-          ${this.languageFormVisible ? `<div class="inline-form"><label>Language code · Sprachcode<input name="language-code" placeholder="fr" pattern="[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*"></label><label>Language label · Sprachname<input name="language-label" placeholder="Français"></label><button type="button" data-action="add-language">Add</button></div>` : ''}
+        <section class="form-section"><div class="section-heading"><div><h2>${escapeHtml(this.t('editor.languages'))}</h2><p>${escapeHtml(this.t('editor.trainingLanguageHelp'))}</p></div></div>
+          <div class="check-row"><span>${escapeHtml(this.t('editor.visibleLanguages'))}</span>${languageChecks}</div>
           ${translationAssistant}
         </section>
-        <section class="form-section"><div class="section-heading"><div><h2>03 · Phases</h2><p>Rounds repeat the exercise sequence; repetitions count one movement.</p></div><button type="button" class="secondary" data-action="add-phase">Add training block · Trainingsblock hinzufügen</button></div>
+        <section class="form-section"><div class="section-heading"><div><h2>${escapeHtml(this.t('editor.phases'))}</h2><p>${escapeHtml(this.t('editor.phaseIntro'))}</p></div><button type="button" class="secondary" data-action="add-phase">${escapeHtml(this.t('editor.addTrainingBlock'))}</button></div>
           <div class="phase-list">${phaseSections}</div>
         </section>
-        <div class="editor-actions"><button type="button" class="primary" data-action="save-plan">${this.editorMode === 'edit' ? 'Save changes · Änderungen speichern' : 'Save locally · Lokal speichern'}</button><button type="button" data-action="start-plan">Start</button><button type="button" data-action="export-plan">Export JSON</button></div>
+        <div class="editor-actions"><button type="button" class="primary" data-action="save-plan">${escapeHtml(this.editorMode === 'edit' ? this.t('button.saveChanges') : this.t('button.saveLocally'))}</button><button type="button" data-action="start-plan">${escapeHtml(this.t('button.start'))}</button><button type="button" data-action="export-plan">${escapeHtml(this.t('editor.exportJson'))}</button></div>
         <p class="notice" role="status">${escapeHtml(this.notice)}</p>
       </form>`);
     this.bindEditor();
@@ -538,7 +588,7 @@ export class HomeWorkoutApp {
     const pendingReview = Object.entries(plan.translationMetadata ?? {}).find(([, metadata]) => metadata.reviewStatus === 'needs-review');
     if (pendingReview) {
       const label = plan.languages.find(({ code }) => code === pendingReview[0])?.label ?? pendingReview[0];
-      throw new Error(`Review and confirm the machine translation for ${label} before saving or starting.`);
+      throw new Error(this.t('translation.confirmBeforeSave', { language: label }));
     }
     return plan;
   }
@@ -547,16 +597,16 @@ export class HomeWorkoutApp {
     this.syncDraftFromForm();
     const sourceLanguage = this.root.querySelector<HTMLSelectElement>('[name="translation-source"]')?.value ?? '';
     const targetLanguage = this.root.querySelector<HTMLSelectElement>('[name="translation-target"]')?.value ?? '';
-    if (!sourceLanguage || !targetLanguage || sourceLanguage === targetLanguage) { this.notice = 'Choose two different languages for translation.'; this.renderEditor(); return; }
+    if (!sourceLanguage || !targetLanguage || sourceLanguage === targetLanguage) { this.notice = this.t('translation.chooseDifferent'); this.renderEditor(); return; }
     this.translationBusy = true;
-    this.notice = 'Translating draft… Existing target text will be replaced.';
+    this.notice = this.t('translation.replacesTarget');
     this.renderEditor();
     try {
       this.draft = await translatePlanDraft(this.draft, sourceLanguage, targetLanguage);
       const label = this.draft.languages.find(({ code }) => code === targetLanguage)?.label ?? targetLanguage;
-      this.notice = `${label} was pre-translated. Review every field and confirm the review before saving.`;
+      this.notice = this.t('translation.completed', { language: label });
     } catch (error) {
-      this.notice = error instanceof Error ? error.message : 'Automatic translation is currently unavailable.';
+      this.notice = error instanceof Error ? error.message : this.t('error.translationUnavailable');
     } finally {
       this.translationBusy = false;
       this.renderEditor();
@@ -565,16 +615,6 @@ export class HomeWorkoutApp {
 
   private bindEditor(): void {
     this.root.querySelector('[data-open-ai-guide]')?.addEventListener('click', () => this.syncDraftFromForm());
-    this.root.querySelector('[data-action="show-language"]')?.addEventListener('click', () => { this.syncDraftFromForm(); this.languageFormVisible = true; this.renderEditor(); });
-    this.root.querySelector('[data-action="add-language"]')?.addEventListener('click', () => {
-      this.syncDraftFromForm();
-      const code = this.root.querySelector<HTMLInputElement>('[name="language-code"]')?.value.trim() ?? '';
-      const label = this.root.querySelector<HTMLInputElement>('[name="language-label"]')?.value.trim() ?? '';
-      if (!code || !label || this.draft.languages.some((language) => language.code === code)) { this.notice = 'Enter a unique language code and label.'; this.renderEditor(); return; }
-      this.draft.languages.push({ code, label }); this.draft.name[code] = this.draft.name.en || label;
-      if (this.draft.displayLanguages.length < 2) this.draft.displayLanguages.push(code);
-      this.languageFormVisible = false; this.notice = `${label} added.`; this.renderEditor();
-    });
     this.root.querySelector('[data-action="translate-plan"]')?.addEventListener('click', () => { void this.preTranslateDraft(); });
     for (const checkbox of this.root.querySelectorAll<HTMLInputElement>('[data-review-translation]')) checkbox.addEventListener('change', () => {
       this.syncDraftFromForm();
@@ -583,25 +623,42 @@ export class HomeWorkoutApp {
       if (!metadata) return;
       metadata.reviewStatus = checkbox.checked ? 'reviewed' : 'needs-review';
       const label = this.draft.languages.find((language) => language.code === code)?.label ?? code;
-      this.notice = checkbox.checked ? `${label} translation marked as reviewed.` : `${label} translation requires review.`;
+      this.notice = `${label}: ${checkbox.checked ? this.t('translation.reviewed') : this.t('translation.reviewRequired')}`;
       const notice = this.root.querySelector<HTMLElement>('.notice');
       if (notice) notice.textContent = this.notice;
     });
     for (const checkbox of this.root.querySelectorAll<HTMLInputElement>('[data-display-language]')) checkbox.addEventListener('change', () => {
+      this.syncDraftFromForm();
       const selected = [...this.root.querySelectorAll<HTMLInputElement>('[data-display-language]:checked')].map((item) => item.dataset.displayLanguage!).slice(0, 2);
-      if (selected.length) this.draft.displayLanguages = selected;
+      if (!selected.length) {
+        checkbox.checked = true;
+        return;
+      }
+      for (const code of selected) {
+        if (!this.draft.languages.some((language) => language.code === code)) this.draft.languages.push({ code, label: localeName(code) });
+        if (isSupportedLocale(code)) {
+          this.draft.name[code] ||= routineNames[this.draft.id as keyof typeof routineNames]?.[code] ?? this.draft.name.en ?? Object.values(this.draft.name)[0] ?? 'Workout';
+          for (const exercise of planExercises(this.draft)) {
+            const copy = exerciseTranslation(exercise.exerciseId, code) ?? exercise.translations.en ?? Object.values(exercise.translations)[0];
+            if (copy) exercise.translations[code] = { ...copy };
+          }
+        }
+      }
+      this.draft.displayLanguages = selected;
+      this.renderEditor();
     });
     for (const button of this.root.querySelectorAll<HTMLButtonElement>('[data-action="show-exercises"]')) button.addEventListener('click', () => { this.syncDraftFromForm(); this.exercisePickerPhaseId = button.dataset.phaseId ?? null; this.renderEditor(); });
     this.root.querySelector<HTMLButtonElement>('[data-action="add-selected"]')?.addEventListener('click', (event) => {
       this.syncDraftFromForm(); const button = event.currentTarget as HTMLButtonElement; const phase = this.draft.phases.find(({ id }) => id === button.dataset.phaseId); const id = this.root.querySelector<HTMLSelectElement>('[name="exercise-library"]')?.value; const definition = id ? EXERCISES_BY_ID.get(id) : undefined;
       if (!definition || !phase) return;
-      phase.exercises.push({ id: `${definition.id}-${crypto.randomUUID()}`, exerciseId: definition.id, type: definition.type, target: structuredClone(definition.defaultTarget), translations: structuredClone(definition.translations), alternativeExerciseIds: [...definition.variants.easier] });
+      const translations = Object.fromEntries(this.draft.languages.map(({ code }) => [code, isSupportedLocale(code) ? exerciseTranslation(definition.id, code) ?? definition.translations.en : definition.translations.en]));
+      phase.exercises.push({ id: `${definition.id}-${crypto.randomUUID()}`, exerciseId: definition.id, type: definition.type, target: structuredClone(definition.defaultTarget), translations: structuredClone(translations), alternativeExerciseIds: [...definition.variants.easier] });
       this.exercisePickerPhaseId = null; this.renderEditor();
     });
     for (const button of this.root.querySelectorAll<HTMLButtonElement>('[data-action="add-custom"]')) button.addEventListener('click', () => {
       this.syncDraftFromForm(); const phaseId = button.dataset.phaseId ?? ''; const phase = this.draft.phases.find(({ id }) => id === phaseId); const name = this.root.querySelector<HTMLInputElement>(`[name="custom-name-${CSS.escape(phaseId)}"]`)?.value.trim(); const type = this.root.querySelector<HTMLSelectElement>(`[name="custom-type-${CSS.escape(phaseId)}"]`)?.value as PlanExercise['type'];
       if (!name || !phase) return;
-      const translations = Object.fromEntries(this.draft.languages.map(({ code }) => [code, { name, instructions: 'Move slowly and with control.' }]));
+      const translations = Object.fromEntries(this.draft.languages.map(({ code }) => [code, { name, instructions: isSupportedLocale(code) ? translator(code)('custom.defaultInstructions') : this.t('custom.defaultInstructions') }]));
       const target = type === 'duration' ? { seconds: 30 } : type === 'untimed' ? {} : { min: 8, max: 12, unit: 'repetitions' as const };
       phase.exercises.push({ id: `custom-${crypto.randomUUID()}`, exerciseId: `custom-${Date.now()}`, type, target, translations, alternativeExerciseIds: [] });
       this.renderEditor();
@@ -612,14 +669,14 @@ export class HomeWorkoutApp {
       if (!phase || index < 0 || destination < 0 || destination >= phase.exercises.length) return;
       const [item] = phase.exercises.splice(index, 1); phase.exercises.splice(destination, 0, item!); this.renderEditor();
     });
-    this.root.querySelector('[data-action="add-phase"]')?.addEventListener('click', () => { this.syncDraftFromForm(); const count = this.draft.phases.filter(({ kind }) => kind === 'training').length + 1; const coolDownIndex = this.draft.phases.findIndex(({ kind }) => kind === 'cool-down'); this.draft.phases.splice(coolDownIndex < 0 ? this.draft.phases.length : coolDownIndex, 0, { id: `training-${crypto.randomUUID()}`, kind: 'training', rounds: 1, restBetweenExercises: 20, restBetweenRounds: 60, restAfterPhase: 30, exercises: [] }); this.notice = `Training block ${count} added.`; this.renderEditor(); });
+    this.root.querySelector('[data-action="add-phase"]')?.addEventListener('click', () => { this.syncDraftFromForm(); const coolDownIndex = this.draft.phases.findIndex(({ kind }) => kind === 'cool-down'); this.draft.phases.splice(coolDownIndex < 0 ? this.draft.phases.length : coolDownIndex, 0, { id: `training-${crypto.randomUUID()}`, kind: 'training', rounds: 1, restBetweenExercises: 20, restBetweenRounds: 60, restAfterPhase: 30, exercises: [] }); this.notice = this.t('editor.addTrainingBlock'); this.renderEditor(); });
     for (const button of this.root.querySelectorAll<HTMLButtonElement>('[data-remove-phase]')) button.addEventListener('click', () => { this.syncDraftFromForm(); this.draft.phases = this.draft.phases.filter(({ id }) => id !== button.dataset.removePhase); this.renderEditor(); });
     for (const button of this.root.querySelectorAll<HTMLButtonElement>('[data-move-phase]')) button.addEventListener('click', () => { this.syncDraftFromForm(); const index = this.draft.phases.findIndex(({ id }) => id === button.dataset.phaseId); const destination = button.dataset.movePhase === 'up' ? index - 1 : index + 1; if (index < 0 || destination < 0 || destination >= this.draft.phases.length) return; const [phase] = this.draft.phases.splice(index, 1); this.draft.phases.splice(destination, 0, phase!); this.renderEditor(); });
-    const withPlan = (callback: (plan: WorkoutPlan) => void): void => { try { callback(this.normalizedDraft()); } catch (error) { this.notice = error instanceof Error && /rounds: must be a positive integer/.test(error.message) ? 'Rounds must be at least 1. · Runden müssen mindestens 1 sein.' : error instanceof Error ? error.message : 'Invalid plan'; this.renderEditor(); } };
+    const withPlan = (callback: (plan: WorkoutPlan) => void): void => { try { callback(this.normalizedDraft()); } catch (error) { this.notice = error instanceof Error && /rounds: must be a positive integer/.test(error.message) ? this.t('editor.roundsMinimum') : error instanceof Error ? error.message : this.t('error.invalidPlan'); this.renderEditor(); } };
     this.root.querySelector('[data-action="save-plan"]')?.addEventListener('click', () => withPlan((plan) => {
       savePlan(localStorage, plan);
       this.editorMode = 'edit';
-      this.notice = 'Saved · Gespeichert. Bundled routines were not changed.';
+      this.notice = this.t('editor.saved');
       this.renderEditor();
     }));
     this.root.querySelector('[data-action="start-plan"]')?.addEventListener('click', () => withPlan((plan) => this.startWorkout(plan)));
@@ -630,31 +687,31 @@ export class HomeWorkoutApp {
 
   private renderImport(): void {
     const preview = this.importPreview;
-    this.shell(`<section class="page-heading"><p class="eyebrow">BRING YOUR OWN PLAN</p><h1>Upload / Import</h1><p>JSON stays on this device and is strictly validated before use.</p></section>
-      <section class="import-panel"><label class="drop-zone">JSON file · JSON-Datei<input type="file" accept="application/json,.json" data-import><span>Choose a file or drop it here</span></label>
+    this.shell(`<section class="page-heading"><p class="eyebrow">${escapeHtml(this.t('import.eyebrow'))}</p><h1>${escapeHtml(this.t('import.title'))}</h1><p>${escapeHtml(this.t('import.intro'))}</p></section>
+      <section class="import-panel"><label class="drop-zone">${escapeHtml(this.t('import.fileLabel'))}<input type="file" accept="application/json,.json" data-import><span>${escapeHtml(this.t('import.dropCopy'))}</span></label>
       ${this.notice ? `<p role="alert" class="error">${escapeHtml(this.notice)}</p>` : ''}
-      ${preview ? `<div class="preview"><p class="eyebrow">VALID PLAN · SCHEMA V${preview.schemaVersion}</p><h2>Preview · Vorschau</h2><h3>${escapeHtml(Object.values(preview.name)[0] ?? 'Workout')}</h3><p>${preview.phases.length} phases · Phasen</p><ul>${planExercises(preview).map((exercise) => `<li>${escapeHtml(Object.values(exercise.translations)[0]?.name ?? exercise.exerciseId)}</li>`).join('')}</ul><div class="editor-actions"><button class="primary" data-action="start-import">Start</button><button data-action="save-import">Save locally</button></div></div>` : ''}</section>`);
+      ${preview ? `<div class="preview"><p class="eyebrow">${escapeHtml(this.t('import.valid'))} · SCHEMA V${preview.schemaVersion}</p><h2>${escapeHtml(this.t('import.preview'))}</h2><h3>${escapeHtml(planTitle(preview, this.uiLocale))}</h3><p>${preview.phases.length}</p><ul>${planExercises(preview).map((exercise) => `<li>${escapeHtml(exercise.translations[this.uiLocale]?.name ?? Object.values(exercise.translations)[0]?.name ?? exercise.exerciseId)}</li>`).join('')}</ul><div class="editor-actions"><button class="primary" data-action="start-import">${escapeHtml(this.t('button.start'))}</button><button data-action="save-import">${escapeHtml(this.t('button.saveLocally'))}</button></div></div>` : ''}</section>`);
     this.root.querySelector<HTMLInputElement>('[data-import]')?.addEventListener('change', (event) => {
       void (async () => {
         const file = (event.currentTarget as HTMLInputElement).files?.[0]; if (!file) return;
         try { this.importPreview = importPlanJson(await file.text()); this.notice = ''; }
-        catch (error) { this.importPreview = null; this.notice = error instanceof Error ? error.message : 'Invalid plan'; }
+        catch (error) { this.importPreview = null; this.notice = error instanceof Error ? error.message : this.t('error.invalidPlan'); }
         this.renderImport();
       })();
     });
     this.root.querySelector('[data-action="start-import"]')?.addEventListener('click', () => { if (this.importPreview) this.startWorkout(this.importPreview); });
-    this.root.querySelector('[data-action="save-import"]')?.addEventListener('click', () => { if (this.importPreview) { savePlan(localStorage, this.importPreview); this.notice = 'Saved · Gespeichert'; this.renderImport(); } });
+    this.root.querySelector('[data-action="save-import"]')?.addEventListener('click', () => { if (this.importPreview) { savePlan(localStorage, this.importPreview); this.notice = this.t('editor.saved'); this.renderImport(); } });
   }
 
   private renderPlans(): void {
     const plans = loadPlans(localStorage);
     const card = (plan: WorkoutPlan, bundled: boolean): string => `<article class="plan-card">
-      <div><span>${plan.phases.length} phases · ${totalRounds(plan)} rounds · ${planExercises(plan).length} exercises · ≈ ${estimatedMinutes(plan)} min</span><h2>${escapeHtml(planTitle(plan))}</h2><p>${bundled ? 'Permanent bundled routine · Dauerhafte Standardroutine' : 'Stored only on this device · Nur auf diesem Gerät'}</p></div>
-      <div class="plan-card-actions"><button class="primary" data-start-plan="${escapeHtml(plan.id)}">Start</button><button data-${bundled ? 'copy' : 'edit'}-plan="${escapeHtml(plan.id)}">${bundled ? 'Customize · Anpassen' : 'Edit · Bearbeiten'}</button>${bundled ? '' : `<button data-duplicate-plan="${escapeHtml(plan.id)}">Duplicate · Duplizieren</button><button class="danger" data-delete-plan="${escapeHtml(plan.id)}">Delete · Löschen</button>`}</div>
+      <div><span>${escapeHtml(this.t('plans.cardStats', { rounds: totalRounds(plan), exercises: planExercises(plan).length, minutes: estimatedMinutes(plan) }))}</span><h2>${escapeHtml(planTitle(plan, this.uiLocale))}</h2><p>${escapeHtml(bundled ? this.t('plans.bundledDescription') : this.t('plans.localDescription'))}</p></div>
+      <div class="plan-card-actions"><button class="primary" data-start-plan="${escapeHtml(plan.id)}">${escapeHtml(this.t('button.start'))}</button><button data-${bundled ? 'copy' : 'edit'}-plan="${escapeHtml(plan.id)}">${escapeHtml(bundled ? this.t('button.customize') : this.t('button.edit'))}</button>${bundled ? '' : `<button data-duplicate-plan="${escapeHtml(plan.id)}">${escapeHtml(this.t('button.duplicate'))}</button><button class="danger" data-delete-plan="${escapeHtml(plan.id)}">${escapeHtml(this.t('button.delete'))}</button>`}</div>
     </article>`;
-    this.shell(`<section class="page-heading"><p class="eyebrow">ROUTINE LIBRARY</p><h1>Plans · Trainingspläne</h1><p>Bundled routines always remain available. Your own plans are stored separately in this browser.</p>${this.notice ? `<p class="notice" role="status">${escapeHtml(this.notice)}</p>` : ''}</section>
-      <section class="saved-plans plan-section"><div class="section-heading"><div><p class="eyebrow">ALWAYS AVAILABLE</p><h2>Bundled routines · Standardroutinen</h2></div><span>${BUILT_IN_WORKOUTS.length} routines</span></div>${BUILT_IN_WORKOUTS.map((plan) => card(plan, true)).join('')}</section>
-      <section class="saved-plans plan-section"><div class="section-heading"><div><p class="eyebrow">ON THIS DEVICE</p><h2>My Plans · Meine Pläne</h2></div><a class="button-link" href="#editor" data-create-plan>Create new plan</a></div>${plans.length ? plans.map((plan) => card(plan, false)).join('') : '<div class="empty-state"><h2>No saved plans yet</h2><p>Create, customize or import a plan to see it here. The bundled routines above are never overwritten.</p><a class="button-link" href="#editor" data-create-plan>Create new plan</a></div>'}</section>`);
+    this.shell(`<section class="page-heading"><p class="eyebrow">${escapeHtml(this.t('plans.eyebrow'))}</p><h1>${escapeHtml(this.t('plans.title'))}</h1><p>${escapeHtml(this.t('plans.intro'))}</p>${this.notice ? `<p class="notice" role="status">${escapeHtml(this.notice)}</p>` : ''}</section>
+      <section class="saved-plans plan-section"><div class="section-heading"><div><p class="eyebrow">${escapeHtml(this.t('plans.alwaysAvailable'))}</p><h2>${escapeHtml(this.t('home.bundledRoutines'))}</h2></div><span>${escapeHtml(this.t('plans.routineCount', { count: BUILT_IN_WORKOUTS.length }))}</span></div>${BUILT_IN_WORKOUTS.map((plan) => card(plan, true)).join('')}</section>
+      <section class="saved-plans plan-section"><div class="section-heading"><div><p class="eyebrow">${escapeHtml(this.t('plans.onDevice'))}</p><h2>${escapeHtml(this.t('nav.plans'))}</h2></div><a class="button-link" href="#editor" data-create-plan>${escapeHtml(this.t('editor.createTitle'))}</a></div>${plans.length ? plans.map((plan) => card(plan, false)).join('') : `<div class="empty-state"><h2>${escapeHtml(this.t('plans.noneTitle'))}</h2><p>${escapeHtml(this.t('plans.noneCopy'))}</p><a class="button-link" href="#editor" data-create-plan>${escapeHtml(this.t('editor.createTitle'))}</a></div>`}</section>`);
     for (const button of this.root.querySelectorAll<HTMLButtonElement>('[data-start-plan]')) button.addEventListener('click', () => { const plan = this.findPlan(button.dataset.startPlan ?? ''); if (plan) this.startWorkout(plan); });
     for (const button of this.root.querySelectorAll<HTMLButtonElement>('[data-copy-plan]')) button.addEventListener('click', () => {
       const plan = this.findPlan(button.dataset.copyPlan ?? '');
@@ -671,11 +728,11 @@ export class HomeWorkoutApp {
       copy.id = createPlanId();
       copy.name = Object.fromEntries(Object.entries(copy.name).map(([code, name]) => [
         code,
-        `${name} · ${code.toLowerCase().startsWith('de') ? 'Kopie' : 'Copy'}`
+        `${name} · ${isSupportedLocale(code) ? translator(code)('plans.copySuffix') : translator('en')('plans.copySuffix')}`
       ]));
       copy.phases = copy.phases.map((phase) => ({ ...phase, id: `${phase.kind}-${crypto.randomUUID()}`, exercises: phase.exercises.map((exercise) => ({ ...exercise, id: `${exercise.exerciseId}-${crypto.randomUUID()}` })) }));
       savePlan(localStorage, validateWorkoutPlan(copy) as WorkoutPlan);
-      this.notice = 'Plan duplicated · Plan dupliziert';
+      this.notice = this.t('plans.duplicated');
       this.renderPlans();
     });
     for (const button of this.root.querySelectorAll<HTMLButtonElement>('[data-delete-plan]')) button.addEventListener('click', () => {
@@ -686,27 +743,36 @@ export class HomeWorkoutApp {
 
   private renderInstructions(): void {
     const guideUrl = new URL('/ai-workout-guide.txt', location.origin).href;
-    const items = [
-      ['Start', 'Choose one of the permanent bundled routines or one of your own plans, review the summary, then choose START WORKOUT.'], ['Targets', 'For repetition exercises, complete the displayed number of repetitions, then choose Next. For timed exercises, follow the countdown; the app advances automatically when time is up.'], ['Rounds', 'Complete each exercise once per round. Round progress is always visible.'], ['Timers', 'Duration exercises and rests advance automatically using timestamps, even after backgrounding. Use Next to skip a rest.'], ['Pause', 'Pause freezes workout, exercise and rest time together.'], ['Alternatives', 'The selector is labelled “Easier alternatives”. Choose one when needed or keep the original movement.'], ['Own plans', 'Create, reorder and adjust exercises in Plan Studio. Edit a local plan directly or customize a separate copy of a bundled routine.'], ['Import / Export', 'Share versioned JSON files. Every import is validated before preview or start.'], ['Languages', 'Show one or two configured languages side by side. After adding a language, enter its plan name and each exercise name and instruction as free text.'], ['Offline', 'This website is designed as a web app and can be installed for offline use on common phones, tablets and computers. Open the app and the exercises you need once while connected; previously loaded content and locally saved plans remain available offline. AI services and translation require an internet connection.<br><strong>Install the app:</strong> On Android in Chrome, open the menu and choose Add to home screen → Install. On iPhone or iPad in Safari, choose Share → Add to Home Screen and enable Open as Web App if offered. On a computer, use the install icon in the Chrome or Edge address bar. If it is not visible, open that browser’s menu and look for Install app or Apps. Detailed steps: <a href="https://support.apple.com/guide/iphone/bookmark-a-website-iphea86e5236/ios">Apple instructions</a> · <a href="https://support.google.com/chrome/answer/9658361?co=GENIE.Platform%3DAndroid&amp;hl=en">Chrome instructions</a>.']
+    const items: Array<[string, string]> = [
+      [this.t('help.startTitle'), this.t('help.startCopy')],
+      [this.t('help.targetsTitle'), this.t('help.targetsCopy')],
+      [this.t('help.roundsTitle'), this.t('help.roundsCopy')],
+      [this.t('help.timersTitle'), this.t('help.timersCopy')],
+      [this.t('help.pauseTitle'), this.t('help.pauseCopy')],
+      [this.t('help.alternativesTitle'), this.t('help.alternativesCopy')],
+      [this.t('help.ownPlansTitle'), this.t('help.ownPlansCopy')],
+      [this.t('help.importTitle'), this.t('help.importCopy')],
+      [this.t('help.languagesTitle'), this.t('help.languagesCopy')],
+      [this.t('help.offlineTitle'), `${this.t('help.offlineCopy')} ${this.t('help.installTitle')}: ${this.t('help.installCopy')} <a href="https://support.apple.com/guide/iphone/bookmark-a-website-iphea86e5236/ios">${escapeHtml(this.t('help.appleInstructions'))}</a> · <a href="https://support.google.com/chrome/answer/9658361?co=GENIE.Platform%3DAndroid&amp;hl=en">${escapeHtml(this.t('help.chromeInstructions'))}</a>.`]
     ];
-    this.shell(`<section class="page-heading"><p class="eyebrow">QUICK GUIDE</p><h1>Instructions · Anleitung</h1><p>Everything needed to move confidently, without a coach in the room.</p></section>
-      <section class="ai-plan-guide"><p class="eyebrow">CREATE WITH AI</p><h2>Let an AI prepare your workout plan</h2><p>Give an AI such as ChatGPT the guide link below together with a description of the workout plan you want.</p><div class="copy-field"><code>${escapeHtml(guideUrl)}</code><button class="primary" data-action="copy-ai-guide">Copy link</button></div><p>Ideally, the AI returns a direct link to the validated plan preview. Alternatively, it can create a JSON configuration file that you upload under “Upload / Import”.</p>${AI_SAFETY_NOTICE}</section>
-      <section class="instruction-list">${items.map(([title, copy], index) => `<article><span>${String(index + 1).padStart(2, '0')}</span><div><h2>${title}</h2><p>${copy}</p></div></article>`).join('')}</section><aside class="safety"><strong>Safety note</strong><p>Train within your ability, stop if you feel pain, and seek qualified medical advice when needed. This app does not diagnose or treat medical conditions.</p></aside>`);
+    this.shell(`<section class="page-heading"><p class="eyebrow">${escapeHtml(this.t('help.eyebrow'))}</p><h1>${escapeHtml(this.t('help.title'))}</h1><p>${escapeHtml(this.t('help.intro'))}</p></section>
+      <section class="ai-plan-guide"><p class="eyebrow">${escapeHtml(this.t('ai.guideEyebrow'))}</p><h2>${escapeHtml(this.t('ai.guideTitle'))}</h2><p>${escapeHtml(this.t('ai.guideCopy'))}</p><div class="copy-field"><code>${escapeHtml(guideUrl)}</code><button class="primary" data-action="copy-ai-guide">${escapeHtml(this.t('button.copyLink'))}</button></div><p>${escapeHtml(this.t('ai.guideResult'))}</p>${aiSafetyNotice(this.t)}</section>
+      <section class="instruction-list">${items.map(([title, copy], index) => `<article><span>${String(index + 1).padStart(2, '0')}</span><div><h2>${escapeHtml(title)}</h2><p>${index === 9 ? copy : escapeHtml(copy)}</p></div></article>`).join('')}</section><aside class="safety"><strong>${escapeHtml(this.t('legal.ownResponsibility'))}</strong><p>${escapeHtml(this.t('legal.healthCopy'))}</p></aside>`);
     this.root.querySelector<HTMLButtonElement>('[data-action="copy-ai-guide"]')?.addEventListener('click', (event) => {
       const button = event.currentTarget as HTMLButtonElement;
-      void navigator.clipboard.writeText(guideUrl).then(() => { button.textContent = 'Copied'; }).catch(() => { window.prompt('Copy link', guideUrl); });
+      void navigator.clipboard.writeText(guideUrl).then(() => { button.textContent = this.t('button.copied'); }).catch(() => { window.prompt(this.t('button.copyLink'), guideUrl); });
     });
   }
 
 
   private renderLegalNotice(): void {
-    this.shell(`<section class="page-heading"><p class="eyebrow">ANBIETERANGABEN</p><h1>Impressum</h1><p>Home Workout ist ein privates, nicht gewerbliches Projekt.</p></section><section class="instruction-list legal-notice"><h2>Anbieter</h2><address>Dr. Dustin Hebecker<br>${__LEGAL_ADDRESS__.length ? __LEGAL_ADDRESS__.map(escapeHtml).join('<br>') : 'Anschrift in dieser Entwicklungsversion nicht hinterlegt.'}</address><h2>Nutzung auf eigene Verantwortung</h2><p>Du entscheidest selbst, ob die Übungen und die gewählte Belastung für dich geeignet sind. Die App bietet allgemeine Trainingsanregungen und ersetzt keine medizinische Beratung oder persönliche Trainingsbetreuung.</p><p>Trainiere innerhalb deiner Möglichkeiten und beende die Übung bei Schmerzen oder Unwohlsein. Kläre bei gesundheitlichen Einschränkungen oder Unsicherheit vor dem Training ärztlich ab, welche Belastung für dich geeignet ist.</p><p>Dieser Hinweis schließt gesetzliche Haftungsansprüche nicht aus.</p><h2>Feedback</h2><p>Fehler gefunden oder eine Idee zur Verbesserung? Nutze das <a href="${APP_CONFIG.githubUrl}/issues">öffentliche Feedback- und Fehlerforum auf GitHub</a>. Bitte veröffentliche dort keine Gesundheitsdaten oder anderen vertraulichen Informationen.</p></section>`);
+    this.shell(`<section class="page-heading"><p class="eyebrow">${escapeHtml(this.t('legal.eyebrow'))}</p><h1>${escapeHtml(this.t('legal.title'))}</h1><p>${escapeHtml(this.t('legal.intro'))}</p></section><section class="instruction-list legal-notice"><h2>${escapeHtml(this.t('legal.provider'))}</h2><address>Dr. Dustin Hebecker<br>${__LEGAL_ADDRESS__.length ? __LEGAL_ADDRESS__.map(escapeHtml).join('<br>') : escapeHtml(this.t('legal.addressMissing'))}</address><h2>${escapeHtml(this.t('legal.ownResponsibility'))}</h2><p>${escapeHtml(this.t('legal.responsibilityCopy'))}</p><p>${escapeHtml(this.t('legal.healthCopy'))}</p><p>${escapeHtml(this.t('legal.liability'))}</p><h2>${escapeHtml(this.t('legal.feedback'))}</h2><p>${escapeHtml(this.t('legal.feedbackCopy'))} <a href="${APP_CONFIG.githubUrl}/issues">${escapeHtml(this.t('legal.feedbackLink'))}</a></p></section>`);
   }
 
   private showResumeDialog(): void {
     const dialog = document.createElement('dialog');
-    dialog.setAttribute('aria-label', 'Resume Workout · Workout fortsetzen');
-    dialog.innerHTML = `<form method="dialog"><p class="eyebrow">WORKOUT IN PROGRESS</p><h2>Resume Workout?</h2><p>Your last session is saved on this device.</p><div class="dialog-actions"><button value="resume" class="primary">Resume · Fortsetzen</button><button value="restart">Start over · Neu starten</button></div></form>`;
+    dialog.setAttribute('aria-label', this.t('dialog.resumeLabel'));
+    dialog.innerHTML = `<form method="dialog"><p class="eyebrow">${escapeHtml(this.t('dialog.resumeLabel'))}</p><h2>${escapeHtml(this.t('dialog.resumeTitle'))}</h2><p>${escapeHtml(this.t('dialog.resumeCopy'))}</p><div class="dialog-actions"><button value="resume" class="primary">${escapeHtml(this.t('button.resume'))}</button><button value="restart">${escapeHtml(this.t('button.startOver'))}</button></div></form>`;
     dialog.addEventListener('close', () => {
       if (dialog.returnValue === 'restart') { clearWorkoutSession(localStorage); this.startWorkout(this.activePlan); }
       else { location.hash = 'workout'; this.render(); }
