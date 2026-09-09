@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { EXERCISE_LIBRARY } from '../../src/data/exercises';
 import { BUILT_IN_WORKOUTS, BUILT_IN_WORKOUTS_BY_ID, DEFAULT_WORKOUT, isBuiltInWorkout } from '../../src/data/default-workout';
 import { validateWorkoutPlan } from '../../src/core/plan-schema';
+import { planExercises } from '../../src/core/plan-schema';
 
 const requiredIds = [
   'squat', 'sumo-squat', 'reverse-lunge', 'forward-lunge', 'split-squat',
@@ -96,11 +97,12 @@ describe('30 Minute Full Body default workout', () => {
   it('is valid, bilingual and has the requested structure and rests', () => {
     expect(validateWorkoutPlan(DEFAULT_WORKOUT)).toStrictEqual(DEFAULT_WORKOUT);
     expect(DEFAULT_WORKOUT.displayLanguages).toEqual(['de', 'en']);
-    expect(DEFAULT_WORKOUT.rounds).toBe(3);
-    expect(DEFAULT_WORKOUT.restBetweenExercises).toBe(20);
-    expect(DEFAULT_WORKOUT.restBetweenRounds).toBe(60);
-    expect(DEFAULT_WORKOUT.exercises).toHaveLength(8);
-    expect(DEFAULT_WORKOUT.exercises.map(({ exerciseId }) => exerciseId)).toEqual([
+    const training = DEFAULT_WORKOUT.phases.find(({ kind }) => kind === 'training')!;
+    expect(training.rounds).toBe(3);
+    expect(training.restBetweenExercises).toBe(20);
+    expect(training.restBetweenRounds).toBe(60);
+    expect(training.exercises).toHaveLength(8);
+    expect(training.exercises.map(({ exerciseId }) => exerciseId)).toEqual([
       'squat',
       'push-up',
       'reverse-lunge',
@@ -114,7 +116,7 @@ describe('30 Minute Full Body default workout', () => {
 
   it('alternates upper-body work with legs, core or cardio', () => {
     const categoryById = new Map(EXERCISE_LIBRARY.map(({ id, category }) => [id, category]));
-    const categories = DEFAULT_WORKOUT.exercises.map(({ exerciseId }) => categoryById.get(exerciseId));
+    const categories = DEFAULT_WORKOUT.phases.find(({ kind }) => kind === 'training')!.exercises.map(({ exerciseId }) => categoryById.get(exerciseId));
     const isUpperBody = (category: string | undefined): boolean => category === 'push' || category === 'pull';
 
     expect(categories).toEqual(['legs', 'push', 'legs', 'pull', 'legs', 'core', 'cardio', 'core']);
@@ -131,7 +133,7 @@ describe('30 Minute Full Body default workout', () => {
     const reverseLunge = byId.get('reverse-lunge');
     const legRaise = byId.get('lying-leg-raise');
 
-    expect(DEFAULT_WORKOUT.exercises.map(({ exerciseId }) => exerciseId)).toEqual(
+    expect(planExercises(DEFAULT_WORKOUT).map(({ exerciseId }) => exerciseId)).toEqual(
       expect.arrayContaining(['reverse-lunge', 'lying-leg-raise'])
     );
     expect(legRaise?.translations.en?.name).toBe('Lying Leg Raises');
@@ -143,7 +145,7 @@ describe('30 Minute Full Body default workout', () => {
   });
 
   it('includes the specified easier alternatives and a 30 second jumping-jack target', () => {
-    const byId = Object.fromEntries(DEFAULT_WORKOUT.exercises.map((exercise) => [exercise.exerciseId, exercise]));
+    const byId = Object.fromEntries(planExercises(DEFAULT_WORKOUT).map((exercise) => [exercise.exerciseId, exercise]));
     expect(byId['push-up']?.alternativeExerciseIds).toContain('incline-push-up');
     expect(byId['pull-up']?.alternativeExerciseIds).toEqual(expect.arrayContaining([
       'assisted-pull-up', 'resistance-band-row'
@@ -169,7 +171,7 @@ describe('permanent bundled routine library', () => {
       expect(validateWorkoutPlan(plan)).toStrictEqual(plan);
       expect(BUILT_IN_WORKOUTS_BY_ID.get(plan.id)).toBe(plan);
       expect(isBuiltInWorkout(plan.id)).toBe(true);
-      expect(plan.exercises.length).toBeGreaterThanOrEqual(6);
+      expect(planExercises(plan).length).toBeGreaterThanOrEqual(6);
     }
     expect(isBuiltInWorkout('my-local-plan')).toBe(false);
   });
@@ -177,9 +179,9 @@ describe('permanent bundled routine library', () => {
   it('gives every bundled exercise a unique slot id and an existing illustration', () => {
     const libraryIds = new Set(EXERCISE_LIBRARY.map(({ id }) => id));
     for (const plan of BUILT_IN_WORKOUTS) {
-      const slotIds = plan.exercises.map(({ id }) => id);
+      const slotIds = planExercises(plan).map(({ id }) => id);
       expect(new Set(slotIds).size).toBe(slotIds.length);
-      for (const exercise of plan.exercises) expect(libraryIds.has(exercise.exerciseId)).toBe(true);
+      for (const exercise of planExercises(plan)) expect(libraryIds.has(exercise.exerciseId)).toBe(true);
     }
   });
 });

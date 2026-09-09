@@ -49,7 +49,7 @@ Plan Studio supports:
 
 - DE/EN plan names and additional BCP-47-style language records;
 - one or two display languages;
-- rounds and rest intervals;
+- ordered warm-up, training, optional active-recovery, and cool-down phases with their own rounds and rest intervals;
 - selecting from the 51-entry exercise library through bilingual category groups sorted alphabetically;
 - custom exercise names;
 - exercise ordering and removal;
@@ -59,7 +59,7 @@ Plan Studio supports:
 
 The plan library adds explicit duplicate and confirmed-delete actions for local plans. These actions are never shown for bundled routines.
 
-Imported JSON and AI links go through the same strict version-1 validator before preview, save, or start. Unknown properties, unsafe text, invalid languages, impossible targets, unsupported schema versions, and oversized/invalid URL payloads are rejected.
+Imported JSON and AI links go through strict versioned validation before preview, save, or start. Schema v2 is canonical. Valid v1 input is migrated in memory to one equivalent training phase without mutating or automatically overwriting its source. Unknown properties, unsafe text, invalid languages, impossible targets, unsupported schema versions, and oversized or invalid URL payloads are rejected.
 
 Schema version 1 remains backward compatible: `translationMetadata` is optional. When present, it records the source language, machine origin, provider, UTC timestamp, and `needs-review` or `reviewed` status for a translated target language. Old plans without this property remain valid and round-trip unchanged.
 
@@ -93,7 +93,7 @@ Direct links never start a workout immediately. The app validates the payload, r
 
 Moving assets use same-scale overlaid positions; static holds and stretches use one pose without a false direction arrow. All 51 assets are covered by file, palette, pose-mode, and SVG contract tests. Movement and floor-contact sources are recorded in `docs/exercise-sources.md`.
 
-The proposed schema-v2 phase model is documented in `docs/phased-workout-proposal.md`. It separates warm-up, multiple independently configured training blocks, and cool-down, and uses “rounds / Runden” for repeated exercise sequences. It remains backlog work until migration and deterministic engine tests are in place.
+The implemented schema-v2 phase model is documented in `docs/phased-workout-proposal.md`. It separates warm-up, independently configured training blocks, optional active recovery, and cool-down, and uses “rounds / Runden” for repeated exercise sequences. Deterministic engine tests cover exercise, round, and phase boundaries, skipping, pausing, and reload persistence.
 
 ## Code map
 

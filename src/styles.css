@@ -125,6 +125,12 @@ select[size] { min-height: 180px; }
 .row-actions button { min-height: 44px; padding: .5rem .75rem; }
 .custom-exercise { margin-top: 1.5rem; }
 .custom-exercise summary { cursor: pointer; font-weight: 750; }
+.phase-list { display: grid; gap: 1.5rem; }
+.phase-editor { padding: 1.25rem; border: 1px solid var(--line); background: var(--surface); }
+.phase-editor .section-heading { margin-bottom: 1rem; }
+.phase-editor h3 { margin: .2rem 0 0; font-size: 1.35rem; }
+.phase-settings { grid-template-columns: repeat(5, minmax(120px, 1fr)); margin-bottom: 1rem; }
+.phase-transition-card strong { margin-top: 1rem; font-size: clamp(2.5rem, 7vw, 5rem); }
 .editor-actions, .dialog-actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 2rem; }
 .notice { min-height: 1.5rem; color: var(--accent-strong); font-weight: 700; margin-top: 1rem; }
 .workout-screen { height: calc(100vh - 78px); height: calc(100dvh - 78px); display: grid; grid-template-rows: minmax(0, 1fr) auto; overflow: hidden; }
@@ -135,7 +141,7 @@ select[size] { min-height: 180px; }
 .home-safety { margin: 1rem 0 0; color: var(--muted); font-size: .8rem; line-height: 1.5; }
 .ai-safety-note { color: var(--muted); font-size: .9rem; line-height: 1.5; border-top: 1px solid var(--line); padding-top: 1rem; }
 .workout-content { min-height: 0; overflow-y: auto; padding: clamp(1rem, 3vw, 2.5rem) clamp(1rem, 5vw, 5rem) 1rem; }
-.workout-status { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 1rem; color: var(--muted); font-size: .78rem; padding-bottom: 1rem; border-bottom: 1px solid var(--line); }
+.workout-status { display: grid; grid-template-columns: repeat(4, auto); justify-content: space-between; align-items: center; gap: 1rem; color: var(--muted); font-size: .78rem; padding-bottom: 1rem; border-bottom: 1px solid var(--line); }
 .workout-status [data-round-exercise-progress] { color: var(--ink); font-weight: 800; text-align: center; }
 .workout-status [data-workout-total] { text-align: right; }
 .phase-pill { margin: 1rem 0; display: inline-block; padding: .45rem .7rem; background: var(--soft); font-size: .72rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
@@ -223,6 +229,7 @@ dialog h2 { font-size: 2.2rem; letter-spacing: -.04em; }
 .illustration-review-summary li p { margin: .35rem 0 0; white-space: pre-wrap; }
 
 @media (max-width: 800px) {
+  .phase-settings { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .site-header nav a:first-child { display: none; }
   .home-grid { grid-template-columns: 1fr; align-items: stretch; }
   .workout-card { min-height: 320px; }

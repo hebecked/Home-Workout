@@ -1,6 +1,6 @@
-# Phase-aware workout proposal
+# Phase-aware workout model
 
-Last updated: 2026-09-01
+Implemented: 2026-09-08
 
 ## Terminology
 
@@ -11,7 +11,7 @@ The product should use two distinct terms:
 
 The user's requested repetition of several exercises in the same order is therefore a **round**, not a repetition.
 
-## Proposed schema version 2
+## Schema version 2
 
 A plan contains ordered phases instead of one global exercise list. Every phase owns its timing and round rules. In addition to warm-up, training, and cool-down, an optional `active-recovery` phase can contain deliberately low-intensity duration movements such as gentle marching; it is not the same as passive rest.
 
@@ -59,7 +59,7 @@ A plan contains ordered phases instead of one global exercise list. Every phase 
 }
 ```
 
-Exercise objects should continue to own a target mode: `repetitions`, `duration`, or a new manually advanced `untimed` mode. Warm-ups and stretches default to duration; `untimed` would cover technique-led movements where the user taps Next when ready.
+Exercise objects own a target mode: `repetitions`, `duration`, or manually advanced `untimed`. Warm-ups and stretches default to duration; `untimed` covers technique-led movements where the user taps Next when ready.
 
 ## Runtime behavior
 
@@ -71,13 +71,8 @@ Exercise objects should continue to own a target mode: `repetitions`, `duration`
 - Previous/Next works across exercise, rest, round, and phase boundaries without resetting elapsed workout time.
 - Duration targets keep counting down; repetition targets show a range but do not require a tap counter.
 
-## Compatibility and implementation order
+## Compatibility
 
-1. Add a strict schema-v2 validator and fixtures without changing the current UI.
-2. Migrate every schema-v1 plan to a single `training` phase with identical rounds, order, and rest values.
-3. Add deterministic phase transitions to the workout engine plus unit tests for skip, pause, reload, and boundary cases.
-4. Add grouped phase editing and drag/reorder controls to Plan Studio.
-5. Extend JSON import/export and the AI plan guide with versioned examples.
-6. Preserve the v1 reader until stored plans and shared links have a documented retirement path.
+Every schema-v1 plan is validated first and then migrated in memory to a single `training` phase with identical rounds, exercise order, exercise targets, translations, alternatives, and rest values. The v1 object is not mutated, and merely loading local storage does not rewrite it. V1 imports and launch links therefore remain usable; a user-triggered save or export writes canonical v2. Persisted v1 workout sessions are upgraded to session persistence v2 at read time and continue in the migrated training phase.
 
-This proposal is intentionally documentation-first. Changing the production schema without migration and engine tests would risk invalidating existing local plans and active sessions.
+The v1 reader and public schema remain part of the supported compatibility path. They may be retired only after a separately documented migration window and evidence that stored plans and shared links no longer require them.

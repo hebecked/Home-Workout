@@ -7,6 +7,37 @@ import {
 import { makeMultilingualPlan } from '../fixtures/plans';
 
 describe('workout state machine', () => {
+  it('crosses phase transitions with phase-specific rests and progress', () => {
+    const plan = makeMultilingualPlan();
+    const source = plan.phases[0]!;
+    plan.phases = [
+      { ...structuredClone(source), id: 'warm', kind: 'warm-up', rounds: 1, restBetweenExercises: 0, restBetweenRounds: 0, restAfterPhase: 10, exercises: [{ ...structuredClone(source.exercises[1]!), id: 'warm-slot', target: { seconds: 5 } }] },
+      { ...structuredClone(source), id: 'training', rounds: 1, restAfterPhase: 7, exercises: [{ ...structuredClone(source.exercises[0]!), id: 'train-slot' }] },
+      { ...structuredClone(source), id: 'cool', kind: 'cool-down', rounds: 1, restBetweenExercises: 0, restBetweenRounds: 0, restAfterPhase: 0, exercises: [{ ...structuredClone(source.exercises[1]!), id: 'cool-slot', target: { seconds: 5 } }] }
+    ];
+    let session = createWorkoutSession(plan, 0);
+    session = dispatchWorkout(session, plan, { type: 'TICK' }, 5_000);
+    expect(getWorkoutSnapshot(session, plan, 5_000)).toMatchObject({ phase: 'phase-transition', phaseIndex: 0, remainingMs: 10_000 });
+    session = dispatchWorkout(session, plan, { type: 'NEXT' }, 6_000);
+    expect(getWorkoutSnapshot(session, plan, 6_000)).toMatchObject({ phase: 'exercise', phaseIndex: 1, roundIndex: 0, exerciseIndex: 0 });
+    session = dispatchWorkout(session, plan, { type: 'NEXT' }, 7_000);
+    expect(getWorkoutSnapshot(session, plan, 7_000)).toMatchObject({ phase: 'phase-transition', phaseIndex: 1, remainingMs: 7_000 });
+    session = dispatchWorkout(session, plan, { type: 'PREVIOUS' }, 8_000);
+    expect(getWorkoutSnapshot(session, plan, 8_000)).toMatchObject({ phase: 'exercise', phaseIndex: 1, exerciseIndex: 0 });
+  });
+
+  it('catches up across duration exercises and multiple phase boundaries', () => {
+    const plan = makeMultilingualPlan();
+    const duration = structuredClone(plan.phases[0]!.exercises[1]!);
+    plan.phases = [
+      { id: 'warm', kind: 'warm-up', rounds: 1, restBetweenExercises: 0, restBetweenRounds: 0, restAfterPhase: 2, exercises: [{ ...structuredClone(duration), id: 'warm-slot', target: { seconds: 2 } }] },
+      { id: 'training', kind: 'training', rounds: 1, restBetweenExercises: 0, restBetweenRounds: 0, restAfterPhase: 2, exercises: [{ ...structuredClone(duration), id: 'training-slot', target: { seconds: 2 } }] },
+      { id: 'recovery', kind: 'active-recovery', rounds: 1, restBetweenExercises: 0, restBetweenRounds: 0, restAfterPhase: 0, exercises: [{ ...structuredClone(duration), id: 'recovery-slot', target: { seconds: 10 } }] }
+    ];
+    const session = dispatchWorkout(createWorkoutSession(plan, 0), plan, { type: 'TICK' }, 9_000);
+    expect(getWorkoutSnapshot(session, plan, 9_000)).toMatchObject({ phase: 'exercise', phaseIndex: 2, remainingMs: 9_000 });
+  });
+
   it('moves through exercise rest, next exercise, round rest and completion', () => {
     const plan = makeMultilingualPlan();
     let session = createWorkoutSession(plan, 0);
@@ -144,7 +175,9 @@ describe('workout state machine', () => {
   });
 
   it('supports zero configured rests without stalling the state machine', () => {
-    const plan = { ...makeMultilingualPlan(), restBetweenExercises: 0, restBetweenRounds: 0 };
+    const plan = makeMultilingualPlan();
+    plan.phases[0]!.restBetweenExercises = 0;
+    plan.phases[0]!.restBetweenRounds = 0;
     let session = createWorkoutSession(plan, 0);
 
     session = dispatchWorkout(session, plan, { type: 'NEXT' }, 1_000);

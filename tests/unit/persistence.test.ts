@@ -8,7 +8,7 @@ import {
   saveWorkoutSession
 } from '../../src/core/persistence';
 import { createWorkoutSession, dispatchWorkout, getWorkoutSnapshot } from '../../src/core/workout-engine';
-import { makeMultilingualPlan } from '../fixtures/plans';
+import { makeMultilingualPlan, makeV1Plan } from '../fixtures/plans';
 
 class MemoryStorage implements Storage {
   readonly #values = new Map<string, string>();
@@ -44,10 +44,12 @@ describe('local persistence', () => {
 
     savePlan(storage, first);
     savePlan(storage, second);
-    savePlan(storage, { ...first, rounds: 4 });
+    const changed = structuredClone(first);
+    changed.phases[0]!.rounds = 4;
+    savePlan(storage, changed);
 
     expect(loadPlans(storage)).toStrictEqual([
-      { ...first, rounds: 4 },
+      changed,
       second
     ]);
   });
@@ -73,6 +75,26 @@ describe('local persistence', () => {
     expect(getWorkoutSnapshot(restored!, plan, 45_000)).toMatchObject({
       phase: 'exercise', exerciseIndex: 1, remainingMs: 20_000
     });
+  });
+
+  it('loads stored v1 plans as v2 without silently overwriting the stored JSON', () => {
+    const legacy = makeV1Plan();
+    const raw = JSON.stringify([legacy]);
+    storage.setItem('home-workout:plans', raw);
+    const [loaded] = loadPlans(storage);
+    expect(loaded).toMatchObject({ schemaVersion: 2, phases: [{ rounds: legacy.rounds, exercises: legacy.exercises }] });
+    expect(storage.getItem('home-workout:plans')).toBe(raw);
+  });
+
+  it('loads legacy session persistence into phase zero without rewriting storage', () => {
+    const legacy = {
+      persistenceVersion: 1, planId: 'plan-fr-hi', phase: 'exercise', roundIndex: 1, exerciseIndex: 0,
+      repetitions: 3, workoutStartedAtMs: 100, workoutPausedAtMs: null,
+      workoutAccumulatedPausedMs: 0, phaseTimer: null
+    };
+    storage.setItem('home-workout:active-session', JSON.stringify(legacy));
+    expect(loadWorkoutSession(storage)).toMatchObject({ persistenceVersion: 2, phaseIndex: 0, roundIndex: 1, repetitions: 3 });
+    expect(storage.getItem('home-workout:active-session')).toBe(JSON.stringify(legacy));
   });
 
   it('restores a paused session without counting time spent away', () => {
@@ -139,6 +161,23 @@ describe('local persistence', () => {
     }
   });
 
+  it.each(['not-json', JSON.stringify({ plan: true })])('recovers from invalid raw plan storage when explicitly saving (%s)', (raw) => {
+    storage.setItem('home-workout:plans', raw);
+    const plan = makeMultilingualPlan();
+    savePlan(storage, plan);
+    expect(JSON.parse(storage.getItem('home-workout:plans') ?? '[]')).toStrictEqual([plan]);
+  });
+
+  it('rejects a legacy session with an unsupported runtime phase', () => {
+    const legacy = {
+      persistenceVersion: 1, planId: 'plan-fr-hi', phase: 'phase-transition', roundIndex: 0, exerciseIndex: 0,
+      repetitions: null, workoutStartedAtMs: 0, workoutPausedAtMs: null,
+      workoutAccumulatedPausedMs: 0, phaseTimer: null
+    };
+    storage.setItem('home-workout:active-session', JSON.stringify(legacy));
+    expect(loadWorkoutSession(storage)).toBeNull();
+  });
+
   it('uses separate stable storage keys for plans and active sessions', () => {
     const recording = new RecordingStorage();
     const plan = makeMultilingualPlan();
@@ -163,8 +202,9 @@ describe('local persistence', () => {
   });
 
   it.each([
-    ['persistenceVersion', 2],
+    ['persistenceVersion', 999],
     ['planId', 42],
+    ['phaseIndex', -1],
     ['roundIndex', '0'],
     ['exerciseIndex', '0'],
     ['workoutStartedAtMs', '0'],

@@ -1,6 +1,6 @@
 # Home Workout backlog
 
-Last reviewed: 2026-09-01
+Last reviewed: 2026-09-08
 
 This file is the durable hand-off for work that must not exist only in an AI conversation. `docs/product-roadmap.md` contains the fuller product context; this file is the short operational checklist.
 
@@ -58,10 +58,10 @@ The report also notes that Firefox could not start because of `spawn UNKNOWN`; t
 
 ## Priority 2 — phase-aware workout model
 
-- [ ] Implement the phase-aware schema-v2 design in `docs/phased-workout-proposal.md`: warm-up, one or more training blocks, and cool-down/stretching, each with its own rounds and rest rules. Use **rounds / Runden** for repetitions of an exercise sequence and reserve **repetitions / Wiederholungen** for one movement.
-- [ ] Add **active recovery** as an optional phase kind or inter-block transition. It should accept low-intensity duration exercises and remain distinct from passive rest.
-- [ ] Add phase-aware editor controls, import/export migration, progress UI, and validators only after schema-v1 plans can be migrated losslessly.
-- [ ] Add explicit schema migrations before introducing workout-plan schema version 2.
+- [x] Implement the phase-aware schema-v2 design in `docs/phased-workout-proposal.md`: warm-up, one or more training blocks, and cool-down/stretching, each with its own rounds and rest rules. Use **rounds / Runden** for repetitions of an exercise sequence and reserve **repetitions / Wiederholungen** for one movement.
+- [x] Add **active recovery** as an optional phase kind. It accepts duration or untimed exercises and remains distinct from passive rest.
+- [x] Add phase-aware editor controls, import/export migration, progress UI, and validators after schema-v1 plans can be migrated losslessly.
+- [x] Add explicit, non-mutating schema-v1 to schema-v2 migration while retaining the v1 reader for stored plans and shared links.
 
 ## Priority 3 — final public URL (owner decision)
 

@@ -23,15 +23,36 @@ const plan = (
   restBetweenRounds: number,
   exercises: Array<[string, PlanExercise['target']?, string[]?]>
 ): WorkoutPlan => ({
-  schemaVersion: 1,
+  schemaVersion: 2,
   id,
   languages: structuredClone(languages),
   name,
   displayLanguages: ['de', 'en'],
-  rounds,
-  restBetweenExercises,
-  restBetweenRounds,
-  exercises: exercises.map(([exerciseId, target, alternatives]) => slot(id, exerciseId, target, alternatives))
+  phases: [
+    {
+      id: 'warm-up', kind: 'warm-up', rounds: 1,
+      restBetweenExercises: 0, restBetweenRounds: 0, restAfterPhase: 20,
+      exercises: [
+        slot(`${id}-warm-up`, 'marching-in-place', { seconds: 30 }),
+        slot(`${id}-warm-up`, 'arm-circle', { seconds: 30 }),
+        slot(`${id}-warm-up`, 'leg-swing', { seconds: 30 })
+      ]
+    },
+    {
+      id: 'training', kind: 'training', rounds,
+      restBetweenExercises, restBetweenRounds, restAfterPhase: 30,
+      exercises: exercises.map(([exerciseId, target, alternatives]) => slot(`${id}-training`, exerciseId, target, alternatives))
+    },
+    {
+      id: 'cool-down', kind: 'cool-down', rounds: 1,
+      restBetweenExercises: 0, restBetweenRounds: 0, restAfterPhase: 0,
+      exercises: [
+        slot(`${id}-cool-down`, 'calf-stretch', { seconds: 30 }),
+        slot(`${id}-cool-down`, 'hamstring-stretch', { seconds: 30 }),
+        slot(`${id}-cool-down`, 'hip-flexor-stretch', { seconds: 30 })
+      ]
+    }
+  ]
 });
 
 export const DEFAULT_WORKOUT: WorkoutPlan = plan(

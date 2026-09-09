@@ -1,24 +1,17 @@
-HOME WORKOUT – AI PLAN GUIDE (SCHEMA VERSION 1)
+HOME WORKOUT – AI PLAN GUIDE (SCHEMA VERSION 2)
 
 Use this guide when a user asks you to create a workout plan for the Home Workout web app.
 The BASE_URL is the origin from which this text file was loaded.
 
 YOUR TASK
-1. Ask for or infer goal, experience level, available equipment, duration, days per week, limitations, and preferred languages.
-2. Draft a balanced plan appropriate to the stated experience and equipment, without guaranteeing safety or health suitability, matching the JSON schema at:
-   BASE_URL/schema/workout-plan-v1.schema.json
+1. Ask for or infer the goal, experience level, equipment, duration, limitations, and preferred languages.
+2. Create a balanced phased plan that matches BASE_URL/schema/workout-plan-v2.schema.json.
 3. Prefer exercise IDs from the supported library below so the app can show a matching illustration.
-4. Return either:
-   A) Preferred: a Markdown link labelled "Workout öffnen" with this URL:
-      BASE_URL/?plan=BASE64URL_UTF8_JSON#import
-      BASE64URL_UTF8_JSON means the complete compact JSON encoded as UTF-8 base64url without padding.
-   B) Fallback: the complete JSON in a code block and tell the user to save it as a .json file and upload it on the app's Upload / Import page.
-5. Never claim that the plan is medical advice. If the user reports pain, injury, pregnancy, cardiovascular concerns, or another relevant condition, recommend qualified professional guidance.
-6. Include a short, visible safety note in the user's language next to the plan link or JSON, not only inside this guide. Explain that the app checks technical import compatibility, not medical or health suitability. The user is responsible for deciding whether to use an AI-generated plan and must review its exercises and workload before training; recommend medical advice for health-related uncertainty. Do not suggest that this waives statutory liability rights or makes the app provider immune from liability.
-7. Give practical safety instructions: start within personal ability, use stable equipment and enough space, and stop if pain or feeling unwell occurs. Do not infer that a person is medically cleared to exercise. Ask about relevant limitations without requesting unnecessary sensitive details.
+4. Return either a Markdown link labelled "Workout öffnen" using BASE_URL/?plan=BASE64URL_UTF8_JSON#import, or the complete JSON in a code block for upload. Encode the compact JSON as UTF-8 base64url without padding.
+5. State clearly that the import check covers technical compatibility, not medical or health suitability. Tell the user to review the exercises and workload, train within their ability, use stable equipment and enough space, stop for pain or illness, and seek qualified advice for health-related uncertainty. Do not imply that this limits statutory liability rights.
 
 SUPPORTED EXERCISE IDS
-These 52 IDs have built-in illustrations and reference instructions. Prefer their exact IDs when they fit the requested workout so the user gets the best experience, including a matching image. Every exercise entry must still provide a name and instructions for each configured language in translations.
+These 52 IDs have built-in illustrations and reference instructions. Every exercise entry must still provide a name and instructions for each configured language.
 legs: squat, sumo-squat, reverse-lunge, forward-lunge, split-squat, glute-bridge, single-leg-glute-bridge, calf-raise, wall-sit, sumo-squat-hold
 push: push-up, scapular-push-up, incline-push-up, knee-push-up, pike-push-up, triceps-dip
 pull: pull-up, assisted-pull-up, chin-up, resistance-band-row, resistance-band-pull-apart
@@ -28,24 +21,18 @@ full-body: burpee, squat-to-reach
 warm-up: heel-dig, shoulder-roll, arm-circle, active-recovery, leg-swing
 stretch: calf-stretch, hamstring-stretch, quadriceps-stretch, hip-flexor-stretch, shoulder-upper-back-stretch, chest-stretch, child-pose, cat-cow, cobra-stretch, yoga-bridge
 
-Custom exercises are also allowed. Give each custom exercise a descriptive kebab-case exerciseId and provide clear names and instructions for every configured language. Custom exercises work normally but do not have a matching built-in illustration.
+If no supported exercise fits, a custom kebab-case exerciseId is allowed. It will not have a built-in illustration.
 
 PLAN RULES
-- schemaVersion must be 1.
-- id and every exercise slot id must be unique, non-empty safe text without < or >.
-- languages must contain at least one BCP-47-like code and label.
-- name must contain a non-empty value for every configured language.
-- displayLanguages must contain one or two configured language codes.
-- rounds must be a positive integer.
-- restBetweenExercises and restBetweenRounds are non-negative seconds.
-- exercises must contain at least one exercise.
-- type is "repetitions" or "duration".
-- A repetitions target is {"min": positive number, "max": number >= min, "unit": "repetitions" or "per-side"}.
-- A duration target is {"seconds": positive number}.
-- translations must contain {"name": string, "instructions": string} for every configured language.
-- alternativeExerciseIds is always an array of safe exercise IDs.
-- Use only the exact fields defined by the schema; unexpected fields are rejected.
-- Omit translationMetadata. It is optional app-managed provenance created only by the built-in machine-translation workflow.
+- schemaVersion must be 2. Older schema-v1 plans remain importable, but new plans should use v2.
+- A plan has ordered phases. Include a warm-up, one or more training phases, and a cool-down. Active recovery is optional and distinct from passive rest.
+- Phase kinds are "warm-up", "training", "active-recovery", and "cool-down". Warm-up comes before training; cool-down comes after training and is last.
+- rounds means repetitions of the phase's complete exercise sequence. repetitions means repeated executions of one movement.
+- Each phase owns rounds, restBetweenExercises, restBetweenRounds, and restAfterPhase. These values are non-negative seconds; rounds is a positive integer.
+- Active-recovery exercises use duration or untimed targets, not repetition targets.
+- Exercise type is "repetitions", "duration", or "untimed". Targets are respectively {"min":8,"max":12,"unit":"repetitions"}, {"seconds":30}, or {}.
+- IDs are unique, non-empty safe text without markup. languages, name, displayLanguages, translations, and alternativeExerciseIds follow the schema exactly.
+- Use only defined fields. Omit translationMetadata; the app creates it only for its machine-translation workflow.
 
 MINIMAL EXAMPLE
-{"schemaVersion":1,"id":"ai-beginner-full-body","languages":[{"code":"de","label":"Deutsch"},{"code":"en","label":"English"}],"name":{"de":"KI Ganzkörper Einstieg","en":"AI Beginner Full Body"},"displayLanguages":["de","en"],"rounds":2,"restBetweenExercises":25,"restBetweenRounds":60,"exercises":[{"id":"slot-squat","exerciseId":"squat","type":"repetitions","target":{"min":8,"max":12,"unit":"repetitions"},"translations":{"de":{"name":"Kniebeuge","instructions":"Kontrolliert absenken und über die ganze Fußsohle aufrichten."},"en":{"name":"Squat","instructions":"Lower with control and stand through the whole foot."}},"alternativeExerciseIds":["wall-sit"]},{"id":"slot-dead-bug","exerciseId":"dead-bug","type":"repetitions","target":{"min":6,"max":10,"unit":"per-side"},"translations":{"de":{"name":"Käfer","instructions":"Den unteren Rücken ruhig halten und diagonal strecken."},"en":{"name":"Dead Bug","instructions":"Keep the lower back steady and extend opposite limbs."}},"alternativeExerciseIds":["bird-dog"]}]}
+{"schemaVersion":2,"id":"ai-beginner-full-body","languages":[{"code":"de","label":"Deutsch"},{"code":"en","label":"English"}],"name":{"de":"KI Ganzkörper Einstieg","en":"AI Beginner Full Body"},"displayLanguages":["de","en"],"phases":[{"id":"warm-up","kind":"warm-up","rounds":1,"restBetweenExercises":0,"restBetweenRounds":0,"restAfterPhase":20,"exercises":[{"id":"slot-march","exerciseId":"marching-in-place","type":"duration","target":{"seconds":30},"translations":{"de":{"name":"Marschieren am Platz","instructions":"Locker aufrecht marschieren."},"en":{"name":"Marching in Place","instructions":"March upright at an easy pace."}},"alternativeExerciseIds":[]}]},{"id":"training","kind":"training","rounds":2,"restBetweenExercises":25,"restBetweenRounds":60,"restAfterPhase":30,"exercises":[{"id":"slot-squat","exerciseId":"squat","type":"repetitions","target":{"min":8,"max":12,"unit":"repetitions"},"translations":{"de":{"name":"Kniebeuge","instructions":"Kontrolliert absenken und über die ganze Fußsohle aufrichten."},"en":{"name":"Squat","instructions":"Lower with control and stand through the whole foot."}},"alternativeExerciseIds":["wall-sit"]}]},{"id":"cool-down","kind":"cool-down","rounds":1,"restBetweenExercises":0,"restBetweenRounds":0,"restAfterPhase":0,"exercises":[{"id":"slot-calf","exerciseId":"calf-stretch","type":"duration","target":{"seconds":30},"translations":{"de":{"name":"Wadendehnung","instructions":"Ferse am Boden lassen und ruhig dehnen."},"en":{"name":"Calf Stretch","instructions":"Keep the heel down and stretch gently."}},"alternativeExerciseIds":[]}]}]}

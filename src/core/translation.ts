@@ -1,4 +1,4 @@
-import { validateWorkoutPlan, type WorkoutPlan } from './plan-schema';
+import { planExercises, validateWorkoutPlan, type WorkoutPlan } from './plan-schema';
 
 export const TRANSLATION_PROVIDER = 'cloudflare-m2m100-1.2b';
 export const MAX_TRANSLATION_ITEMS = 61;
@@ -51,7 +51,7 @@ export function createPlanTranslationRequest(plan: WorkoutPlan, sourceLanguage: 
   const planName = plan.name[sourceLanguage];
   if (!planName?.trim()) throw new Error(`The ${sourceLanguage} plan name is required before translation.`);
   const items: TranslationItem[] = [{ id: 'plan.name', text: planName }];
-  plan.exercises.forEach((exercise, index) => {
+  planExercises(plan).forEach((exercise, index) => {
     const copy = exercise.translations[sourceLanguage];
     if (!copy?.name.trim() || !copy.instructions.trim()) throw new Error(`Exercise ${index + 1} needs complete ${sourceLanguage} text before translation.`);
     items.push(
@@ -85,7 +85,7 @@ export function applyPlanTranslation(
   const translations = new Map(validatedResponse.translations.map((item) => [item.id, item.text]));
   const next = structuredClone(plan);
   next.name[validatedRequest.targetLanguage] = translations.get('plan.name')!;
-  next.exercises.forEach((exercise, index) => {
+  planExercises(next).forEach((exercise, index) => {
     exercise.translations[validatedRequest.targetLanguage] = {
       name: translations.get(`exercise.${index}.name`)!,
       instructions: translations.get(`exercise.${index}.instructions`)!
@@ -101,7 +101,7 @@ export function applyPlanTranslation(
       translatedAt
     }
   };
-  return validateWorkoutPlan(next);
+  return validateWorkoutPlan(next) as WorkoutPlan;
 }
 
 export async function translatePlanDraft(

@@ -7,7 +7,7 @@ import {
   PlanImportError
 } from '../../src/core/plan-io';
 import { PlanValidationError } from '../../src/core/plan-schema';
-import { clonePlan, makeMultilingualPlan } from '../fixtures/plans';
+import { clonePlan, makeMultilingualPlan, makeV1Plan } from '../fixtures/plans';
 
 describe('plan JSON import and export', () => {
   it('round-trips a validated multilingual plan through a base64url launch payload', () => {
@@ -42,7 +42,7 @@ describe('plan JSON import and export', () => {
 
   it('applies the normal strict plan validation after decoding a syntactically valid link', () => {
     const invalidPlan = clonePlan();
-    invalidPlan.rounds = 0;
+    invalidPlan.phases[0]!.rounds = 0;
     const payload = Buffer.from(JSON.stringify(invalidPlan), 'utf8').toString('base64url');
 
     try {
@@ -52,10 +52,10 @@ describe('plan JSON import and export', () => {
       expect(error).toBeInstanceOf(PlanImportError);
       const importError = error as PlanImportError;
       expect(importError.userMessage).toBe(
-        'The workout plan is invalid (rounds). Please check the JSON file.'
+        'The workout plan is invalid (phases.0.rounds). Please check the JSON file.'
       );
       expect(importError.cause).toBeInstanceOf(PlanValidationError);
-      expect((importError.cause as PlanValidationError).issues[0]?.path).toBe('rounds');
+      expect((importError.cause as PlanValidationError).issues[0]?.path).toBe('phases.0.rounds');
     }
   });
 
@@ -104,17 +104,17 @@ describe('plan JSON import and export', () => {
   it('validates before export and does not mutate its input', () => {
     const plan = clonePlan();
     const snapshot = structuredClone(plan);
-    plan.rounds = 0;
+    plan.phases[0]!.rounds = 0;
 
     expect(() => exportPlanJson(plan)).toThrow();
-    plan.rounds = snapshot.rounds;
+    plan.phases[0]!.rounds = snapshot.phases[0]!.rounds;
     exportPlanJson(plan);
     expect(plan).toStrictEqual(snapshot);
   });
 
   it('uses a stable safe error contract and preserves the diagnostic cause', () => {
     const invalid = clonePlan();
-    invalid.rounds = 0;
+    invalid.phases[0]!.rounds = 0;
 
     try {
       importPlanJson(JSON.stringify(invalid));
@@ -124,15 +124,31 @@ describe('plan JSON import and export', () => {
       const importError = error as PlanImportError;
       expect(importError.name).toBe('PlanImportError');
       expect(importError.userMessage).toBe(
-        'The workout plan is invalid (rounds). Please check the JSON file.'
+        'The workout plan is invalid (phases.0.rounds). Please check the JSON file.'
       );
       expect(importError.message).toBe(importError.userMessage);
       expect(importError.cause).toBeInstanceOf(PlanValidationError);
       expect((importError.cause as PlanValidationError).issues[0]).toStrictEqual({
-        path: 'rounds',
+        path: 'phases.0.rounds',
         message: 'must be a positive integer'
       });
     }
+  });
+
+  it('migrates a v1 file and launch link losslessly into one training phase', () => {
+    const legacy = makeV1Plan();
+    const jsonSnapshot = JSON.stringify(legacy);
+    const imported = importPlanJson(jsonSnapshot);
+
+    expect(imported.schemaVersion).toBe(2);
+    expect(imported.phases).toStrictEqual([{
+      id: 'training', kind: 'training', rounds: legacy.rounds,
+      restBetweenExercises: legacy.restBetweenExercises,
+      restBetweenRounds: legacy.restBetweenRounds, restAfterPhase: 0,
+      exercises: legacy.exercises
+    }]);
+    expect(JSON.stringify(legacy)).toBe(jsonSnapshot);
+    expect(importPlanUrlPayload(Buffer.from(jsonSnapshot).toString('base64url'))).toStrictEqual(imported);
   });
 
   it('keeps malformed input out of both the user message and diagnostic message', () => {

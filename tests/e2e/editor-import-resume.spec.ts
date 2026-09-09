@@ -30,7 +30,8 @@ test('desktop editor creates, orders and saves a multilingual plan', async ({ pa
   await page.getByLabel(/language label|Sprachname/i).fill('Français');
   await page.getByRole('button', { name: /^add$/i }).click();
   await page.getByLabel(/plan name.*Français/i).fill('Force compacte');
-  await page.getByRole('button', { name: /add exercise|Übung hinzufügen/i }).click();
+  const trainingPhase = page.locator('.phase-editor[data-phase="training"]');
+  await trainingPhase.getByRole('button', { name: /add exercise|Übung hinzufügen/i }).click();
   const picker = page.locator('select[name="exercise-library"]');
   await expect(picker).toBeVisible();
   const categoryGroups = await picker.evaluate((select) => Array.from(select.querySelectorAll('optgroup')).map((group) => ({
@@ -46,29 +47,28 @@ test('desktop editor creates, orders and saves a multilingual plan', async ({ pa
   await page.getByRole('option', { name: /^Squat · Kniebeuge$/i }).click();
   await page.getByRole('button', { name: /add selected|Auswahl hinzufügen/i }).click();
 
-  await page.getByText(/edit translations|Übersetzungen bearbeiten/i).click();
-  await page.getByLabel(/Exercise name.*Übungsname/i).last().fill('Squat français');
-  await page.getByLabel(/Instructions.*Beschreibung/i).last().fill('Pliez les genoux et gardez les pieds au sol.');
+  await trainingPhase.getByText(/edit translations|Übersetzungen bearbeiten/i).click();
+  await trainingPhase.getByLabel(/Exercise name.*Übungsname/i).last().fill('Squat français');
+  await trainingPhase.getByLabel(/Instructions.*Beschreibung/i).last().fill('Pliez les genoux et gardez les pieds au sol.');
 
   await expect(page.getByText(/squat|Kniebeuge/i)).toBeVisible();
-  await page.getByLabel('Minimum', { exact: true }).fill('14');
-  await page.getByLabel('Maximum', { exact: true }).fill('18');
+  await trainingPhase.getByLabel('Minimum', { exact: true }).fill('14');
+  await trainingPhase.getByLabel('Maximum', { exact: true }).fill('18');
   await page.getByRole('button', { name: /save locally|lokal speichern/i }).click();
   await expect(page.getByText(/saved|gespeichert/i)).toBeVisible();
 
   const savedPlansRaw = await page.evaluate(() => localStorage.getItem('home-workout:plans') ?? '[]');
   const savedPlans = JSON.parse(savedPlansRaw) as Array<{
     name: Record<string, string>;
-    exercises: Array<{ translations: Record<string, { name: string; instructions: string }> }>;
+    schemaVersion: number;
+    phases: Array<{ kind: string; exercises: Array<{ translations: Record<string, { name: string; instructions: string }> }> }>;
   }>;
   expect(savedPlans[0]).toEqual(expect.objectContaining({
+    schemaVersion: 2,
     name: expect.objectContaining({ fr: 'Force compacte' }),
-    exercises: [expect.objectContaining({
-      translations: expect.objectContaining({ fr: {
-        name: 'Squat français',
-        instructions: 'Pliez les genoux et gardez les pieds au sol.'
-      } })
-    })]
+    phases: expect.arrayContaining([expect.objectContaining({ kind: 'training', exercises: [expect.objectContaining({
+      translations: expect.objectContaining({ fr: { name: 'Squat français', instructions: 'Pliez les genoux et gardez les pieds au sol.' } })
+    })] })])
   }));
 
   await page.getByRole('link', { name: /my plans|meine Pläne/i }).click();
@@ -79,12 +79,13 @@ test('desktop editor creates, orders and saves a multilingual plan', async ({ pa
   const localCard = page.locator('.plan-card').filter({ hasText: 'Compact Strength' });
   await localCard.getByRole('button', { name: /edit|bearbeiten/i }).click();
   await expect(page.getByRole('heading', { name: /edit plan|Plan bearbeiten/i })).toBeVisible();
-  await expect(page.getByLabel('Minimum', { exact: true })).toHaveValue('14');
-  await expect(page.getByLabel('Maximum', { exact: true })).toHaveValue('18');
-  await page.getByLabel(/^Rounds$/i).fill('2');
+  const editedTraining = page.locator('.phase-editor[data-phase="training"]');
+  await expect(editedTraining.getByLabel('Minimum', { exact: true })).toHaveValue('14');
+  await expect(editedTraining.getByLabel('Maximum', { exact: true })).toHaveValue('18');
+  await editedTraining.getByLabel('Rounds · Runden', { exact: true }).fill('2');
   await page.getByRole('button', { name: /save changes|Änderungen speichern/i }).click();
   await page.getByRole('link', { name: /my plans|meine Pläne/i }).click();
-  await expect(page.locator('.plan-card').filter({ hasText: 'Compact Strength' })).toContainText(/2 rounds/i);
+  await expect(page.locator('.plan-card').filter({ hasText: 'Compact Strength' })).toContainText(/4 rounds/i);
   await expect(page.locator('.plan-card').filter({ hasText: '30 Minute Full Body' })).toContainText(/permanent bundled routine/i);
 
   const updatedCard = page.locator('.plan-card').filter({ hasText: 'Compact Strength' }).first();
@@ -121,7 +122,7 @@ test('machine translation explains the transfer and requires explicit review bef
   await page.getByLabel(/language code|Sprachcode/i).fill('fr');
   await page.getByLabel(/language label|Sprachname/i).fill('Français');
   await page.getByRole('button', { name: /^add$/i }).click();
-  await page.getByRole('button', { name: /add exercise|Übung hinzufügen/i }).click();
+  await page.locator('.phase-editor[data-phase="training"]').getByRole('button', { name: /add exercise|Übung hinzufügen/i }).click();
   await page.getByRole('option', { name: /^Squat · Kniebeuge$/i }).click();
   await page.getByRole('button', { name: /add selected|Auswahl hinzufügen/i }).click();
 
@@ -150,11 +151,27 @@ test('machine translation explains the transfer and requires explicit review bef
 test('editor rejects zero rounds without changing it to one', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'firefox-desktop', 'Representative editor validation journey');
   await page.goto('/#editor');
-  await page.getByLabel(/^Rounds$/i).fill('0');
+  await page.locator('.phase-editor[data-phase="training"]').getByLabel('Rounds · Runden', { exact: true }).fill('0');
   await page.getByRole('button', { name: /save locally|lokal speichern/i }).click();
   await expect(page.getByRole('status')).toContainText(/rounds must be at least 1|Runden müssen mindestens 1 sein/i);
   const savedPlans = await page.evaluate(() => localStorage.getItem('home-workout:plans'));
   expect(savedPlans).toBeNull();
+});
+
+test('phase editor groups warm-up, training and cool-down and can add a block', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'firefox-desktop', 'Representative phase-editor journey');
+  await page.goto('/#editor');
+  await expect(page.locator('.phase-editor')).toHaveCount(3);
+  await expect(page.locator('.phase-editor').nth(0)).toContainText(/Warm-up|Aufwärmen/i);
+  await expect(page.locator('.phase-editor').nth(1)).toContainText(/Training/i);
+  await expect(page.locator('.phase-editor').nth(2)).toContainText(/Cool-down|Dehnen/i);
+
+  await page.getByRole('button', { name: /add training block|Trainingsblock hinzufügen/i }).click();
+  await expect(page.locator('.phase-editor')).toHaveCount(4);
+  const added = page.locator('.phase-editor').nth(2);
+  await added.getByLabel('Kind · Art').selectOption('active-recovery');
+  await added.getByRole('button', { name: /remove phase/i }).click();
+  await expect(page.locator('.phase-editor')).toHaveCount(3);
 });
 
 test('customizing a bundled routine creates a separate editable plan', async ({ page }, testInfo) => {
@@ -278,11 +295,11 @@ test('reload offers resume or start over and resume keeps progress', async ({ pa
   const prompt = page.getByRole('dialog', { name: /resume workout|Workout fortsetzen/i });
   await expect(prompt).toBeVisible();
   await prompt.getByRole('button', { name: /resume|fortsetzen/i }).click();
-  await expect(page.locator('.phase-pill')).toHaveText(/rest|pause/i);
+  await expect(page.getByText(/Exercise 2\s*\/\s*3.*Übung 2\s*\/\s*3/i)).toBeVisible();
 
   await page.reload();
   await page.getByRole('dialog', { name: /resume workout|Workout fortsetzen/i })
     .getByRole('button', { name: /start over|neu starten/i }).click();
-  await expect(page.getByText(/Runde 1\s*\/\s*3|Round 1\s*\/\s*3/i)).toBeVisible();
+  await expect(page.getByText(/Runde 1\s*\/\s*1|Round 1\s*\/\s*1/i)).toBeVisible();
   await expect(page.locator('.phase-pill')).not.toHaveText(/rest|pause/i);
 });

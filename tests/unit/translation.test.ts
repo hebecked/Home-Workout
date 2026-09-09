@@ -36,7 +36,7 @@ describe('plan translation workflow', () => {
 
     expect(translated.name.fr).toBe(sourceSnapshot);
     expect(translated.name.hi).toBe('translated: Circuit maison');
-    expect(translated.exercises[0]?.translations.hi?.instructions).toBe('translated: Descendez avec le dos droit.');
+    expect(translated.phases[0]!.exercises[0]?.translations.hi?.instructions).toBe('translated: Descendez avec le dos droit.');
     expect(translated.translationMetadata?.hi).toStrictEqual({
       sourceLanguage: 'fr',
       origin: 'machine',
@@ -106,7 +106,7 @@ describe('plan translation workflow', () => {
     plan.name.fr = ' ';
     expect(() => createPlanTranslationRequest(plan, 'fr', 'hi')).toThrow(/plan name/i);
     plan.name.fr = 'Circuit maison';
-    plan.exercises[0]!.translations.fr!.instructions = ' ';
+    plan.phases[0]!.exercises[0]!.translations.fr!.instructions = ' ';
     expect(() => createPlanTranslationRequest(plan, 'fr', 'hi')).toThrow(/Exercise 1/i);
   });
 
@@ -127,8 +127,8 @@ describe('plan translation workflow', () => {
 
   it('batches longer plans and rejects a provider change between batches', async () => {
     const plan = clonePlan();
-    const template = plan.exercises[0]!;
-    plan.exercises = Array.from({ length: 11 }, (_, index) => ({ ...structuredClone(template), id: `slot-${index}` }));
+    const template = plan.phases[0]!.exercises[0]!;
+    plan.phases[0]!.exercises = Array.from({ length: 11 }, (_, index) => ({ ...structuredClone(template), id: `slot-${index}` }));
     const fetcher = vi.fn<typeof fetch>((_input, init) => {
       const body = JSON.parse(String(init?.body)) as { items: Array<{ id: string; text: string }> };
       return Promise.resolve(Response.json({
@@ -139,7 +139,7 @@ describe('plan translation workflow', () => {
 
     const translated = await translatePlanDraft(plan, 'fr', 'hi', fetcher);
     expect(fetcher).toHaveBeenCalledTimes(2);
-    expect(translated.exercises).toHaveLength(11);
+    expect(translated.phases[0]!.exercises).toHaveLength(11);
 
     let call = 0;
     const changingProvider = vi.fn<typeof fetch>((_input, init) => {

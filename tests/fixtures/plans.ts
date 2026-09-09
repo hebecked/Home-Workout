@@ -1,9 +1,9 @@
-import type { WorkoutPlan } from '../../src/core/plan-schema';
+import type { WorkoutPlan, WorkoutPlanV1 } from '../../src/core/plan-schema';
 
 /** A valid plan deliberately containing no German translation. */
 export function makeMultilingualPlan(): WorkoutPlan {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     id: 'plan-fr-hi',
     languages: [
       { code: 'fr', label: 'Français' },
@@ -14,10 +14,10 @@ export function makeMultilingualPlan(): WorkoutPlan {
       hi: 'घर का व्यायाम'
     },
     displayLanguages: ['fr', 'hi'],
-    rounds: 2,
-    restBetweenExercises: 20,
-    restBetweenRounds: 60,
-    exercises: [
+    phases: [{
+      id: 'training', kind: 'training', rounds: 2,
+      restBetweenExercises: 20, restBetweenRounds: 60, restAfterPhase: 0,
+      exercises: [
       {
         id: 'plan-exercise-squat',
         exerciseId: 'squat',
@@ -40,10 +40,27 @@ export function makeMultilingualPlan(): WorkoutPlan {
         },
         alternativeExerciseIds: ['dead-bug']
       }
-    ]
+      ]
+    }]
   };
 }
 
 export function clonePlan(): WorkoutPlan {
   return structuredClone(makeMultilingualPlan());
+}
+
+export function makeV1Plan(): WorkoutPlanV1 {
+  const plan = makeMultilingualPlan();
+  const training = plan.phases[0]!;
+  return {
+    schemaVersion: 1,
+    id: plan.id,
+    languages: structuredClone(plan.languages),
+    name: structuredClone(plan.name),
+    displayLanguages: [...plan.displayLanguages],
+    rounds: training.rounds,
+    restBetweenExercises: training.restBetweenExercises,
+    restBetweenRounds: training.restBetweenRounds,
+    exercises: structuredClone(training.exercises)
+  };
 }
