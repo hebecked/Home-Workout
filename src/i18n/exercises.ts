@@ -1,4 +1,5 @@
 import { row, type FirstReleaseBaseLocale, type LocalizedText } from './matrix';
+import { newExerciseInstructions } from './exercise-instructions-new';
 
 export const EXERCISE_IDS = [
   'squat', 'sumo-squat', 'reverse-lunge', 'forward-lunge', 'split-squat', 'glute-bridge',
@@ -9,6 +10,8 @@ export const EXERCISE_IDS = [
   'hollow-hold', 'jumping-jack', 'step-jack', 'high-knees', 'marching-in-place',
   'shadow-boxing', 'burpee', 'squat-to-reach', 'superman', 'superman-dynamic',
   'triceps-dip', 'heel-dig', 'shoulder-roll', 'arm-circle', 'active-recovery', 'leg-swing',
+  'hip-circles', 'ankle-rocks', 'torso-rotations', 'bodyweight-good-morning',
+  'dynamic-lunge-reach', 'inchworm',
   'calf-stretch', 'hamstring-stretch', 'quadriceps-stretch', 'hip-flexor-stretch',
   'shoulder-upper-back-stretch', 'chest-stretch', 'child-pose', 'cat-cow', 'cobra-stretch',
   'yoga-bridge'
@@ -60,6 +63,12 @@ export const exerciseNames: Readonly<Record<ExerciseId, LocalizedText>> = {
   'arm-circle': row('Armkreisen', 'Arm circles', 'Armcirkels', 'Círculos de brazos', 'Cercles de bras', 'Круги руками', '手臂绕环', '암 서클', 'アームサークル', 'دوائر الذراعين'),
   'active-recovery': row('Aktive Erholung', 'Active recovery', 'Actief herstel', 'Recuperación activa', 'Récupération active', 'Активное восстановление', '主动恢复', '액티브 리커버리', 'アクティブリカバリー', 'تعافٍ نشط'),
   'leg-swing': row('Beinschwingen', 'Leg swings', 'Beenzwaaien', 'Balanceos de pierna', 'Balancements de jambe', 'Махи ногой', '摆腿', '레그 스윙', 'レッグスイング', 'مرجحة الساق'),
+  'hip-circles': row('Hüftkreisen', 'Hip circles', 'Heupcirkels', 'Círculos de cadera', 'Cercles de hanches', 'Круги тазом', '髋部绕环', '골반 돌리기', 'ヒップサークル', 'دوائر الورك'),
+  'ankle-rocks': row('Dynamische Sprunggelenk-Mobilisation', 'Ankle rocks', 'Dynamische enkelmobilisatie', 'Balanceos de tobillo', 'Mobilisation dynamique des chevilles', 'Покачивания голеностопа', '踝关节前后移动', '발목 앞뒤 움직이기', '足首の前後運動', 'تحريك الكاحل للأمام والخلف'),
+  'torso-rotations': row('Rumpfrotation', 'Torso rotations', 'Romprotaties', 'Rotaciones de torso', 'Rotations du buste', 'Повороты корпуса', '躯干转体', '몸통 회전', '体幹回旋', 'دوران الجذع'),
+  'bodyweight-good-morning': row('Good Mornings ohne Gewicht', 'Bodyweight good mornings', 'Good mornings zonder gewicht', 'Buenos días sin peso', 'Good mornings au poids du corps', 'Наклоны good morning без веса', '徒手早安式', '맨몸 굿모닝', '自重グッドモーニング', 'تمرين صباح الخير بوزن الجسم'),
+  'dynamic-lunge-reach': row('Dynamischer Ausfallschritt mit Strecken', 'Dynamic lunge with reach', 'Dynamische uitvalspas met strekking', 'Zancada dinámica con alcance', 'Fente dynamique avec extension', 'Динамический выпад с вытягиванием', '动态弓步上举', '리치 동작을 곁들인 다이내믹 런지', 'リーチ付きダイナミックランジ', 'اندفاع ديناميكي مع مد الذراعين'),
+  'inchworm': row('Raupengang', 'Inchworm', 'Rupsloop', 'Gusano', 'Marche de la chenille', 'Гусеница', '毛毛虫式', '인치웜', 'インチワーム', 'مشية الدودة'),
   'calf-stretch': row('Waden-Dehnung', 'Calf stretch', 'Kuitrek', 'Estiramiento de gemelos', 'Étirement du mollet', 'Растяжка икр', '小腿拉伸', '종아리 스트레칭', 'ふくらはぎストレッチ', 'إطالة ربلة الساق'),
   'hamstring-stretch': row('Oberschenkelrückseiten-Dehnung', 'Hamstring stretch', 'Hamstringrek', 'Estiramiento de isquiotibiales', 'Étirement des ischio-jambiers', 'Растяжка задней поверхности бедра', '腘绳肌拉伸', '햄스트링 스트레칭', 'ハムストリングストレッチ', 'إطالة أوتار الركبة'),
   'quadriceps-stretch': row('Oberschenkelvorderseiten-Dehnung', 'Quadriceps stretch', 'Quadricepsrek', 'Estiramiento de cuádriceps', 'Étirement des quadriceps', 'Растяжка квадрицепса', '股四头肌拉伸', '대퇴사두근 스트레칭', '大腿四頭筋ストレッチ', 'إطالة العضلة الرباعية'),
@@ -94,7 +103,7 @@ export const baseExerciseTranslations: Readonly<Record<ExerciseId, Readonly<Reco
   EXERCISE_IDS.map((id) => [id, Object.fromEntries(
     Object.entries(exerciseNames[id]).map(([locale, name]) => [locale, {
       name,
-      instructions: instructionTemplates[locale as FirstReleaseBaseLocale].replace('{name}', name)
+      instructions: newExerciseInstructions[id]?.[locale as FirstReleaseBaseLocale] ?? instructionTemplates[locale as FirstReleaseBaseLocale].replace('{name}', name)
     }])
   )])
 ) as Record<ExerciseId, Record<FirstReleaseBaseLocale, ExerciseTranslation>>;

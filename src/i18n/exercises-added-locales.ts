@@ -1,5 +1,6 @@
 import { addedRow, type AddedLocalizedText, type FirstReleaseAddedLocale } from './matrix';
 import { EXERCISE_IDS, type ExerciseId, type ExerciseTranslation } from './exercises';
+import { newExerciseInstructions } from './exercise-instructions-new';
 
 export const addedExerciseNames: Readonly<Record<ExerciseId, AddedLocalizedText>> = {
   'squat': addedRow('Agachamento', 'Squat', 'Przysiad', 'Squat', 'Присідання', 'स्क्वाट'),
@@ -44,6 +45,12 @@ export const addedExerciseNames: Readonly<Record<ExerciseId, AddedLocalizedText>
   'arm-circle': addedRow('Círculos com os braços', 'Circonduzioni delle braccia', 'Krążenia ramion', 'Kol çevirme', 'Колові рухи руками', 'आर्म सर्कल'),
   'active-recovery': addedRow('Recuperação ativa', 'Recupero attivo', 'Aktywna regeneracja', 'Aktif toparlanma', 'Активне відновлення', 'एक्टिव रिकवरी'),
   'leg-swing': addedRow('Balanço da perna', 'Slanci della gamba', 'Wymachy nogą', 'Bacak sallama', 'Махи ногою', 'लेग स्विंग'),
+  'hip-circles': addedRow('Círculos da anca', 'Circonduzioni dell’anca', 'Krążenia bioder', 'Kalça çemberleri', 'Колові рухи тазом', 'कूल्हे घुमाना'),
+  'ankle-rocks': addedRow('Mobilização dinâmica do tornozelo', 'Mobilizzazione dinamica della caviglia', 'Mobilizacja stawu skokowego', 'Dinamik ayak bileği mobilizasyonu', 'Динамічна мобілізація гомілковостопа', 'टखना आगे-पीछे झुकाना'),
+  'torso-rotations': addedRow('Rotações do tronco', 'Rotazioni del busto', 'Rotacje tułowia', 'Gövde rotasyonu', 'Повороти тулуба', 'धड़ घुमाना'),
+  'bodyweight-good-morning': addedRow('Bom-dia com peso corporal', 'Good morning a corpo libero', 'Skłon „dzień dobry” bez obciążenia', 'Vücut ağırlığıyla good morning', 'Гудморнінг без обтяження', 'बॉडीवेट गुड मॉर्निंग'),
+  'dynamic-lunge-reach': addedRow('Afundo dinâmico com alcance', 'Affondo dinamico con estensione delle braccia', 'Dynamiczny wykrok z sięgnięciem', 'Uzanmalı dinamik hamle', 'Динамічний випад із витягуванням', 'रीच के साथ डायनेमिक लंज'),
+  'inchworm': addedRow('Caminhada da lagarta', 'Camminata a bruco', 'Marsz gąsienicy', 'Tırtıl yürüyüşü', 'Гусінь', 'इंचवर्म'),
   'calf-stretch': addedRow('Alongamento dos gémeos', 'Allungamento del polpaccio', 'Rozciąganie łydki', 'Baldır esnetme', 'Розтягування литки', 'काफ स्ट्रेच'),
   'hamstring-stretch': addedRow('Alongamento dos posteriores da coxa', 'Allungamento dei muscoli posteriori della coscia', 'Rozciąganie tylnej części uda', 'Arka bacak esnetme', 'Розтягування задньої поверхні стегна', 'हैमस्ट्रिंग स्ट्रेच'),
   'quadriceps-stretch': addedRow('Alongamento dos quadríceps', 'Allungamento dei quadricipiti', 'Rozciąganie mięśnia czworogłowego', 'Ön bacak esnetme', 'Розтягування квадрицепса', 'क्वाड्रिसेप्स स्ट्रेच'),
@@ -69,7 +76,7 @@ export const addedExerciseTranslations: Readonly<Record<ExerciseId, Readonly<Rec
   EXERCISE_IDS.map((id) => [id, Object.fromEntries(
     Object.entries(addedExerciseNames[id]).map(([locale, name]) => [locale, {
       name,
-      instructions: addedInstructionTemplates[locale as FirstReleaseAddedLocale].replace('{name}', name)
+      instructions: newExerciseInstructions[id]?.[locale as FirstReleaseAddedLocale] ?? addedInstructionTemplates[locale as FirstReleaseAddedLocale].replace('{name}', name)
     }])
   )])
 ) as Record<ExerciseId, Record<FirstReleaseAddedLocale, ExerciseTranslation>>;

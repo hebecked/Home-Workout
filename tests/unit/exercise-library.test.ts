@@ -15,6 +15,8 @@ const requiredIds = [
   'mountain-climber', 'hollow-hold', 'jumping-jack', 'step-jack', 'high-knees',
   'marching-in-place', 'shadow-boxing', 'burpee', 'squat-to-reach',
   'heel-dig', 'shoulder-roll', 'arm-circle', 'active-recovery', 'leg-swing',
+  'hip-circles', 'ankle-rocks', 'torso-rotations', 'bodyweight-good-morning',
+  'dynamic-lunge-reach', 'inchworm',
   'calf-stretch', 'hamstring-stretch', 'quadriceps-stretch', 'hip-flexor-stretch',
   'shoulder-upper-back-stretch', 'chest-stretch', 'child-pose', 'cat-cow', 'cobra-stretch', 'yoga-bridge'
 ];
@@ -74,6 +76,11 @@ describe('built-in exercise library', () => {
     expect(byId.get('hamstring-stretch')?.equipment).toEqual(['none']);
     expect(byId.get('split-squat')?.defaultTarget).toMatchObject({ unit: 'per-side' });
     expect(byId.get('single-leg-glute-bridge')?.defaultTarget).toMatchObject({ unit: 'per-side' });
+    expect(byId.get('dynamic-lunge-reach')?.defaultTarget).toStrictEqual({ min: 6, max: 8, unit: 'per-side' });
+    expect(byId.get('inchworm')?.defaultTarget).toStrictEqual({ min: 4, max: 6, unit: 'repetitions' });
+    for (const id of ['hip-circles', 'ankle-rocks', 'torso-rotations']) {
+      expect(byId.get(id)?.defaultTarget).toStrictEqual({ seconds: 30 });
+    }
   });
 
   it('keeps source-audited safety and timing cues in both languages', () => {
@@ -184,4 +191,42 @@ describe('permanent bundled routine library', () => {
       for (const exercise of planExercises(plan)) expect(libraryIds.has(exercise.exerciseId)).toBe(true);
     }
   });
+  it('uses goal-specific warm-ups and muscle-group-specific cool-downs', () => {
+    const expected = {
+      '30-minute-full-body': {
+        warmUp: ['marching-in-place', 'torso-rotations', 'bodyweight-good-morning', 'dynamic-lunge-reach'],
+        coolDown: ['active-recovery', 'hamstring-stretch', 'hip-flexor-stretch', 'chest-stretch', 'shoulder-upper-back-stretch']
+      },
+      'gentle-start': {
+        warmUp: ['heel-dig', 'shoulder-roll', 'ankle-rocks', 'hip-circles'],
+        coolDown: ['active-recovery', 'calf-stretch', 'hip-flexor-stretch', 'shoulder-upper-back-stretch']
+      },
+      'full-body-strength': {
+        warmUp: ['marching-in-place', 'arm-circle', 'bodyweight-good-morning', 'dynamic-lunge-reach'],
+        coolDown: ['hamstring-stretch', 'quadriceps-stretch', 'chest-stretch', 'shoulder-upper-back-stretch']
+      },
+      'cardio-base': {
+        warmUp: ['marching-in-place', 'heel-dig', 'arm-circle', 'dynamic-lunge-reach'],
+        coolDown: ['active-recovery', 'calf-stretch', 'quadriceps-stretch', 'hip-flexor-stretch']
+      },
+      'active-circuit': {
+        warmUp: ['heel-dig', 'torso-rotations', 'bodyweight-good-morning', 'dynamic-lunge-reach'],
+        coolDown: ['active-recovery', 'quadriceps-stretch', 'chest-stretch', 'child-pose']
+      },
+      'advanced-bodyweight': {
+        warmUp: ['jumping-jack', 'dynamic-lunge-reach', 'inchworm', 'scapular-push-up'],
+        coolDown: ['active-recovery', 'hamstring-stretch', 'hip-flexor-stretch', 'chest-stretch', 'child-pose']
+      }
+    } as const;
+    const signatures = new Set<string>();
+
+    for (const routine of BUILT_IN_WORKOUTS) {
+      const warmUp = routine.phases.find(({ kind }) => kind === 'warm-up')!.exercises.map(({ exerciseId }) => exerciseId);
+      const coolDown = routine.phases.find(({ kind }) => kind === 'cool-down')!.exercises.map(({ exerciseId }) => exerciseId);
+      expect({ warmUp, coolDown }).toStrictEqual(expected[routine.id as keyof typeof expected]);
+      signatures.add(JSON.stringify({ warmUp, coolDown }));
+    }
+    expect(signatures.size).toBe(BUILT_IN_WORKOUTS.length);
+  });
+
 });

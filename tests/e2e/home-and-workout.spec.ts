@@ -7,7 +7,7 @@ test('home presents the default plan and all primary destinations', async ({ pag
   await expect(page.getByRole('heading', { name: /30 Minute Full Body/i })).toBeVisible();
   await expect(page.getByText(/3\s+(phases|Phasen)/i)).toBeVisible();
   await expect(page.getByText(/5\s+(rounds|Runden)/i)).toBeVisible();
-  await expect(page.getByText(/14\s+(exercises|Übungen)/i)).toBeVisible();
+  await expect(page.getByText(/17\s+(exercises|Übungen)/i)).toBeVisible();
   await expect(page.getByLabel(/choose routine|Routine wählen/i)).toHaveValue('30-minute-full-body');
   await expect(page.getByRole('button', { name: /start workout/i })).toBeVisible();
   const options = page.locator('.plan-options');
@@ -25,7 +25,7 @@ test('permanent bundled routines can be selected without replacing the default',
   await picker.selectOption('gentle-start');
   await expect(page.getByRole('heading', { name: 'Gentle Start', exact: true })).toBeVisible();
   await expect(page.getByText(/4\s+(rounds|Runden)/i)).toBeVisible();
-  await expect(page.getByText(/12\s+(exercises|Übungen)/i)).toBeVisible();
+  await expect(page.getByText(/14\s+(exercises|Übungen)/i)).toBeVisible();
 
   await picker.selectOption('30-minute-full-body');
   await expect(page.getByRole('heading', { name: /30 Minute Full Body/i })).toBeVisible();
@@ -61,7 +61,7 @@ test('phone workout journey shows two-language exercise copy, localized controls
 
   await expect(page.getByText(/Phase 1\s*\/\s*3/i)).toBeVisible();
   await expect(page.getByText(/Runde 1\s*\/\s*1|Round 1\s*\/\s*1/i)).toBeVisible();
-  await expect(page.getByText(/Exercise 1\s*\/\s*3/i)).toBeVisible();
+  await expect(page.getByText(/Exercise 1\s*\/\s*4/i)).toBeVisible();
   await expect(page.locator('.translation')).toHaveCount(2);
   await expect(page.getByRole('img', { name: /marching|Marschieren/i })).toBeVisible();
   await expect(page.getByRole('button', { name: /previous|zurück/i })).toBeVisible();
@@ -73,7 +73,16 @@ test('phone workout journey shows two-language exercise copy, localized controls
   await page.clock.fastForward(60_000);
   await expect(page.getByText(/paused|pausiert/i)).toBeVisible();
   await page.getByRole('button', { name: /resume|fortsetzen/i }).click();
-  await page.clock.fastForward(111_000);
+  const next = page.getByRole('button', { name: /next|weiter/i });
+  for (const heading of [/^Torso Rotations$/i, /^Bodyweight Good Mornings$/i, /^Dynamic Lunge with Reach$/i]) {
+    await next.click();
+    await page.clock.runFor(550);
+    await expect(page.getByRole('heading', { name: heading })).toBeVisible();
+  }
+  await next.click();
+  await expect(page.locator('.phase-pill')).toHaveText(/rest|pause/i);
+  await next.click();
+  await page.clock.runFor(550);
   await expect(page.getByText(/Phase 2\s*\/\s*3/i)).toBeVisible();
   await expect(page.getByText(/Exercise 1\s*\/\s*8/i)).toBeVisible();
   await page.getByRole('button', { name: /next|weiter/i }).click();

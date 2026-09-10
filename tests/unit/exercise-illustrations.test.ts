@@ -10,8 +10,8 @@ function numericAttribute(element: string | undefined, attribute: string): numbe
 }
 
 describe('exercise illustrations', () => {
-  it('gives all 51 exercises a local pose and movement indicators only where movement is shown', () => {
-    expect(EXERCISE_LIBRARY).toHaveLength(52);
+  it('gives all 58 exercises a local pose and movement indicators only where movement is shown', () => {
+    expect(EXERCISE_LIBRARY).toHaveLength(58);
     const singlePoseIds = new Set([
       'burpee',
       'side-plank', 'sumo-squat-hold', 'plank', 'superman', 'wall-sit',
@@ -38,7 +38,9 @@ describe('exercise illustrations', () => {
       expect.soft(svg, `${exerciseId} has a viewBox`).toMatch(/^<svg\b[^>]*viewBox=["'][^"']+["']/i);
       expect.soft(svg, `${exerciseId} closes its SVG root`).toMatch(/<\/svg>$/i);
       expect.soft(svg, `${exerciseId} has a finish pose`).toContain('data-pose="finish"');
-      if (singlePoseIds.has(exerciseId)) {
+      if (exerciseId === 'inchworm') {
+        expect(svg.match(/data-inchworm-phase=/g)).toHaveLength(3);
+      } else if (singlePoseIds.has(exerciseId)) {
         expect.soft(svg, `${exerciseId} intentionally uses one same-scale figure`).not.toContain('data-pose="start"');
       } else {
         expect.soft(svg, `${exerciseId} has an overlaid start pose`).toContain('data-pose="start"');

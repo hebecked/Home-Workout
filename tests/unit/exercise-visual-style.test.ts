@@ -14,7 +14,7 @@ const points = (svg: string, part: string): number[][] => {
 describe('exercise illustration visual system', () => {
   it('preserves the category colours across the complete library', () => {
     const hues = { legs: 208, push: 28, pull: 28, core: 276, cardio: 4, 'full-body': 4, 'warm-up': 42, stretch: 160 };
-    expect(EXERCISE_LIBRARY).toHaveLength(52);
+    expect(EXERCISE_LIBRARY).toHaveLength(58);
     for (const exercise of EXERCISE_LIBRARY) {
       const svg = svgFor(exercise.id);
       expect(svg).toContain(`fill="hsl(${hues[exercise.category]} 42% 93%)"`);
@@ -22,7 +22,7 @@ describe('exercise illustration visual system', () => {
     }
   });
   it('connects each revised arm at the shoulder and leg at the hip with only one elbow or knee', () => {
-    expect(REVISED_ILLUSTRATIONS.size).toBe(34);
+    expect(REVISED_ILLUSTRATIONS.size).toBe(40);
     for (const id of REVISED_ILLUSTRATIONS) {
       const bodies = [...svgFor(id).matchAll(/<g data-anatomy="joint-chains">([\s\S]*?)<\/g>/g)];
       expect(bodies.length, id).toBeGreaterThan(0);
@@ -78,5 +78,28 @@ describe('exercise illustration visual system', () => {
       expect(svgFor(id)).toContain('<circle cx="160" cy="95"');
       expect(svgFor(id)).toContain('<circle cx="160" cy="55"');
     }
+  });
+
+  it('keeps hip-circle and good-morning feet planted between poses', () => {
+    for (const id of ['hip-circles', 'bodyweight-good-morning']) {
+      const bodies = [...svgFor(id).matchAll(/<g data-anatomy="joint-chains">([\s\S]*?)<\/g>/g)];
+      expect(bodies).toHaveLength(2);
+      for (const leg of ['leg-0', 'leg-1']) {
+        expect(points(bodies[0]![1]!, leg)[2]).toEqual(points(bodies[1]![1]!, leg)[2]);
+      }
+    }
+  });
+  it('shows the inchworm feet advancing while hands stay planted, without a push-up', () => {
+    const phases = [...svgFor('inchworm').matchAll(/data-inchworm-phase="\d"[^>]*><g data-anatomy="joint-chains">([\s\S]*?)<\/g>/g)];
+    expect(phases).toHaveLength(3);
+    const startPhase = phases[0]![1]!;
+    const plankPhase = phases[1]![1]!;
+    expect(points(startPhase, 'leg-0')[2]).toEqual(points(plankPhase, 'leg-0')[2]);
+    expect(svgFor('inchworm')).not.toContain('data-phase-labels');
+    expect(svgFor('inchworm')).not.toContain('transform=');
+    const walkPhase = phases[2]![1]!;
+    expect(points(plankPhase, 'arm-0')).toEqual(points(walkPhase, 'arm-0'));
+    expect(points(walkPhase, 'leg-0')[2]![0]).toBeGreaterThan(points(plankPhase, 'leg-0')[2]![0]!);
+    expect(points(walkPhase, 'torso')[1]![1]).toBeLessThan(points(plankPhase, 'torso')[1]![1]!);
   });
 });

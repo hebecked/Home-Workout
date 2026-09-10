@@ -1,8 +1,8 @@
 # Exercise text and illustration audit
 
-Last updated: 2026-09-07
+Last updated: 2026-09-10
 
-This checklist covers 52 exercise definitions. After round three, 51 illustrations are accepted. Only Burpee awaits round-six approval: four separate small poses with rounded numbers use the existing palette, without frames or overlapping figures. Earlier decisions are documented in [review-round-3.md](review-round-3.md).
+This checklist covers 58 exercise definitions. The six newly added dynamic warm-up illustrations were owner-confirmed after three local review rounds. Burpee remains separately pending from round six. Earlier decisions are documented in [review-round-3.md](review-round-3.md).
 
 ## Corrections made during the completed audit
 
@@ -59,6 +59,12 @@ This checklist covers 52 exercise definitions. After round three, 51 illustratio
 | `arm-circle` | Arm Circles | [Mayo Clinic Press — Dynamic stretching examples](https://mcpress.mayoclinic.org/nutrition-fitness/does-stretching-prevent-injuries/) | Reviewed | Owner confirmed | 2026-09-07 |
 | `active-recovery` | Active Recovery | [Cleveland Clinic — Active Recovery](https://health.clevelandclinic.org/active-recovery) | Reviewed | Reviewed | 2026-09-01 |
 | `leg-swing` | Leg Swings | [Mayo Clinic Press — Dynamic stretching examples](https://mcpress.mayoclinic.org/nutrition-fitness/does-stretching-prevent-injuries/) | Reviewed | Owner confirmed | 2026-09-07 |
+| `hip-circles` | Hip Circles | [Special Olympics Wisconsin — Snowshoe warm-up guide (PDF)](https://specialolympicswisconsin.org/wp-content/uploads/2024/10/Snow-Shoe-Racing-Warm-up-Guide.pdf) | Reviewed | Owner confirmed | 2026-09-10 |
+| `ankle-rocks` | Ankle Rocks | [HSS — Ankle stretches and exercises](https://www.hss.edu/health-library/move-better/ankle-stretches-exercises) | Reviewed | Owner confirmed | 2026-09-10 |
+| `torso-rotations` | Torso Rotations | [ACE — Group Fitness Instructor Assessments (PDF)](https://www.acefitness.org/groupfitnessresources/pdfs/GFI_Assessments.pdf) | Reviewed | Owner confirmed | 2026-09-10 |
+| `bodyweight-good-morning` | Bodyweight Good Mornings | [ACE — Joint-friendly hip hinges](https://www.acefitness.org/resources/pros/expert-articles/9158/ankles-knees-and-hips-10-joint-friendly-exercises-for-the-lower-extremity/) | Reviewed | Owner confirmed | 2026-09-10 |
+| `dynamic-lunge-reach` | Dynamic Lunge with Reach | [Mayo Clinic — Dynamic warm-up examples](https://dahlc.mayoclinic.org/2015/12/22/20-minute-jump-rope-workout/) | Reviewed | Owner confirmed | 2026-09-10 |
+| `inchworm` | Inchworm | [ACE — Inchworms](https://www.acefitness.org/resources/everyone/exercise-library/254/inchworms/) | Reviewed | Owner confirmed | 2026-09-10 |
 | `calf-stretch` | Calf Stretch | [Mayo Clinic — Basic stretches](https://www.mayoclinic.org/healthy-lifestyle/fitness/in-depth/stretching/art-20546848) | Reviewed | Owner confirmed | 2026-09-07 |
 | `hamstring-stretch` | Hamstring Stretch | [NHS Plymouth — Hamstring stretch](https://www.plymouthhospitals.nhs.uk/display-pil/pil-paediatric-physiotherapy-exercises-5942/) | Reviewed | Owner confirmed | 2026-09-07 |
 | `quadriceps-stretch` | Quadriceps Stretch | [Mayo Clinic — Basic stretches](https://www.mayoclinic.org/healthy-lifestyle/fitness/in-depth/stretching/art-20546848) | Reviewed | Reviewed | 2026-09-01 |
@@ -72,6 +78,6 @@ This checklist covers 52 exercise definitions. After round three, 51 illustratio
 
 ## Visual review method
 
-Round-two SVG contact sheets were inspected for disconnected limbs, additional bends, floor contacts and silhouette clarity. Revised bodies use named joint chains; parallel limbs overlap in profile. Burpee uses four separate numbered phases. Static holds use one pose; hip-flexor stretching shows entry into the hold. No automated test establishes medical suitability or final visual acceptance.
+Round-two SVG contact sheets were inspected for disconnected limbs, additional bends, floor contacts and silhouette clarity. The six dynamic warm-up illustrations were then checked with a local-only reviewer; the owner confirmed the final candidates on 2026-09-10. Revised bodies use named joint chains; parallel limbs overlap in profile. Burpee uses four separate numbered phases. Static holds use one pose; hip-flexor stretching shows entry into the hold. No automated test establishes medical suitability or final visual acceptance.
 
 The unit test `tests/unit/exercise-audit.test.ts` requires a row for every exercise and keeps revised poses explicitly pending owner review.

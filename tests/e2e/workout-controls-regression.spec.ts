@@ -21,13 +21,10 @@ test('workout controls remain reliable while the render timer is running', async
 
   await expect(page.getByRole('heading', { name: /^Marching in Place$/i })).toBeVisible();
   await pressAcrossRenderTick(page, page.getByRole('button', { name: /next|weiter/i }));
-  await expect(page.locator('.phase-pill')).toHaveText(/rest|pause/i);
 
-  // Move the timestamp beyond the zero-second transition, then allow one
-  // render tick to settle the state machine onto the next exercise.
-  await page.clock.setSystemTime(new Date('2026-01-01T12:00:01Z'));
+  // Allow the zero-second transition to settle onto the next exercise.
   await page.clock.runFor(550);
-  await expect(page.getByRole('heading', { name: /^Arm Circles$/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /^Torso Rotations$/i })).toBeVisible();
 
   await pressAcrossRenderTick(page, page.getByRole('button', { name: /^pause$/i }));
   await expect(page.getByText(/paused|pausiert/i)).toBeVisible();
@@ -47,7 +44,15 @@ test('Next skips an active rest and repetition targets do not render a tap count
   await page.goto('/');
   await page.getByRole('button', { name: /start workout/i }).click();
 
-  await page.clock.setSystemTime(new Date('2026-01-01T12:01:51Z'));
+  const next = page.getByRole('button', { name: /next|weiter/i });
+  for (const heading of [/^Torso Rotations$/i, /^Bodyweight Good Mornings$/i, /^Dynamic Lunge with Reach$/i]) {
+    await next.click();
+    await page.clock.runFor(550);
+    await expect(page.getByRole('heading', { name: heading })).toBeVisible();
+  }
+  await next.click();
+  await expect(page.locator('.phase-pill')).toHaveText(/rest|pause/i);
+  await next.click();
   await page.clock.runFor(550);
   await expect(page.getByRole('heading', { name: /^Squat$/i })).toBeVisible();
 

@@ -86,6 +86,17 @@ describe('local persistence', () => {
     expect(storage.getItem('home-workout:plans')).toBe(raw);
   });
 
+  it('does not replace or rewrite a stored plan whose id matches a bundled routine', () => {
+    const storedPlan = makeMultilingualPlan();
+    storedPlan.id = 'gentle-start';
+    storedPlan.name.fr = 'Mon programme conservé';
+    const raw = JSON.stringify([storedPlan]);
+    storage.setItem('home-workout:plans', raw);
+
+    expect(loadPlans(storage)).toStrictEqual([storedPlan]);
+    expect(storage.getItem('home-workout:plans')).toBe(raw);
+  });
+
   it('loads legacy session persistence into phase zero without rewriting storage', () => {
     const legacy = {
       persistenceVersion: 1, planId: 'plan-fr-hi', phase: 'exercise', roundIndex: 1, exerciseIndex: 0,

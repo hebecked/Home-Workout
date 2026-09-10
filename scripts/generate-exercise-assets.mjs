@@ -10,7 +10,7 @@ const groups = {
   arms: `push-up scapular-push-up incline-push-up knee-push-up pike-push-up pull-up assisted-pull-up chin-up resistance-band-row resistance-band-pull-apart triceps-dip`.split(' '),
   core: `dead-bug lying-leg-raise bird-dog plank side-plank mountain-climber hollow-hold superman superman-dynamic`.split(' '),
   cardio: `jumping-jack step-jack high-knees marching-in-place shadow-boxing burpee squat-to-reach`.split(' '),
-  warmup: `heel-dig shoulder-roll arm-circle active-recovery leg-swing`.split(' '),
+  warmup: `heel-dig shoulder-roll arm-circle active-recovery leg-swing hip-circles ankle-rocks torso-rotations bodyweight-good-morning dynamic-lunge-reach inchworm`.split(' '),
   stretch: `calf-stretch hamstring-stretch quadriceps-stretch hip-flexor-stretch shoulder-upper-back-stretch chest-stretch child-pose cat-cow cobra-stretch yoga-bridge`.split(' ')
 };
 const hueByGroup = { legs: 208, arms: 28, core: 276, cardio: 4, warmup: 42, stretch: 160 };

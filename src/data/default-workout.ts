@@ -15,13 +15,17 @@ function slot(planId: string, exerciseId: string, target?: PlanExercise['target'
 }
 
 const languages = [{ code: 'de', label: 'Deutsch' }, { code: 'en', label: 'English' }];
+type PhaseExercise = readonly [string, PlanExercise['target']?, string[]?];
+type Preparation = Readonly<{ warmUp: PhaseExercise[]; coolDown: PhaseExercise[] }>;
+
 const plan = (
   id: string,
   name: WorkoutPlan['name'],
   rounds: number,
   restBetweenExercises: number,
   restBetweenRounds: number,
-  exercises: Array<[string, PlanExercise['target']?, string[]?]>
+  preparation: Preparation,
+  exercises: PhaseExercise[]
 ): WorkoutPlan => ({
   schemaVersion: 2,
   id,
@@ -32,28 +36,112 @@ const plan = (
     {
       id: 'warm-up', kind: 'warm-up', rounds: 1,
       restBetweenExercises: 0, restBetweenRounds: 0, restAfterPhase: 20,
-      exercises: [
-        slot(`${id}-warm-up`, 'marching-in-place', { seconds: 30 }),
-        slot(`${id}-warm-up`, 'arm-circle', { seconds: 30 }),
-        slot(`${id}-warm-up`, 'leg-swing', { seconds: 30 })
-      ]
+      exercises: preparation.warmUp.map(([exerciseId, target, alternatives]) =>
+        slot(`${id}-warm-up`, exerciseId, target, alternatives))
     },
     {
       id: 'training', kind: 'training', rounds,
       restBetweenExercises, restBetweenRounds, restAfterPhase: 30,
-      exercises: exercises.map(([exerciseId, target, alternatives]) => slot(`${id}-training`, exerciseId, target, alternatives))
+      exercises: exercises.map(([exerciseId, target, alternatives]) =>
+        slot(`${id}-training`, exerciseId, target, alternatives))
     },
     {
       id: 'cool-down', kind: 'cool-down', rounds: 1,
       restBetweenExercises: 0, restBetweenRounds: 0, restAfterPhase: 0,
-      exercises: [
-        slot(`${id}-cool-down`, 'calf-stretch', { seconds: 30 }),
-        slot(`${id}-cool-down`, 'hamstring-stretch', { seconds: 30 }),
-        slot(`${id}-cool-down`, 'hip-flexor-stretch', { seconds: 30 })
-      ]
+      exercises: preparation.coolDown.map(([exerciseId, target, alternatives]) =>
+        slot(`${id}-cool-down`, exerciseId, target, alternatives))
     }
   ]
 });
+
+const PREPARATIONS: Readonly<Record<string, Preparation>> = {
+  '30-minute-full-body': {
+    warmUp: [
+      ['marching-in-place', { seconds: 30 }],
+      ['torso-rotations', { seconds: 30 }],
+      ['bodyweight-good-morning', { min: 8, max: 10, unit: 'repetitions' }],
+      ['dynamic-lunge-reach', { min: 6, max: 6, unit: 'per-side' }]
+    ],
+    coolDown: [
+      ['active-recovery', { seconds: 60 }],
+      ['hamstring-stretch', { seconds: 30 }],
+      ['hip-flexor-stretch', { seconds: 30 }],
+      ['chest-stretch', { seconds: 30 }],
+      ['shoulder-upper-back-stretch', { seconds: 30 }]
+    ]
+  },
+  'gentle-start': {
+    warmUp: [
+      ['heel-dig', { seconds: 30 }],
+      ['shoulder-roll', { seconds: 30 }],
+      ['ankle-rocks', { seconds: 30 }],
+      ['hip-circles', { seconds: 30 }]
+    ],
+    coolDown: [
+      ['active-recovery', { seconds: 60 }],
+      ['calf-stretch', { seconds: 30 }],
+      ['hip-flexor-stretch', { seconds: 30 }],
+      ['shoulder-upper-back-stretch', { seconds: 30 }]
+    ]
+  },
+  'full-body-strength': {
+    warmUp: [
+      ['marching-in-place', { seconds: 30 }],
+      ['arm-circle', { seconds: 30 }],
+      ['bodyweight-good-morning', { min: 8, max: 10, unit: 'repetitions' }],
+      ['dynamic-lunge-reach', { min: 6, max: 6, unit: 'per-side' }]
+    ],
+    coolDown: [
+      ['hamstring-stretch', { seconds: 30 }],
+      ['quadriceps-stretch', { seconds: 30 }],
+      ['chest-stretch', { seconds: 30 }],
+      ['shoulder-upper-back-stretch', { seconds: 30 }]
+    ]
+  },
+  'cardio-base': {
+    warmUp: [
+      ['marching-in-place', { seconds: 45 }],
+      ['heel-dig', { seconds: 30 }],
+      ['arm-circle', { seconds: 30 }],
+      ['dynamic-lunge-reach', { min: 6, max: 6, unit: 'per-side' }]
+    ],
+    coolDown: [
+      ['active-recovery', { seconds: 60 }],
+      ['calf-stretch', { seconds: 30 }],
+      ['quadriceps-stretch', { seconds: 30 }],
+      ['hip-flexor-stretch', { seconds: 30 }]
+    ]
+  },
+  'active-circuit': {
+    warmUp: [
+      ['heel-dig', { seconds: 30 }],
+      ['torso-rotations', { seconds: 30 }],
+      ['bodyweight-good-morning', { min: 8, max: 10, unit: 'repetitions' }],
+      ['dynamic-lunge-reach', { min: 6, max: 6, unit: 'per-side' }]
+    ],
+    coolDown: [
+      ['active-recovery', { seconds: 60 }],
+      ['quadriceps-stretch', { seconds: 30 }],
+      ['chest-stretch', { seconds: 30 }],
+      ['child-pose', { seconds: 30 }]
+    ]
+  },
+  'advanced-bodyweight': {
+    warmUp: [
+      ['jumping-jack', { seconds: 30 }, ['step-jack']],
+      ['dynamic-lunge-reach', { min: 8, max: 8, unit: 'per-side' }],
+      ['inchworm', { min: 5, max: 5, unit: 'repetitions' }],
+      ['scapular-push-up', { min: 8, max: 10, unit: 'repetitions' }]
+    ],
+    coolDown: [
+      ['active-recovery', { seconds: 60 }],
+      ['hamstring-stretch', { seconds: 30 }],
+      ['hip-flexor-stretch', { seconds: 30 }],
+      ['chest-stretch', { seconds: 30 }],
+      ['child-pose', { seconds: 30 }]
+    ]
+  }
+};
 
 export const DEFAULT_WORKOUT: WorkoutPlan = plan(
   '30-minute-full-body',
@@ -61,6 +149,7 @@ export const DEFAULT_WORKOUT: WorkoutPlan = plan(
   3,
   20,
   60,
+  PREPARATIONS['30-minute-full-body']!,
   [
     ['squat', { min: 12, max: 15, unit: 'repetitions' }],
     ['push-up', { min: 6, max: 15, unit: 'repetitions' }, ['incline-push-up', 'knee-push-up']],
@@ -81,6 +170,7 @@ export const BUILT_IN_WORKOUTS: WorkoutPlan[] = [
     2,
     30,
     60,
+    PREPARATIONS['gentle-start']!,
     [
       ['marching-in-place', { seconds: 30 }],
       ['squat', { min: 8, max: 10, unit: 'repetitions' }, ['wall-sit']],
@@ -96,6 +186,7 @@ export const BUILT_IN_WORKOUTS: WorkoutPlan[] = [
     3,
     45,
     75,
+    PREPARATIONS['full-body-strength']!,
     [
       ['squat', { min: 8, max: 12, unit: 'repetitions' }],
       ['push-up', { min: 8, max: 12, unit: 'repetitions' }, ['incline-push-up', 'knee-push-up']],
@@ -113,6 +204,7 @@ export const BUILT_IN_WORKOUTS: WorkoutPlan[] = [
     3,
     20,
     60,
+    PREPARATIONS['cardio-base']!,
     [
       ['step-jack', { seconds: 40 }, ['marching-in-place']],
       ['squat-to-reach', { min: 10, max: 15, unit: 'repetitions' }, ['squat']],
@@ -128,6 +220,7 @@ export const BUILT_IN_WORKOUTS: WorkoutPlan[] = [
     3,
     15,
     45,
+    PREPARATIONS['active-circuit']!,
     [
       ['jumping-jack', { seconds: 40 }, ['step-jack']],
       ['squat', { min: 12, max: 15, unit: 'repetitions' }],
@@ -143,6 +236,7 @@ export const BUILT_IN_WORKOUTS: WorkoutPlan[] = [
     4,
     30,
     90,
+    PREPARATIONS['advanced-bodyweight']!,
     [
       ['burpee', { min: 6, max: 10, unit: 'repetitions' }, ['squat-to-reach']],
       ['split-squat', { min: 8, max: 12, unit: 'per-side' }, ['reverse-lunge']],

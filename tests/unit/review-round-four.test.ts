@@ -6,6 +6,9 @@ it('only requests a new Burpee review and retains accepted revision numbers', ()
   expect([...CURRENT_REVIEW_ILLUSTRATIONS]).toEqual(['burpee']);
   expect(illustrationRevision('burpee')).toBe(6);
   expect(illustrationRevision('dead-bug')).toBe(3);
+  for (const id of ['hip-circles', 'ankle-rocks', 'torso-rotations', 'bodyweight-good-morning', 'dynamic-lunge-reach', 'inchworm']) {
+    expect(illustrationRevision(id)).toBe(8);
+  }
   expect(illustrationRevision('squat')).toBe(2);
 });
 

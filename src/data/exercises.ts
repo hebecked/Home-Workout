@@ -57,6 +57,12 @@ const seeds: Seed[] = [
   ['arm-circle', 'warm-up', 'Armkreisen', 'Arm Circles', 'beginner', 'duration', ['shoulder-roll'], []],
   ['active-recovery', 'warm-up', 'Aktive Erholung', 'Active Recovery', 'beginner', 'duration', [], ['marching-in-place']],
   ['leg-swing', 'warm-up', 'Beinschwingen', 'Leg Swings', 'beginner', 'duration', ['marching-in-place'], []],
+  ['hip-circles', 'warm-up', 'Hüftkreisen', 'Hip Circles', 'beginner', 'duration', [], []],
+  ['ankle-rocks', 'warm-up', 'Dynamische Sprunggelenk-Mobilisation', 'Ankle Rocks', 'beginner', 'duration', ['calf-stretch'], []],
+  ['torso-rotations', 'warm-up', 'Rumpfrotation', 'Torso Rotations', 'beginner', 'duration', ['shoulder-roll'], []],
+  ['bodyweight-good-morning', 'warm-up', 'Good Mornings ohne Gewicht', 'Bodyweight Good Mornings', 'beginner', 'repetitions', ['glute-bridge'], ['inchworm']],
+  ['dynamic-lunge-reach', 'warm-up', 'Dynamischer Ausfallschritt mit Strecken', 'Dynamic Lunge with Reach', 'intermediate', 'repetitions', ['reverse-lunge'], []],
+  ['inchworm', 'warm-up', 'Raupengang', 'Inchworm', 'advanced', 'repetitions', ['plank'], ['burpee']],
   ['calf-stretch', 'stretch', 'Waden-Dehnung', 'Calf Stretch', 'beginner', 'duration', [], []],
   ['hamstring-stretch', 'stretch', 'Oberschenkelrückseiten-Dehnung', 'Hamstring Stretch', 'beginner', 'duration', [], []],
   ['quadriceps-stretch', 'stretch', 'Oberschenkelvorderseiten-Dehnung', 'Quadriceps Stretch', 'beginner', 'duration', [], []],
@@ -72,7 +78,11 @@ const seeds: Seed[] = [
 const bandExercises = new Set(['resistance-band-row', 'resistance-band-pull-apart']);
 const barExercises = new Set(['pull-up', 'chin-up']);
 const supportExercises = new Set(['wall-sit', 'leg-swing', 'calf-stretch', 'quadriceps-stretch', 'chest-stretch']);
-const perSideExercises = new Set(['reverse-lunge', 'forward-lunge', 'split-squat', 'single-leg-glute-bridge', 'bird-dog', 'dead-bug']);
+const perSideExercises = new Set(['reverse-lunge', 'forward-lunge', 'split-squat', 'single-leg-glute-bridge', 'bird-dog', 'dead-bug', 'dynamic-lunge-reach']);
+const targetOverrides: Readonly<Record<string, ExerciseTarget>> = {
+  'dynamic-lunge-reach': { min: 6, max: 8, unit: 'per-side' },
+  inchworm: { min: 4, max: 6, unit: 'repetitions' }
+};
 const detailedInstructions: Record<string, Record<'de' | 'en', string>> = {
   squat: {
     de: 'Stelle die Füße etwa schulterbreit auf. Schiebe die Hüfte nach hinten, beuge Hüfte und Knie und senke dich mit gehobener Brust ab. Drücke die Füße in den Boden und richte dich wieder auf; die Knie folgen der Richtung der Zehen.',
@@ -242,6 +252,30 @@ const detailedInstructions: Record<string, Record<'de' | 'en', string>> = {
     de: 'Halte dich leicht an einer Wand oder einem stabilen Gegenstand fest. Schwinge ein Bein kontrolliert vor und zurück, ohne den Oberkörper zu verdrehen oder Schwung zu erzwingen. Wechsle nach der Hälfte der Zeit die Seite.',
     en: 'Use light support from a wall or sturdy object. Swing one leg forward and backward with control without twisting your torso or forcing the range. Change sides halfway through.'
   },
+  'hip-circles': {
+    de: 'Stelle die Füße etwa hüftbreit auf, beuge die Knie leicht und lege die Hände an die Hüften. Führe das Becken langsam in kleinen Kreisen, während Brustkorb und Füße möglichst ruhig bleiben. Wechsle nach der Hälfte der Zeit die Richtung und bleibe in einem angenehmen Bewegungsumfang.',
+    en: 'Stand with feet about hip-width apart, soften your knees, and place your hands on your hips. Slowly circle your pelvis while keeping your chest and feet as still as practical. Change direction halfway through and stay within a comfortable range.'
+  },
+  'ankle-rocks': {
+    de: 'Nimm einen kleinen versetzten Stand ein und belaste den vorderen Fuß gleichmäßig. Schiebe das vordere Knie langsam über die Zehen nach vorn und wieder zurück, ohne die Ferse anzuheben; das Knie folgt der Fußrichtung. Wechsle nach der Hälfte der Zeit die Seite und verkleinere den Weg bei Schmerzen oder einem unangenehmen Druckgefühl im Sprunggelenk.',
+    en: 'Take a short staggered stance and keep pressure even across the front foot. Slowly guide the front knee forward over the toes and back without lifting the heel, keeping the knee in line with the foot. Change sides halfway through and shorten the range if you feel pain or pinching.'
+  },
+  'torso-rotations': {
+    de: 'Stehe hüftbreit mit leicht gebeugten Knien. Drehe Brustkorb und locker gehaltene Arme langsam nach links und rechts, während Becken und Füße weitgehend nach vorn zeigen. Bleibe aufrecht, vermeide Schwung und nutze nur einen angenehmen Bewegungsumfang.',
+    en: 'Stand hip-width with soft knees. Slowly turn your rib cage and relaxed arms left and right while your pelvis and feet remain mostly forward. Stay tall, avoid momentum, and use only a comfortable range.'
+  },
+  'bodyweight-good-morning': {
+    de: 'Stelle die Füße hüftbreit auf und beuge die Knie leicht. Schiebe die Hüfte nach hinten und neige den Oberkörper mit neutral gehaltener Wirbelsäule aus der Hüfte vor, bis du eine angenehme Spannung an der Oberschenkelrückseite spürst. Drücke die Füße in den Boden und richte dich wieder auf; runde den Rücken nicht.',
+    en: 'Stand with feet hip-width apart and soften your knees. Send your hips back and hinge forward from the hips while maintaining a neutral spine, until you feel comfortable tension behind the thighs. Press through your feet to stand; do not round your back.'
+  },
+  'dynamic-lunge-reach': {
+    de: 'Mache einen kontrollierten Schritt nach vorn und beuge beide Knie in einen bequemen Ausfallschritt; das vordere Knie folgt dabei der Fußrichtung. Strecke den Arm auf der Seite des vorderen Beins über den Kopf, ohne ins Hohlkreuz zu fallen, senke ihn wieder und drücke dich über den vorderen Fuß zurück. Wechsle die Seite und verkleinere Schrittlänge oder Tiefe, wenn die Position instabil wird.',
+    en: 'Take a controlled step forward and bend both knees into a comfortable lunge, keeping the front knee in line with the foot. Reach the arm on the same side as the front leg overhead without arching your lower back, lower it, and push through the front foot to return. Alternate sides and shorten the step or depth if the position becomes unsteady.'
+  },
+  inchworm: {
+    de: 'Beuge aus dem Stand bei Bedarf die Knie und setze die Hände vor den Füßen auf. Laufe mit den Händen in kleinen Schritten bis in einen stabilen hohen Stütz, ohne die Hüfte durchhängen zu lassen. Halte dann die Hände am Platz und gehe mit den Füßen in kleinen Schritten zu ihnen; beuge die Knie bei Bedarf. Richte dich kontrolliert auf; verkürze den Weg oder brich bei Schmerzen in Handgelenken, Schultern oder Rücken ab.',
+    en: 'From standing, bend your knees as needed and place your hands in front of your feet. Walk your hands forward in small steps to a stable high plank without letting your hips sag, then keep your hands planted and walk your feet toward them in small steps, bending your knees as needed. Rise with control; shorten the range or stop if your wrists, shoulders, or back hurt.'
+  },
   'calf-stretch': {
     de: 'Stütze die Hände an einer Wand ab und stelle einen Fuß hinter den anderen. Beuge das vordere Knie, halte das hintere Bein gestreckt und die hintere Ferse am Boden. Schiebe die Hüfte sanft vor, halte ohne Wippen und wechsle nach der Hälfte die Seite.',
     en: 'Place your hands on a wall and step one foot behind the other. Bend the front knee while keeping the back leg straight and its heel on the floor. Gently move your hips forward, hold without bouncing, and change sides halfway through.'
@@ -298,7 +332,7 @@ export const EXERCISE_LIBRARY: ExerciseDefinition[] = seeds.map(([id, category, 
             ? ['chair or stable raised support']
             : ['none'],
   difficulty, type,
-  defaultTarget: type === 'duration' ? { seconds: 30 } : { min: 8, max: 12, unit: perSideExercises.has(id) ? 'per-side' : 'repetitions' },
+  defaultTarget: targetOverrides[id] ?? (type === 'duration' ? { seconds: 30 } : { min: 8, max: 12, unit: perSideExercises.has(id) ? 'per-side' : 'repetitions' }),
   translations: {
     de: { name: de, instructions: detailedInstructions[id]!.de },
     en: { name: en, instructions: detailedInstructions[id]!.en }

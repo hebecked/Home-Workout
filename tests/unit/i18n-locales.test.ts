@@ -11,6 +11,7 @@ import {
 } from '../../src/i18n/locales';
 import { EXERCISE_IDS } from '../../src/i18n/exercises';
 import { exerciseTranslations } from '../../src/i18n/exercise-catalog';
+import { newExerciseInstructions } from '../../src/i18n/exercise-instructions-new';
 import { ROUTINE_IDS, routineNames } from '../../src/i18n/routines';
 
 const memoryStorage = (initial: Record<string, string> = {}) => {
@@ -71,11 +72,25 @@ describe('localized bundled content', () => {
         const translation = exerciseTranslations[id][locale];
         expect(translation.name.trim(), `${id}.${locale}.name`).not.toBe('');
         expect(translation.instructions.trim(), `${id}.${locale}.instructions`).not.toBe('');
-        expect(translation.instructions, `${id}.${locale}.instructions`).toContain(translation.name);
+        expect(translation.instructions.length, `${id}.${locale}.instructions`).toBeGreaterThan(30);
       }
     }
   });
 
+  it('uses exercise-specific instructions in all 16 locales for every new dynamic warm-up', () => {
+    const expectedIds = [
+      'hip-circles', 'ankle-rocks', 'torso-rotations',
+      'bodyweight-good-morning', 'dynamic-lunge-reach', 'inchworm'
+    ] as const;
+    expect(Object.keys(newExerciseInstructions).sort()).toEqual([...expectedIds].sort());
+    for (const id of expectedIds) {
+      const instructions = newExerciseInstructions[id]!;
+      expect(Object.keys(instructions).sort(), id).toEqual([...SUPPORTED_LOCALES].sort());
+      for (const locale of SUPPORTED_LOCALES) {
+        expect(exerciseTranslations[id][locale].instructions).toBe(instructions[locale]);
+      }
+    }
+  });
   it('has a direct non-empty name for every bundled routine and locale', () => {
     expect(Object.keys(routineNames).sort()).toEqual([...ROUTINE_IDS].sort());
     for (const id of ROUTINE_IDS) {

@@ -11,14 +11,14 @@ YOUR TASK
 5. State clearly that the import check covers technical compatibility, not medical or health suitability. Tell the user to review the exercises and workload, train within their ability, use stable equipment and enough space, stop for pain or illness, and seek qualified advice for health-related uncertainty. Do not imply that this limits statutory liability rights.
 
 SUPPORTED EXERCISE IDS
-These 52 IDs have built-in illustrations and reference instructions. Every exercise entry must still provide a name and instructions for each configured language.
+These 58 IDs have built-in illustrations and reference instructions. Every exercise entry must still provide a name and instructions for each configured language.
 legs: squat, sumo-squat, reverse-lunge, forward-lunge, split-squat, glute-bridge, single-leg-glute-bridge, calf-raise, wall-sit, sumo-squat-hold
 push: push-up, scapular-push-up, incline-push-up, knee-push-up, pike-push-up, triceps-dip
 pull: pull-up, assisted-pull-up, chin-up, resistance-band-row, resistance-band-pull-apart
 core: dead-bug, lying-leg-raise, bird-dog, plank, side-plank, mountain-climber, hollow-hold, superman, superman-dynamic
 cardio: jumping-jack, step-jack, high-knees, marching-in-place, shadow-boxing
 full-body: burpee, squat-to-reach
-warm-up: heel-dig, shoulder-roll, arm-circle, active-recovery, leg-swing
+warm-up: heel-dig, shoulder-roll, arm-circle, active-recovery, leg-swing, hip-circles, ankle-rocks, torso-rotations, bodyweight-good-morning, dynamic-lunge-reach, inchworm
 stretch: calf-stretch, hamstring-stretch, quadriceps-stretch, hip-flexor-stretch, shoulder-upper-back-stretch, chest-stretch, child-pose, cat-cow, cobra-stretch, yoga-bridge
 
 If no supported exercise fits, a custom kebab-case exerciseId is allowed. It will not have a built-in illustration.

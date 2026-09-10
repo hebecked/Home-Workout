@@ -290,7 +290,7 @@ test('reload offers resume or start over and resume keeps progress', async ({ pa
   const prompt = page.getByRole('dialog', { name: /resume workout|Workout fortsetzen/i });
   await expect(prompt).toBeVisible();
   await prompt.getByRole('button', { name: /resume|fortsetzen/i }).click();
-  await expect(page.getByText(/Exercise 2\s*\/\s*3/i)).toBeVisible();
+  await expect(page.getByText(/Exercise 2\s*\/\s*4/i)).toBeVisible();
 
   await page.reload();
   await page.getByRole('dialog', { name: /resume workout|Workout fortsetzen/i })
