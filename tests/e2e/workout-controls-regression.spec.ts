@@ -27,9 +27,9 @@ test('workout controls remain reliable while the render timer is running', async
   await expect(page.getByRole('heading', { name: /^Torso Rotations$/i })).toBeVisible();
 
   await pressAcrossRenderTick(page, page.getByRole('button', { name: /^pause$/i }));
-  await expect(page.getByText(/paused|pausiert/i)).toBeVisible();
+  await expect(page.locator('.phase-pill')).toContainText(/paused|pausiert/i);
   await pressAcrossRenderTick(page, page.getByRole('button', { name: /resume|fortsetzen/i }));
-  await expect(page.getByText(/paused|pausiert/i)).toHaveCount(0);
+  await expect(page.locator('.phase-pill')).not.toContainText(/paused|pausiert/i);
 
   await expect(page.getByLabel(/repetition counter/i)).toHaveCount(0);
   await expect(page.locator('[data-workout-total]')).toContainText(/Total\s+00:/i);

@@ -4,6 +4,7 @@ import {
   DEFAULT_WORKOUT,
   isBuiltInWorkout
 } from '../data/default-workout';
+import { loadTimerAudioSettings, saveTimerAudioSettings, TimerEndSignal, type TimerAudioSettings } from '../core/audio';
 import { EXERCISE_LIBRARY, EXERCISES_BY_ID } from '../data/exercises';
 import { illustrationRevision } from '../data/illustration-revisions';
 import { exportPlanJson, importPlanJson, importPlanUrlPayload } from '../core/plan-io';
@@ -97,6 +98,8 @@ export class HomeWorkoutApp {
   private importPreview: WorkoutPlan | null = null;
   private notice = '';
   private uiLocale: SupportedLocale;
+  private audioSettings: TimerAudioSettings = loadTimerAudioSettings(localStorage);
+  private readonly timerEndSignal = new TimerEndSignal();
   private t: Translator;
 
   constructor(private readonly root: HTMLElement) {
@@ -132,6 +135,11 @@ export class HomeWorkoutApp {
     }
     history.replaceState(null, '', `${location.pathname}#import`);
     return true;
+  }
+
+  private unlockTimerAudio(): void {
+    if (!this.audioSettings.enabled) return;
+    void this.timerEndSignal.unlock();
   }
 
   private route(): string { return location.hash.replace(/^#\/?/, '') || 'home'; }
@@ -172,7 +180,10 @@ export class HomeWorkoutApp {
     this.root.innerHTML = `
       <header class="site-header">
         <a href="#home" class="brand" aria-label="${escapeHtml(this.t('app.name'))}"><span class="brand-mark">HW</span><span>${escapeHtml(this.t('app.name'))}</span></a>
-        <div class="header-actions">${this.route() === 'workout' && this.session?.phase !== 'completed' ? `<button class="workout-exit" data-action="abort" aria-label="${escapeHtml(this.t('button.endWorkout'))}"><span aria-hidden="true">×</span> ${escapeHtml(this.t('button.endWorkout'))}</button>` : `<nav aria-label="${escapeHtml(this.t('nav.primary'))}"><a href="#instructions">${escapeHtml(this.t('nav.instructions'))}</a><a href="#plans" aria-label="${escapeHtml(savedPlansLabel)}">${escapeHtml(this.t('nav.plans'))}</a></nav>`}${localePicker}</div>
+        <div class="header-actions">${this.route() === 'workout' && this.session?.phase !== 'completed' ? `<div class="workout-header-controls">
+          ${this.timerEndSignal.supported ? `<button class="workout-audio" data-action="timer-audio" aria-label="${escapeHtml(this.t('audio.timerCues'))}" aria-pressed="${this.audioSettings.enabled}">${this.audioSettings.enabled ? '🔊' : '🔇'}</button>` : ''}
+          <button class="workout-exit" data-action="abort" aria-label="${escapeHtml(this.t('button.endWorkout'))}"><span aria-hidden="true">×</span><span class="workout-exit-label">${escapeHtml(this.t('button.endWorkout'))}</span></button>
+        </div>` : `<nav aria-label="${escapeHtml(this.t('nav.primary'))}"><a href="#instructions">${escapeHtml(this.t('nav.instructions'))}</a><a href="#plans" aria-label="${escapeHtml(savedPlansLabel)}">${escapeHtml(this.t('nav.plans'))}</a></nav>`}${localePicker}</div>
       </header>
       <main id="main" tabindex="-1">${content}</main>
       <footer><span>${escapeHtml(this.t('footer.privacy'))}</span><a href="#impressum">${escapeHtml(this.t('nav.legal'))}</a><span>PolyForm Perimeter 1.0.0</span></footer>`;
@@ -230,6 +241,7 @@ export class HomeWorkoutApp {
       const nextPosition = `${snapshot.phase}:${snapshot.phaseIndex}:${snapshot.roundIndex}:${snapshot.exerciseIndex}:${snapshot.paused}`;
 
       if (previousPosition !== nextPosition) {
+        if (this.audioSettings.enabled) this.timerEndSignal.play(this.audioSettings.volume);
         this.renderWorkout();
         return;
       }
@@ -245,11 +257,21 @@ export class HomeWorkoutApp {
   private renderHome(): void {
     const title = planTitle(this.activePlan, this.uiLocale);
     const savedPlans = loadPlans(localStorage);
+    const allRoutinePlans = [...BUILT_IN_WORKOUTS, ...savedPlans];
+    const routineOption = (plan: WorkoutPlan, index: number): string => `<div id="routine-option-${index}" role="option" tabindex="-1" data-routine-option="${escapeHtml(plan.id)}" aria-selected="${plan.id === this.activePlan.id}">
+      <span>${escapeHtml(planTitle(plan, this.uiLocale))}</span>
+      <span>${escapeHtml(this.t('home.minutes', { count: estimatedMinutes(plan) }))}</span>
+    </div>`;
     const routineOptions = [
-      `<optgroup label="${escapeHtml(this.t('home.bundledRoutines'))}">${BUILT_IN_WORKOUTS.map((plan) => `<option value="${escapeHtml(plan.id)}" ${plan.id === this.activePlan.id ? 'selected' : ''}>${escapeHtml(planTitle(plan, this.uiLocale))}</option>`).join('')}</optgroup>`,
-      savedPlans.length ? `<optgroup label="${escapeHtml(this.t('home.myPlans'))}">${savedPlans.map((plan) => `<option value="${escapeHtml(plan.id)}" ${plan.id === this.activePlan.id ? 'selected' : ''}>${escapeHtml(planTitle(plan, this.uiLocale))}</option>`).join('')}</optgroup>` : ''
+      `<div role="group" aria-label="${escapeHtml(this.t('home.bundledRoutines'))}"><div class="routine-group-label">${escapeHtml(this.t('home.bundledRoutines'))}</div>
+        ${BUILT_IN_WORKOUTS.map((plan, index) => routineOption(plan, index)).join('')}
+      </div>`,
+      savedPlans.length ? `<div role="group" aria-label="${escapeHtml(this.t('home.myPlans'))}"><div class="routine-group-label">${escapeHtml(this.t('home.myPlans'))}</div>
+        ${savedPlans.map((plan, index) => routineOption(plan, BUILT_IN_WORKOUTS.length + index)).join('')}
+      </div>` : ''
     ].join('');
     const activeExercises = planExercises(this.activePlan);
+    const audioSupported = this.timerEndSignal.supported;
     const previews = activeExercises.map((exercise, index) => {
       const definition = EXERCISES_BY_ID.get(exercise.exerciseId);
       const localized = isBuiltInWorkout(this.activePlan.id) ? exerciseTranslation(exercise.exerciseId, this.uiLocale) : undefined;
@@ -269,13 +291,26 @@ export class HomeWorkoutApp {
           <p class="lede">${escapeHtml(this.t('home.lede'))}</p>
         </div>
         <article class="workout-card">
-          <div class="card-topline"><span>${escapeHtml(this.t('home.ready'))}</span><span>${escapeHtml(this.t('home.minutes', { count: estimatedMinutes(this.activePlan) }))}</span></div>
-          <label class="routine-picker">${escapeHtml(this.t('home.chooseRoutine'))}<select data-routine-picker>${routineOptions}</select></label>
+          <div class="routine-picker">
+            <label id="routine-picker-label" for="routine-picker">${escapeHtml(this.t('home.chooseRoutine'))}</label>
+            <div class="routine-combobox">
+              <button id="routine-picker" type="button" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-controls="routine-options" aria-labelledby="routine-picker-label" data-routine-picker data-value="${escapeHtml(this.activePlan.id)}">
+                <span id="routine-picker-value" class="routine-picker-value"><span>${escapeHtml(title)}</span><span>${escapeHtml(this.t('home.minutes', { count: estimatedMinutes(this.activePlan) }))}</span></span><span class="routine-arrow" aria-hidden="true">⌄</span>
+              </button>
+              <div id="routine-options" class="routine-options" role="listbox" aria-labelledby="routine-picker-label" data-routine-options hidden>${routineOptions}</div>
+            </div>
+          </div>
           <h2>${escapeHtml(title)}</h2>
-          <div class="plan-stats" aria-label="${escapeHtml(this.t('home.summary'))}">
-            <span>${escapeHtml(this.t('home.phases', { count: this.activePlan.phases.length }))}</span>
-            <span>${escapeHtml(this.t('home.rounds', { count: totalRounds(this.activePlan) }))}</span>
-            <span>${escapeHtml(this.t('home.exercises', { count: activeExercises.length }))}</span>
+          <div class="plan-meta">
+            <div class="plan-stats" aria-label="${escapeHtml(this.t('home.summary'))}">
+              <span>${escapeHtml(this.t('home.phases', { count: this.activePlan.phases.length }))}</span>
+              <span>${escapeHtml(this.t('home.rounds', { count: totalRounds(this.activePlan) }))}</span>
+              <span>${escapeHtml(this.t('home.exercises', { count: activeExercises.length }))}</span>
+            </div>
+            <div class="audio-settings">
+              <label class="check audio-toggle"><input type="checkbox" data-timer-audio ${this.audioSettings.enabled ? 'checked' : ''} ${audioSupported ? '' : 'disabled'}><span>${escapeHtml(this.t('audio.timerCues'))}</span></label>
+              <details class="audio-volume-settings" data-audio-volume-settings ${this.audioSettings.enabled && audioSupported ? '' : 'hidden'}><summary>${escapeHtml(this.t('audio.volume'))}</summary><label><span class="sr-only">${escapeHtml(this.t('audio.volume'))}</span><input type="range" aria-label="${escapeHtml(this.t('audio.volume'))}" min="0" max="100" step="5" value="${Math.round(this.audioSettings.volume * 100)}" data-timer-audio-volume></label></details>
+            </div>
           </div>
           <button class="primary start-button" data-action="start">${escapeHtml(this.t('button.startWorkout'))}</button>
           <a class="button-link create-plan-button" href="#editor" data-create-plan>${escapeHtml(this.t('home.createPlan'))}</a>
@@ -294,15 +329,87 @@ export class HomeWorkoutApp {
       </nav></section>
       <div class="github-placeholder">${APP_CONFIG.githubUrl ? `<a href="${escapeHtml(APP_CONFIG.githubUrl)}">GitHub</a>` : '<span>GitHub</span>'}</div>`);
     this.root.querySelector('[data-action="start"]')?.addEventListener('click', () => this.startWorkout(this.activePlan));
-    this.root.querySelector<HTMLSelectElement>('[data-routine-picker]')?.addEventListener('change', (event) => {
-      const plan = this.findPlan((event.currentTarget as HTMLSelectElement).value);
+    const picker = this.root.querySelector<HTMLButtonElement>('[data-routine-picker]');
+    const listbox = this.root.querySelector<HTMLElement>('[data-routine-options]');
+    const options = [...this.root.querySelectorAll<HTMLElement>('[data-routine-option]')];
+    let activeIndex = Math.max(0, allRoutinePlans.findIndex((plan) => plan.id === this.activePlan.id));
+    const setActiveOption = (index: number): void => {
+      if (!picker || options.length === 0) return;
+      activeIndex = (index + options.length) % options.length;
+      options.forEach((option, optionIndex) => option.toggleAttribute('data-active', optionIndex === activeIndex));
+      const activeOption = options[activeIndex]!;
+      picker.setAttribute('aria-activedescendant', activeOption.id);
+      activeOption.scrollIntoView({ block: 'nearest' });
+    };
+    const openListbox = (): void => {
+      if (!picker || !listbox) return;
+      listbox.hidden = false;
+      picker.setAttribute('aria-expanded', 'true');
+      setActiveOption(activeIndex);
+    };
+    const closeListbox = (): void => {
+      if (!picker || !listbox) return;
+      listbox.hidden = true;
+      picker.setAttribute('aria-expanded', 'false');
+      picker.removeAttribute('aria-activedescendant');
+    };
+    const selectRoutine = (id: string | undefined): void => {
+      if (!id) return;
+      const plan = this.findPlan(id);
       if (!plan) return;
       this.activePlan = structuredClone(plan);
       this.renderHome();
+      this.root.querySelector<HTMLButtonElement>('[data-routine-picker]')?.focus();
+    };
+    picker?.addEventListener('click', () => {
+      if (picker.getAttribute('aria-expanded') === 'true') closeListbox();
+      else openListbox();
+    });
+    picker?.addEventListener('keydown', (event) => {
+      const expanded = picker.getAttribute('aria-expanded') === 'true';
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        if (!expanded) openListbox();
+        else setActiveOption(activeIndex + (event.key === 'ArrowDown' ? 1 : -1));
+      } else if (expanded && (event.key === 'Home' || event.key === 'End')) {
+        event.preventDefault();
+        setActiveOption(event.key === 'Home' ? 0 : options.length - 1);
+      } else if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        if (expanded) selectRoutine(options[activeIndex]?.dataset.routineOption);
+        else openListbox();
+      } else if (event.key === 'Escape') {
+        event.preventDefault();
+        closeListbox();
+      } else if (event.key === 'Tab') closeListbox();
+    });
+    for (const [index, option] of options.entries()) {
+      option.addEventListener('pointermove', () => setActiveOption(index));
+      option.addEventListener('click', () => selectRoutine(option.dataset.routineOption));
+    }
+    this.root.querySelector('.routine-combobox')?.addEventListener('focusout', (event) => {
+      if (!(event.currentTarget as HTMLElement).contains((event as FocusEvent).relatedTarget as Node | null)) closeListbox();
+    });
+    const audioToggle = this.root.querySelector<HTMLInputElement>('[data-timer-audio]');
+    const volume = this.root.querySelector<HTMLInputElement>('[data-timer-audio-volume]');
+    const volumeSettings = this.root.querySelector<HTMLDetailsElement>('[data-audio-volume-settings]');
+    audioToggle?.addEventListener('change', () => {
+      this.audioSettings = { ...this.audioSettings, enabled: audioToggle.checked };
+      saveTimerAudioSettings(localStorage, this.audioSettings);
+      if (volumeSettings) {
+        volumeSettings.hidden = !audioToggle.checked;
+        if (!audioToggle.checked) volumeSettings.open = false;
+      }
+      this.unlockTimerAudio();
+    });
+    volume?.addEventListener('input', () => {
+      this.audioSettings = { ...this.audioSettings, volume: Number(volume.value) / 100 };
+      saveTimerAudioSettings(localStorage, this.audioSettings);
     });
   }
 
   private startWorkout(plan: WorkoutPlan): void {
+    this.unlockTimerAudio();
     this.activePlan = structuredClone(plan);
     this.exerciseOverrides.clear();
     if (!isBuiltInWorkout(plan.id)) savePlan(localStorage, plan);
@@ -395,6 +502,12 @@ export class HomeWorkoutApp {
         : exercise.translations[code]?.name ?? catalogueCopy?.name;
     }).filter((name): name is string => Boolean(name));
     const imageName = displayNames.join(' / ');
+    const announcement = [
+      this.t('phase.label', { current: snapshot.phaseIndex + 1, total: this.activePlan.phases.length }),
+      this.t('status.round', { current: snapshot.roundIndex + 1, total: workoutPhase.rounds }),
+      this.t('status.exercise', { current: snapshot.exerciseIndex + 1, total: workoutPhase.exercises.length }),
+      statusLabel, snapshot.paused ? this.t('status.paused') : '', isRest ? this.t('workout.readyIn') : imageName
+    ].filter(Boolean).join(' · ');
     const alternativeIds = [exercise.exerciseId, ...exercise.alternativeExerciseIds]
       .filter((id, index, ids) => ids.indexOf(id) === index && EXERCISES_BY_ID.has(id));
     const alternatives = !isRest && alternativeIds.length > 1 ? `<div class="alternative-chooser" aria-label="${escapeHtml(this.t('help.alternativesTitle'))}">
@@ -410,6 +523,7 @@ export class HomeWorkoutApp {
       <section class="workout-screen ${isRest ? 'is-rest' : ''}">
         <div class="workout-content">
           <div class="workout-status"><span>${escapeHtml(this.t('phase.label', { current: snapshot.phaseIndex + 1, total: this.activePlan.phases.length }))} · ${escapeHtml(phaseLabel(workoutPhase.kind, this.t))}</span><span>${escapeHtml(this.t('status.round', { current: snapshot.roundIndex + 1, total: workoutPhase.rounds }))}</span><span data-round-exercise-progress>${escapeHtml(this.t('status.exercise', { current: snapshot.exerciseIndex + 1, total: workoutPhase.exercises.length }))}</span><span data-workout-total>${escapeHtml(this.t('status.total', { time: formatClock(snapshot.elapsedWorkoutMs) }))}</span></div>
+          <p class="sr-only" role="status" aria-live="polite" aria-atomic="true" data-workout-announcement>${escapeHtml(announcement)}</p>
           <div class="phase-pill">${escapeHtml(statusLabel)}${snapshot.paused ? ` · ${escapeHtml(this.t('status.paused'))}` : ''}</div>
           ${snapshot.phase === 'completed' ? `<div class="completion"><p class="eyebrow">${escapeHtml(this.t('phase.complete'))}</p><h1>${escapeHtml(this.t('phase.complete'))}</h1><p>${escapeHtml(this.t('workout.completeCopy'))}</p><button class="primary" data-action="finish">${escapeHtml(this.t('button.backHome'))}</button></div>` : `
             ${isTransition ? `<div class="completion phase-transition-card"><p class="eyebrow">${escapeHtml(this.t('button.next'))}</p><h1>${escapeHtml(phaseLabel(this.activePlan.phases[snapshot.phaseIndex + 1]!.kind, this.t))}</h1><p>${escapeHtml(this.t('workout.restCopy'))}</p><strong data-workout-countdown>${formatClock(snapshot.remainingMs ?? 0)}</strong></div>` : `<div class="exercise-layout">
@@ -432,13 +546,22 @@ export class HomeWorkoutApp {
     const act = (name: string, action: Parameters<typeof dispatchWorkout>[2]): void => {
       this.root.querySelector(`[data-action="${name}"]`)?.addEventListener('click', () => {
         if (!this.session) return;
+        this.unlockTimerAudio();
         this.session = dispatchWorkout(this.session, this.activePlan, action, Date.now());
         saveWorkoutSession(localStorage, this.session);
         this.renderWorkout();
+        this.root.querySelector<HTMLButtonElement>(`[data-action="${name}"]`)?.focus();
       });
     };
     act('previous', { type: 'PREVIOUS' }); act('next', { type: 'NEXT' });
     act('pause', { type: snapshot.paused ? 'RESUME' : 'PAUSE' });
+    this.root.querySelector('[data-action="timer-audio"]')?.addEventListener('click', () => {
+      this.audioSettings = { ...this.audioSettings, enabled: !this.audioSettings.enabled };
+      saveTimerAudioSettings(localStorage, this.audioSettings);
+      this.unlockTimerAudio();
+      this.renderWorkout();
+      this.root.querySelector<HTMLButtonElement>('[data-action="timer-audio"]')?.focus();
+    });
     this.root.querySelector('[data-action="finish"]')?.addEventListener('click', () => { clearWorkoutSession(localStorage); this.session = null; location.hash = 'home'; });
     this.root.querySelector('[data-action="abort"]')?.addEventListener('click', () => this.requestAbortWorkout());
     for (const button of this.root.querySelectorAll<HTMLButtonElement>('[data-alternative]')) {
@@ -448,6 +571,7 @@ export class HomeWorkoutApp {
         if (alternativeId === exercise.exerciseId) this.exerciseOverrides.delete(exercise.id);
         else this.exerciseOverrides.set(exercise.id, alternativeId);
         this.renderWorkout();
+        this.root.querySelector<HTMLButtonElement>(`[data-alternative="${CSS.escape(alternativeId)}"]`)?.focus();
       });
     }
     if (snapshot.phase !== 'completed' && !snapshot.paused) this.scheduleWorkoutTick();
@@ -810,6 +934,7 @@ export class HomeWorkoutApp {
     const dialog = document.createElement('dialog');
     dialog.setAttribute('aria-label', this.t('dialog.resumeLabel'));
     dialog.innerHTML = `<form method="dialog"><p class="eyebrow">${escapeHtml(this.t('dialog.resumeLabel'))}</p><h2>${escapeHtml(this.t('dialog.resumeTitle'))}</h2><p>${escapeHtml(this.t('dialog.resumeCopy'))}</p><div class="dialog-actions"><button value="resume" class="primary">${escapeHtml(this.t('button.resume'))}</button><button value="restart">${escapeHtml(this.t('button.startOver'))}</button></div></form>`;
+    for (const button of dialog.querySelectorAll('button')) button.addEventListener('click', () => this.unlockTimerAudio());
     dialog.addEventListener('close', () => {
       if (dialog.returnValue === 'restart') { clearWorkoutSession(localStorage); this.startWorkout(this.activePlan); }
       else { location.hash = 'workout'; this.render(); }

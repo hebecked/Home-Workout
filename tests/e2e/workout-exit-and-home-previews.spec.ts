@@ -5,7 +5,7 @@ const exitDialogName = /end workout|training beenden|workout abbrechen/i;
 async function startWorkout(page: Page): Promise<void> {
   await page.goto('/');
   await page.getByRole('button', { name: /start workout/i }).click();
-  await expect(page.getByText(/Phase 1\s*\/\s*3/i)).toBeVisible();
+  await expect(page.locator('.workout-status').getByText(/Phase 1\s*\/\s*3/i)).toBeVisible();
 }
 
 async function confirmWorkoutExit(page: Page): Promise<void> {
@@ -16,7 +16,7 @@ async function confirmWorkoutExit(page: Page): Promise<void> {
     name: /^(end workout|training beenden|workout abbrechen|beenden)$/i
   }).click();
   await expect(page.getByRole('button', { name: /start workout/i })).toBeVisible();
-  await expect(page.getByText(/Phase 1\s*\/\s*3/i)).toHaveCount(0);
+  await expect(page.locator('.workout-status')).toHaveCount(0);
 }
 
 test('a running workout has a clearly visible confirmed exit action that returns home', async ({ page }, testInfo) => {

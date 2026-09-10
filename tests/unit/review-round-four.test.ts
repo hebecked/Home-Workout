@@ -2,8 +2,8 @@ import { readFileSync } from 'node:fs';
 import { expect, it } from 'vitest';
 import { CURRENT_REVIEW_ILLUSTRATIONS, illustrationRevision } from '../../src/data/illustration-revisions';
 
-it('only requests a new Burpee review and retains accepted revision numbers', () => {
-  expect([...CURRENT_REVIEW_ILLUSTRATIONS]).toEqual(['burpee']);
+it('retains accepted revision numbers without requesting another review', () => {
+  expect([...CURRENT_REVIEW_ILLUSTRATIONS]).toEqual([]);
   expect(illustrationRevision('burpee')).toBe(6);
   expect(illustrationRevision('dead-bug')).toBe(3);
   for (const id of ['hip-circles', 'ankle-rocks', 'torso-rotations', 'bodyweight-good-morning', 'dynamic-lunge-reach', 'inchworm']) {

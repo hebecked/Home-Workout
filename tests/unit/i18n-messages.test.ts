@@ -20,8 +20,8 @@ const meaningSensitiveKeys: MessageKey[] = [
 // written identically in English and the named locale. All other equality is
 // treated as a likely fallback leak and fails this test.
 const unchangedCopyAllowlist: Readonly<Record<keyof typeof addedMessagesByLocale, readonly MessageKey[]>> = {
-  pt: ['app.name', 'status.total', 'category.cardio', 'category.core', 'home.minutes'],
-  it: ['app.name', 'category.cardio', 'category.core', 'category.stretch', 'home.minutes', 'help.importTitle', 'help.offlineTitle'],
+  pt: ['app.name', 'status.total', 'category.cardio', 'category.core', 'home.minutes', 'audio.volume'],
+  it: ['app.name', 'category.cardio', 'category.core', 'category.stretch', 'home.minutes', 'help.importTitle', 'help.offlineTitle', 'audio.volume'],
   pl: ['app.name', 'button.start', 'category.cardio', 'category.core', 'home.minutes'],
   tr: ['app.name', 'category.cardio', 'category.core', 'editor.minimum', 'help.pauseTitle'],
   uk: ['app.name', 'category.cardio', 'category.core'],

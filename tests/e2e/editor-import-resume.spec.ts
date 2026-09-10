@@ -220,7 +220,7 @@ test('tablet imports, previews, and starts a valid own plan', async ({ page }, t
   await expect(page.getByText('Plan corto')).toBeVisible();
   await expect(page.getByText('Sentadilla')).toBeVisible();
   await page.getByRole('button', { name: /^start$|^starten$/i }).click();
-  await expect(page.getByText('Sentadilla')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Sentadilla' })).toBeVisible();
 });
 
 test('invalid imports show a useful error and never offer start', async ({ page }, testInfo) => {
@@ -290,11 +290,11 @@ test('reload offers resume or start over and resume keeps progress', async ({ pa
   const prompt = page.getByRole('dialog', { name: /resume workout|Workout fortsetzen/i });
   await expect(prompt).toBeVisible();
   await prompt.getByRole('button', { name: /resume|fortsetzen/i }).click();
-  await expect(page.getByText(/Exercise 2\s*\/\s*4/i)).toBeVisible();
+  await expect(page.locator('.workout-status').getByText(/Exercise 2\s*\/\s*4/i)).toBeVisible();
 
   await page.reload();
   await page.getByRole('dialog', { name: /resume workout|Workout fortsetzen/i })
     .getByRole('button', { name: /start over|neu starten/i }).click();
-  await expect(page.getByText(/Runde 1\s*\/\s*1|Round 1\s*\/\s*1/i)).toBeVisible();
+  await expect(page.locator('.workout-status').getByText(/Runde 1\s*\/\s*1|Round 1\s*\/\s*1/i)).toBeVisible();
   await expect(page.locator('.phase-pill')).not.toHaveText(/rest|pause/i);
 });

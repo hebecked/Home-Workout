@@ -1,18 +1,19 @@
 # Project documentation
 
-Last updated: 2026-09-01
+Last updated: 2026-09-10
 
 ## Product overview
 
-Home Workout is a framework-free TypeScript PWA for following multilingual workout routines on phones, tablets, and desktops. It requires no account and sends no workout or plan data to an application backend. After the first successful load, the app shell, bundled plans, exercise copy, and illustrations are available offline.
+Home Workout is a framework-free TypeScript PWA for following multilingual workout routines on phones, tablets, and desktops. It requires no account; plans and workout sessions stay in browser storage. Only an explicit optional pre-translation action sends selected plan text to the same-origin Cloudflare endpoint. After the first successful load, the app shell, bundled plans, exercise copy, and illustrations are available offline.
 
 The default experience is deliberately simple:
 
-1. Select a permanent bundled routine or a local plan.
-2. Review its exercises and illustrations.
+1. Select a permanent bundled routine or local plan from the keyboard-accessible list; each option shows its estimate in a right-aligned column.
+2. Review its warm-up, training, and cool-down exercises and illustrations.
 3. Start the workout.
-4. Follow `Exercise X / Y` within the current round, optionally select a stored easier movement, and use Previous, Pause/Resume, Next, or the confirmed Abort action.
-5. Duration exercises and rests count down automatically; total workout time continues independently.
+4. Follow phase, round, and exercise progress; optionally select a stored easier movement; and use Previous, Pause/Resume, Next, or the confirmed Abort action.
+5. Duration exercises, transitions, and rests count down automatically; total workout time continues independently.
+6. If explicitly enabled, hear a short local tone at automatic timer transitions; mute it at any time without changing workout state.
 
 The manual repetition counter is disabled because it caused unwanted scroll repositioning and offered limited value. Repetition target ranges are still shown. The session model retains its versioned repetition field for backward-compatible restoration of already stored sessions, but the current interface does not expose increment/decrement controls.
 
@@ -27,19 +28,20 @@ Bundled and local plans are intentionally separate:
 - “Customize” assigns a fresh plan ID before opening the editor.
 - “Edit” preserves the ID of a local plan so saving updates that plan only.
 - Active workout state uses the separate `home-workout:active-session` key.
+- Opt-in timer-audio settings use `home-workout:timer-audio`; audio settings never enter a workout plan or session schema.
 
 If a session references a bundled plan, it is restored from source-controlled bundled data. If it references a local plan, it is restored from browser storage. Invalid or outdated stored data is rejected safely.
 
 ## Bundled routines
 
-| ID | Purpose | Rounds | Exercises |
+| ID | Purpose | Training rounds | Warm-up / training / cool-down slots |
 | --- | --- | ---: | ---: |
-| `30-minute-full-body` | Balanced full body | 3 | 8 |
-| `gentle-start` | Beginner / low impact | 2 | 6 |
-| `full-body-strength` | Strength development | 3 | 8 |
-| `cardio-base` | Aerobic base | 3 | 6 |
-| `active-circuit` | Mixed active circuit | 3 | 6 |
-| `advanced-bodyweight` | Advanced bodyweight | 4 | 8 |
+| `30-minute-full-body` | Balanced full body | 3 | 4 / 8 / 5 |
+| `gentle-start` | Beginner / low impact | 2 | 4 / 6 / 4 |
+| `full-body-strength` | Strength development | 3 | 4 / 8 / 4 |
+| `cardio-base` | Aerobic base | 3 | 4 / 6 / 4 |
+| `active-circuit` | Mixed active circuit | 3 | 4 / 6 / 4 |
+| `advanced-bodyweight` | Advanced bodyweight | 4 | 4 / 8 / 5 |
 
 The presets are general templates, not medical advice or guaranteed outcome programs. Their research basis is recorded in `docs/product-roadmap.md`.
 
@@ -47,10 +49,9 @@ The presets are general templates, not medical advice or guaranteed outcome prog
 
 Plan Studio supports:
 
-- DE/EN plan names and additional BCP-47-style language records;
-- one or two display languages;
+- arbitrary BCP-47-style plan-language records and one or two workout display languages;
 - ordered warm-up, training, optional active-recovery, and cool-down phases with their own rounds and rest intervals;
-- selecting from the 51-entry exercise library through bilingual category groups sorted alphabetically;
+- selecting from the 58-entry exercise library through bilingual category groups sorted alphabetically;
 - custom exercise names;
 - exercise ordering and removal;
 - repetition range, per-side, and duration target editing;
@@ -61,7 +62,7 @@ The plan library adds explicit duplicate and confirmed-delete actions for local 
 
 Imported JSON and AI links go through strict versioned validation before preview, save, or start. Schema v2 is canonical. Valid v1 input is migrated in memory to one equivalent training phase without mutating or automatically overwriting its source. Unknown properties, unsafe text, invalid languages, impossible targets, unsupported schema versions, and oversized or invalid URL payloads are rejected.
 
-Schema version 1 remains backward compatible: `translationMetadata` is optional. When present, it records the source language, machine origin, provider, UTC timestamp, and `needs-review` or `reviewed` status for a translated target language. Old plans without this property remain valid and round-trip unchanged.
+Schema version 1 remains backward compatible: `translationMetadata` is optional, and old plans without it remain valid. Reading stored v1 JSON does not rewrite that stored source; import, export, or a later save uses the canonical migrated v2 shape. When present, translation metadata records the source language, machine origin, provider, UTC timestamp, and `needs-review` or `reviewed` status for a translated target language.
 
 ## Optional automatic translation
 
@@ -82,7 +83,7 @@ Direct links never start a workout immediately. The app validates the payload, r
 
 ## Exercise illustrations
 
-`src/data/exercises.ts` defines 51 exercises. Every entry points to a local SVG in `public/assets/exercises/`. The visual color system is category based:
+`src/data/exercises.ts` defines 58 exercises. Every entry points to a local SVG in `public/assets/exercises/`. The visual color system is category based:
 
 - legs: blue;
 - push/pull/arms: orange;
@@ -91,12 +92,12 @@ Direct links never start a workout immediately. The app validates the payload, r
 - warm-up: gold;
 - stretching: teal.
 
-Moving assets use same-scale overlaid positions; static holds and stretches use one pose without a false direction arrow. All 51 assets are covered by file, palette, pose-mode, and SVG contract tests. Movement and floor-contact sources are recorded in `docs/exercise-sources.md`.
+Most two-position movement assets use same-scale overlays; multi-step sequences such as Burpee use separated numbered poses. Static holds and stretches use one pose without a false direction arrow. All 58 assets are covered by file, palette, pose-mode, and SVG contract tests. Movement and floor-contact sources are recorded in `docs/exercise-sources.md`; completed per-exercise text and pose review is recorded in `docs/exercise-audit.md`.
 
 The implemented schema-v2 phase model is documented in `docs/phased-workout-proposal.md`. It separates warm-up, independently configured training blocks, optional active recovery, and cool-down, and uses “rounds / Runden” for repeated exercise sequences. Deterministic engine tests cover exercise, round, and phase boundaries, skipping, pausing, and reload persistence.
 
 ## Code map
-
+- `src/core/audio.ts`: strict local audio preferences plus user-gesture-safe Web Audio tone synthesis.
 - `src/ui/app.ts`: hash routing, rendering, event binding, editor, plan library, imports, instructions, and workout UI.
 - `src/data/default-workout.ts`: permanent bundled routine catalogue.
 - `src/data/exercises.ts`: exercise metadata, translations, targets, variants, and illustration paths.
@@ -109,6 +110,12 @@ The implemented schema-v2 phase model is documented in `docs/phased-workout-prop
 - `src/core/timer.ts`: pause-aware timestamp timer calculations.
 - `public/service-worker.js`: offline app shell caching.
 - Cloudflare Pages serves the generated static files from `dist/`; hash routing keeps direct application routes on the root document.
+
+## Optional audio
+
+Timer-end signals are an opt-in enhancement, not part of workout correctness. The compact checkbox is beside the plan summary, the bounded volume control stays in a collapsed disclosure, and the in-workout mute button is immediately left of End workout. The app creates or resumes its `AudioContext` only after an explicit interaction and synthesizes a sub-second oscillator tone without a media file or network request. A blocked, suspended, unsupported, or failed audio context is silent and does not alter the timestamp-based engine.
+
+Spoken exercise names are intentionally not implemented. Browser speech voices may be local or remote and cannot provide guaranteed offline, privacy, or language coverage for the 16 interface locales and arbitrary plan languages. `docs/audio-decision.md` records the decision, sources, accessibility constraints, and criteria for reconsideration.
 
 ## Development and verification
 
@@ -123,7 +130,11 @@ npm run e2e
 npm run build
 ```
 
-Vitest covers validation, transformations, persistence, timers, the workout engine, the bundled catalogue, and illustration contracts. Playwright covers representative phone, desktop, and tablet journeys, including plan creation/editing, immutable bundled plans, import/AI links, workout controls, fixed action placement, abort/home behavior, reload restoration, and touch targets.
+Vitest covers validation, transformations, persistence, timers, audio, the workout engine, the bundled catalogue, and illustration contracts. Playwright covers representative phone, desktop, and tablet journeys, including plan creation/editing, immutable bundled plans, import/AI links, workout controls, fixed action placement, abort/home behavior, reload restoration, touch targets, plan-list keyboard behavior, and responsive time-column alignment.
+
+Audio unit tests cover invalid and valid preferences, bounded persistence, deferred context creation, user-gesture resume behavior, tone scheduling, mute, and failure-safe behavior. Browser tests cover opt-in defaults, accessible controls, volume persistence, and in-workout mute.
+
+The interface catalogue has 16 locales with compile-time and runtime completeness checks. Playwright verifies locale persistence, translated accessible names, Arabic right-to-left layout, keyboard focus, and representative responsive layouts. Chromium accessibility-tree smoke tests also verify the plan/audio controls, the polite atomic workout status, state changes, and retained focus. Stryker mutation testing covers the validator, import/export, persistence, plan transformations, timer, and workout engine. Exact current results and native-engine limitations are recorded in `docs/ci-quality.md`.
 
 The build produces a static client in `dist/`. `npm run deploy:cloudflare` publishes that directory to the existing Cloudflare Pages project `home-workout`. Deployment credentials and generated output must never be committed.
 

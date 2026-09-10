@@ -25,6 +25,7 @@ button:disabled, button:disabled:hover { background: #e5e7eb; border-color: #98a
 button:disabled { opacity: 1; }
 button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible { outline: 3px solid var(--accent-strong); outline-offset: 3px; }
 a { color: inherit; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 .skip-link { position: fixed; left: 1rem; top: -5rem; z-index: 100; background: var(--accent); padding: 1rem; }
 .skip-link:focus { top: 1rem; }
 .site-header { min-height: 78px; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem clamp(1rem, 4vw, 4rem); border-bottom: 1px solid var(--line); }
@@ -44,12 +45,32 @@ h1, h2, h3, p { margin-top: 0; }
 h1 { font-size: clamp(3rem, 8vw, 7rem); line-height: .88; letter-spacing: -.075em; margin-bottom: 1.25rem; }
 .lede { color: var(--muted); max-width: 34rem; font-size: clamp(1rem, 2vw, 1.3rem); line-height: 1.55; }
 .workout-card { background: var(--surface); color: var(--ink); padding: clamp(1.5rem, 4vw, 3rem); min-height: 360px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid var(--line); box-shadow: 14px 14px 0 #e4e8f0; }
-.card-topline { display: flex; justify-content: space-between; color: var(--muted); font-size: .7rem; letter-spacing: .12em; }
-.routine-picker { margin-top: 1.25rem; color: var(--muted); }
-.routine-picker select { width: 100%; border-color: #cdd5e3; font-weight: 750; }
+.routine-picker { display: grid; gap: .5rem; color: var(--muted); }
+.routine-picker > label { font-size: .78rem; font-weight: 700; }
+.routine-combobox { position: relative; }
+.routine-combobox > button { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .75rem; border-color: #cdd5e3; background: var(--surface); text-align: start; }
+.routine-picker-value, [data-routine-option] { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 1rem; min-width: 0; }
+.routine-picker-value > span:first-child, [data-routine-option] > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); font-weight: 750; }
+.routine-picker-value > span:last-child, [data-routine-option] > span:last-child { text-align: end; white-space: nowrap; color: var(--muted); font-size: .78rem; font-weight: 700; }
+.routine-arrow { color: var(--ink); font-size: 1.2rem; line-height: 1; }
+.routine-options { position: absolute; z-index: 40; inset: calc(100% + 2px) 0 auto; max-height: min(24rem, 60vh); overflow-y: auto; padding: .35rem; border: 1px solid #cdd5e3; background: var(--surface); box-shadow: 0 12px 28px rgb(31 41 55 / .16); color: var(--ink); }
+.routine-options[hidden] { display: none; }
+.routine-options [role="group"] + [role="group"] { margin-top: .35rem; padding-top: .35rem; border-top: 1px solid var(--line); }
+.routine-group-label { padding: .45rem .65rem .3rem; color: var(--muted); font-size: .75rem; font-weight: 800; font-style: italic; }
+[data-routine-option] { min-height: 44px; padding: .65rem; cursor: pointer; }
+[data-routine-option][data-active], [data-routine-option]:hover { background: var(--soft); }
+[data-routine-option][aria-selected="true"] { box-shadow: inset 3px 0 0 var(--accent); }
 .workout-card h2 { font-size: clamp(2.2rem, 5vw, 4.8rem); line-height: .95; letter-spacing: -.055em; max-width: 12ch; margin: 1.5rem 0; }
-.plan-stats { display: flex; flex-wrap: wrap; gap: 1.2rem 2rem; color: var(--muted); font-size: .9rem; }
+.plan-meta { display: flex; flex-wrap: wrap; align-items: start; gap: .35rem 1rem; }
+.plan-stats { display: flex; flex: 1 1 15rem; flex-wrap: wrap; gap: 1.2rem 2rem; color: var(--muted); font-size: .9rem; }
 .plan-stats strong { color: var(--accent); font-size: 1.4rem; margin-right: .3rem; }
+.audio-settings { flex: 0 0 auto; margin-inline-start: auto; color: var(--muted); font-size: .78rem; }
+.audio-toggle { display: inline-flex; min-height: 44px; align-items: center; gap: .5rem; }
+.audio-volume-settings { margin-inline-start: 1.45rem; width: min(15rem, calc(100% - 1.45rem)); }
+.audio-volume-settings summary { min-height: 36px; display: flex; align-items: center; cursor: pointer; font-weight: 700; }
+.audio-volume-settings summary::before { content: '›'; margin-inline-end: .35rem; }
+.audio-volume-settings[open] summary::before { transform: rotate(90deg); }
+.audio-volume-settings input { width: 100%; min-height: 36px; padding: 0; }
 .primary { background: var(--accent); color: #fff; border-color: var(--accent); }
 .primary:hover { background: var(--accent-strong); }
 .start-button { margin-top: 2rem; width: 100%; display: flex; justify-content: center; align-items: center; padding: 1rem 1.2rem; }
@@ -155,9 +176,12 @@ select[size] { min-height: 180px; }
 .workout-exercise-heading { margin-bottom: .65rem; }
 .workout-exercise-heading h2 { margin: 0; font-size: clamp(1.15rem, 2.5vw, 2rem); line-height: 1.2; letter-spacing: -.025em; overflow-wrap: anywhere; }
 .workout-exercise-heading h2 + h2 { margin-top: .2rem; color: var(--muted); font-size: clamp(1rem, 2vw, 1.5rem); }
+.workout-header-controls { display: flex; align-items: center; gap: .4rem; }
 .workout-exit { display: inline-flex; align-items: center; gap: .4rem; min-width: 44px; min-height: 44px; padding: .5rem .75rem; background: var(--surface); color: var(--ink); border: 1px solid var(--muted); border-radius: 999px; font-size: .8rem; }
-.workout-exit > span { color: var(--danger); font-size: 1.5rem; font-weight: 850; line-height: 1; }
+.workout-exit > span[aria-hidden] { color: var(--danger); font-size: 1.5rem; font-weight: 850; line-height: 1; }
 .workout-exit:hover { color: var(--danger); border-color: var(--danger); }
+.workout-audio { width: 44px; min-width: 44px; min-height: 44px; padding: 0; border-color: var(--line); border-radius: 999px; color: var(--muted); }
+.workout-audio[aria-pressed="true"] { border-color: var(--accent); background: var(--soft); color: var(--ink); }
 .legal-notice { max-width: 52rem; line-height: 1.6; padding-bottom: 2rem; }
 .legal-notice h2:not(:first-child) { margin-top: 2rem; }
 .legal-notice address { font-style: normal; }
@@ -182,9 +206,10 @@ select[size] { min-height: 180px; }
 .target-block { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 1rem 0; display: flex; justify-content: space-between; align-items: center; }
 .target-block strong { font-size: clamp(1.8rem, 4vw, 3.5rem); letter-spacing: -.04em; }
 .workout-actions { position: relative; z-index: 20; padding: .5rem clamp(1rem, 5vw, 5rem) calc(.5rem + env(safe-area-inset-bottom)); background: var(--surface); border-top: 1px solid var(--line); }
-.workout-controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin: 0; }
+.workout-controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 0; }
 .workout-controls button { min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; gap: .5rem; }
 .workout-controls .pause { background: var(--ink); color: #fff; }
+.workout-controls [aria-pressed="true"] { background: var(--soft); border-color: var(--accent); }
 button.danger:hover { background: #f7d9d6; }
 button.danger { border-color: var(--danger); color: var(--danger); }
 .completion { min-height: 65vh; display: flex; flex-direction: column; align-items: start; justify-content: center; max-width: 50rem; }
@@ -253,6 +278,8 @@ dialog h2 { font-size: 2.2rem; letter-spacing: -.04em; }
   .brand > span:last-child, .language-picker > span { display: none; }
   .header-actions { gap: .4rem; }
   .language-picker select { max-width: 7.6rem; min-height: 40px; padding-inline: .35rem; }
+  .workout-exit { width: 44px; padding: 0; justify-content: center; }
+  .workout-exit-label { display: none; }
   .workout-screen { height: calc(100vh - 68px); height: calc(100dvh - 68px); }
   .site-header nav a { font-size: .75rem; }
   .home-grid { padding-top: 3rem; }

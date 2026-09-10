@@ -2,7 +2,7 @@
 
 Last updated: 2026-09-10
 
-This checklist covers 58 exercise definitions. The six newly added dynamic warm-up illustrations were owner-confirmed after three local review rounds. Burpee remains separately pending from round six. Earlier decisions are documented in [review-round-3.md](review-round-3.md).
+This checklist covers all 58 exercise definitions. The six added dynamic warm-up illustrations and the final separated four-step Burpee sequence were owner-confirmed on 2026-09-10. Earlier revision decisions are documented in [review-round-3.md](review-round-3.md).
 
 ## Corrections made during the completed audit
 
@@ -49,7 +49,7 @@ This checklist covers 58 exercise definitions. The six newly added dynamic warm-
 | `high-knees` | High Knees | [ACE — Body-weight interval exercise table](https://www.acefitness.org/continuing-education/certified/september-2024/8711/body-weight-interval-training-equipment-free-and-highly-versatile/) | Reviewed | Owner confirmed | 2026-09-07 |
 | `marching-in-place` | Marching in Place | [NHS — How to warm up before exercising](https://www.nhs.uk/live-well/exercise/how-to-warm-up-before-exercising/) | Reviewed | Owner confirmed | 2026-09-07 |
 | `shadow-boxing` | Shadowboxing | [ACE — Boxing-inspired workout](https://www.acefitness.org/resources/everyone/blog/5472/boxing-inspired-workout/) | Reviewed | Reviewed | 2026-09-01 |
-| `burpee` | Burpee | [Cleveland Clinic — How to do a Burpee](https://health.clevelandclinic.org/how-to-do-burpee) | Reviewed | Owner review pending | 2026-09-07 |
+| `burpee` | Burpee | [Cleveland Clinic — How to do a Burpee](https://health.clevelandclinic.org/how-to-do-burpee) | Reviewed | Owner confirmed | 2026-09-10 |
 | `squat-to-reach` | Squat to Reach | [Hospital for Special Surgery — Bite-size workouts](https://www.hss.edu/health-library/move-better/bite-size-workouts) | Reviewed | Owner confirmed | 2026-09-07 |
 | `superman` | Superman | [ACE — Supermans](https://www.acefitness.org/resources/everyone/exercise-library/9/supermans/) | Reviewed | Owner confirmed | 2026-09-07 |
 | `superman-dynamic` | Dynamic Superman | [ACE — Supermans](https://www.acefitness.org/resources/everyone/exercise-library/9/supermans/) | Reviewed | Owner confirmed | 2026-09-07 |
@@ -78,6 +78,6 @@ This checklist covers 58 exercise definitions. The six newly added dynamic warm-
 
 ## Visual review method
 
-Round-two SVG contact sheets were inspected for disconnected limbs, additional bends, floor contacts and silhouette clarity. The six dynamic warm-up illustrations were then checked with a local-only reviewer; the owner confirmed the final candidates on 2026-09-10. Revised bodies use named joint chains; parallel limbs overlap in profile. Burpee uses four separate numbered phases. Static holds use one pose; hip-flexor stretching shows entry into the hold. No automated test establishes medical suitability or final visual acceptance.
+Round-two SVG contact sheets were inspected for disconnected limbs, additional bends, floor contacts and silhouette clarity. The six dynamic warm-up illustrations were then checked with a local-only reviewer; the owner confirmed the final candidates on 2026-09-10. Revised bodies use named joint chains; parallel limbs overlap in profile. The final Burpee image separates four numbered poses instead of overlaying its sequence. Static holds use one pose; hip-flexor stretching shows entry into the hold. No automated test establishes medical suitability or final visual acceptance.
 
-The unit test `tests/unit/exercise-audit.test.ts` requires a row for every exercise and keeps revised poses explicitly pending owner review.
+The unit test `tests/unit/exercise-audit.test.ts` requires one completed row for every exercise and rejects pending text or pose status.

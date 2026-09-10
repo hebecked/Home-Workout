@@ -1,6 +1,6 @@
 # Illustration revision 2
 
-The owner export from 2026-09-07 contains 51 reviews: 33 correction requests and 18 confirmations. Only the 33 flagged images were revised. Dynamic Superman is one additional exercise. The 18 accepted SVGs remain byte-identical.
+The second revision applied the owner's requested corrections and added Dynamic Superman as a separate exercise. Illustrations already accepted in the earlier round were left byte-identical.
 
 ## Decisions
 
@@ -17,21 +17,21 @@ The owner export from 2026-09-07 contains 51 reviews: 33 correction requests and
 
 `scripts/revised-poses.mjs` declares head, neck, shoulder, hip, elbow/wrist and knee/ankle coordinates. The torso is one segment, each arm and leg two segments. Arms always attach to the shoulder and legs to the hip. Profile views intentionally hide coincident far-side limbs. Base head radius is 12 SVG units; torso is approximately 50–75 units, upper/lower limb segments approximately 30–60 units, with shorter frontal projections. Regression tests reject segments outside 15–80 units, disconnected attachments and extra joints; key tests check squat symmetry, rigid push-up alignment, bridge alignment and floor supports. These are drawing conventions, not clinical anatomical measurements or a guarantee of correct form.
 
-## Second owner review
+## Second owner review (historical workflow)
 
-`/#review` contains 34 revised/new images. A blank submitted comment confirms the current revision; text requests another correction. Revision 1 feedback stays in local storage and in the JSON export. Neither rebuilding nor opening the viewer constitutes acceptance. The old comment is available under “Dein bisheriges Feedback”. Subsequent changes must increment the affected image revisions before another review.
+A temporary local workflow was used only to review revised or new images. It is complete: the public review route was removed, temporary reviewer and feedback data were deleted, and they must not be restored. The durable outcome is the completed checklist in `exercise-audit.md`.
 
 ## Legal notice assumption
 
 The owner supplied the public postal address and states that this is a private, non-commercial project. Name and address implement [§ 18(1) MStV](https://www.gesetze-bayern.de/Content/Document/MStV-18). [§ 5 DDG](https://www.gesetze-im-internet.de/ddg/__5.html) expressly requires email for services in its businesslike/economic scope; absence of stored user data is not an exemption. Omitting email relies on the stated non-economic character and must be reassessed if advertising, monetisation or professional promotion is added. This is not a binding legal opinion.
 
-Do not claim that no data is processed: local plans, progress and review comments are stored in the browser; translation sends selected text to Cloudflare, and hosting entails network request data. Hosting/provider retention was not audited in this task.
+Do not claim that no data is processed: local plans and workout progress are stored in the browser; optional translation sends selected text to Cloudflare; and hosting entails network request data. Hosting/provider retention was not audited in this task.
 
-## Verification and local preview
+## Historical verification snapshot
 
 - Production build, TypeScript, ESLint and production-license check pass.
 - 164 unit tests pass. Core coverage: statements 99.30%, branches 98.63%, functions 100%, lines 99.67%; thresholds remain 95%.
 - Full Windows Chromium-fallback suite: 48 passed, 36 intentionally skipped by viewport routing. These are Chromium runs, not native Firefox/WebKit results.
-- Revised images were rendered and visually inspected. The 18 previously confirmed SVG files compare byte-for-byte equal to their pre-edit versions.
-- The local review is served at `http://127.0.0.1:5173/#review`; no existing port owner was stopped. It serves the verified build from `C:/tmp/hw-revision2/dist`, not a live source watcher. After subsequent code changes, rebuild that preview copy or start a new explicitly free development port. The durable sources live in the project repository.
-- No commit, push or public deployment was performed. User acceptance and the platform-specific browser checks described in `ci-quality.md` remain open.
+- Revised images were rendered and visually inspected. Previously accepted SVG files remained byte-for-byte equal to their pre-edit versions.
+- The temporary local review server and its generated artifacts were not retained.
+- These figures describe revision 2 only; current release evidence is recorded in `ci-quality.md`, `mutation-testing.md`, and the repository's continuous integration runs.

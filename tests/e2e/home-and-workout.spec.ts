@@ -8,7 +8,7 @@ test('home presents the default plan and all primary destinations', async ({ pag
   await expect(page.getByText(/3\s+(phases|Phasen)/i)).toBeVisible();
   await expect(page.getByText(/5\s+(rounds|Runden)/i)).toBeVisible();
   await expect(page.getByText(/17\s+(exercises|Übungen)/i)).toBeVisible();
-  await expect(page.getByLabel(/choose routine|Routine wählen/i)).toHaveValue('30-minute-full-body');
+  await expect(page.getByRole('combobox', { name: /choose routine|Routine wählen/i })).toHaveAttribute('data-value', '30-minute-full-body');
   await expect(page.getByRole('button', { name: /start workout/i })).toBeVisible();
   const options = page.locator('.plan-options');
   await expect(options.getByRole('link', { name: /instructions|Anleitung/i })).toBeVisible();
@@ -20,16 +20,89 @@ test('home presents the default plan and all primary destinations', async ({ pag
 test('permanent bundled routines can be selected without replacing the default', async ({ page }) => {
   await page.goto('/');
 
-  const picker = page.getByLabel(/choose routine|Routine wählen/i);
-  await expect(picker.locator('option')).toHaveCount(6);
-  await picker.selectOption('gentle-start');
+  let picker = page.getByRole('combobox', { name: /choose routine|Routine wählen/i });
+  await picker.click();
+  await expect(page.getByRole('listbox', { name: /choose routine|Routine wählen/i })).toBeVisible();
+  await expect(page.getByRole('listbox', { name: /choose routine|Routine wählen/i }).getByRole('option')).toHaveCount(6);
+  await page.getByRole('option', { name: /Gentle Start.*\d+ min/i }).click();
   await expect(page.getByRole('heading', { name: 'Gentle Start', exact: true })).toBeVisible();
   await expect(page.getByText(/4\s+(rounds|Runden)/i)).toBeVisible();
   await expect(page.getByText(/14\s+(exercises|Übungen)/i)).toBeVisible();
 
-  await picker.selectOption('30-minute-full-body');
+  picker = page.getByRole('combobox', { name: /choose routine|Routine wählen/i });
+  await picker.click();
+  await page.getByRole('option', { name: /30 Minute Full Body.*\d+ min/i }).click();
   await expect(page.getByRole('heading', { name: /30 Minute Full Body/i })).toBeVisible();
   await expect(page.getByText(/5\s+(rounds|Runden)/i)).toBeVisible();
+});
+
+test('plan selection keeps its estimate, label, focus, and responsive alignment', async ({ page }) => {
+  await page.goto('/');
+
+  await expect(page.getByText(/READY WHEN YOU ARE|BEREIT, WENN DU ES BIST/i)).toHaveCount(0);
+  const picker = page.getByRole('combobox', { name: /choose routine|Trainingsplan wählen/i });
+  await expect(picker).toContainText(/30 Minute Full Body/i);
+  await expect(picker).toContainText(/\d+\s*(min|Min\.)/);
+  await expect(picker).toHaveAttribute('aria-expanded', 'false');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+
+  await picker.focus();
+  await expect(picker).toBeFocused();
+  await picker.press('ArrowDown');
+  const listbox = page.getByRole('listbox', { name: /choose routine|Trainingsplan wählen/i });
+  await expect(listbox).toBeVisible();
+  const optionTimeRights = await listbox.getByRole('option').evaluateAll((options) => options.map((option) => {
+    const time = option.lastElementChild as HTMLElement;
+    return Math.round(time.getBoundingClientRect().right);
+  }));
+  expect(Math.max(...optionTimeRights) - Math.min(...optionTimeRights)).toBeLessThanOrEqual(1);
+  await picker.press('ArrowDown');
+  await picker.press('Enter');
+
+  const updatedPicker = page.getByRole('combobox', { name: /choose routine|Trainingsplan wählen/i });
+  await expect(updatedPicker).toBeFocused();
+  await expect(updatedPicker).toHaveAttribute('data-value', 'gentle-start');
+  await expect(updatedPicker).toContainText(/Gentle Start/i);
+  await expect(updatedPicker).toContainText(/\d+\s*(min|Min\.)/);
+});
+
+test('timer audio remains opt-in, local, adjustable, and mutable during a workout', async ({ page }) => {
+  await page.goto('/');
+
+  const toggle = page.getByRole('checkbox', { name: /timer end signals|Timer-Endsignale/i });
+  await expect(toggle).not.toBeChecked();
+  await expect(page.getByRole('slider', { name: /volume|Lautstärke/i })).toHaveCount(0);
+  if (await toggle.isDisabled()) {
+    await expect(toggle).toBeDisabled();
+    expect(await page.evaluate(() => localStorage.getItem('home-workout:timer-audio'))).toBeNull();
+    return;
+  }
+  await expect(toggle).toBeEnabled();
+
+  await toggle.check();
+  const volumeDetails = page.locator('[data-audio-volume-settings]');
+  await expect(volumeDetails).toBeVisible();
+  await volumeDetails.locator('summary').click();
+  const volume = page.getByRole('slider', { name: /volume|Lautstärke/i });
+  await expect(volume).toBeEnabled();
+  await volume.fill('25');
+  expect(await page.evaluate(() => localStorage.getItem('home-workout:timer-audio'))).toBe('{"enabled":true,"volume":0.25}');
+
+  await page.getByRole('button', { name: /start workout/i }).click();
+  const workoutToggle = page.getByRole('button', { name: /timer end signals|Timer-Endsignale/i });
+  await expect(page.locator('.workout-header-controls')).toContainText(/end workout|Workout beenden/i);
+  const headerButtons = page.locator('.workout-header-controls').getByRole('button');
+  await expect(headerButtons).toHaveCount(2);
+  await expect(headerButtons.first()).toHaveAccessibleName(/timer end signals|Timer-Endsignale/i);
+  await expect(headerButtons.last()).toHaveAccessibleName(/end workout|Workout beenden/i);
+  await expect(workoutToggle).toHaveAttribute('aria-pressed', 'true');
+  await workoutToggle.click();
+  await expect(page.getByRole('button', { name: /timer end signals|Timer-Endsignale/i })).toHaveAttribute('aria-pressed', 'false');
+  expect(await page.evaluate(() => localStorage.getItem('home-workout:timer-audio'))).toBe('{"enabled":false,"volume":0.25}');
+
+  await page.reload();
+  await page.getByRole('button', { name: /resume|fortsetzen/i }).click();
+  await expect(page.getByRole('button', { name: /timer end signals|Timer-Endsignale/i })).toHaveAttribute('aria-pressed', 'false');
 });
 
 test('the app stays visibly light when the operating system prefers dark mode', async ({ page }, testInfo) => {
@@ -59,9 +132,9 @@ test('phone workout journey shows two-language exercise copy, localized controls
   await page.goto('/');
   await page.getByRole('button', { name: /start workout/i }).click();
 
-  await expect(page.getByText(/Phase 1\s*\/\s*3/i)).toBeVisible();
-  await expect(page.getByText(/Runde 1\s*\/\s*1|Round 1\s*\/\s*1/i)).toBeVisible();
-  await expect(page.getByText(/Exercise 1\s*\/\s*4/i)).toBeVisible();
+  await expect(page.locator('.workout-status').getByText(/Phase 1\s*\/\s*3/i)).toBeVisible();
+  await expect(page.locator('.workout-status').getByText(/Runde 1\s*\/\s*1|Round 1\s*\/\s*1/i)).toBeVisible();
+  await expect(page.locator('.workout-status').getByText(/Exercise 1\s*\/\s*4/i)).toBeVisible();
   await expect(page.locator('.translation')).toHaveCount(2);
   await expect(page.getByRole('img', { name: /marching|Marschieren/i })).toBeVisible();
   await expect(page.getByRole('button', { name: /previous|zurück/i })).toBeVisible();
@@ -71,7 +144,7 @@ test('phone workout journey shows two-language exercise copy, localized controls
   await page.getByRole('button', { name: /pause/i }).click();
   await expect(page.getByRole('button', { name: /resume|fortsetzen/i })).toBeVisible();
   await page.clock.fastForward(60_000);
-  await expect(page.getByText(/paused|pausiert/i)).toBeVisible();
+  await expect(page.locator('.phase-pill')).toContainText(/paused|pausiert/i);
   await page.getByRole('button', { name: /resume|fortsetzen/i }).click();
   const next = page.getByRole('button', { name: /next|weiter/i });
   for (const heading of [/^Torso Rotations$/i, /^Bodyweight Good Mornings$/i, /^Dynamic Lunge with Reach$/i]) {
@@ -83,11 +156,11 @@ test('phone workout journey shows two-language exercise copy, localized controls
   await expect(page.locator('.phase-pill')).toHaveText(/rest|pause/i);
   await next.click();
   await page.clock.runFor(550);
-  await expect(page.getByText(/Phase 2\s*\/\s*3/i)).toBeVisible();
-  await expect(page.getByText(/Exercise 1\s*\/\s*8/i)).toBeVisible();
+  await expect(page.locator('.workout-status').getByText(/Phase 2\s*\/\s*3/i)).toBeVisible();
+  await expect(page.locator('.workout-status').getByText(/Exercise 1\s*\/\s*8/i)).toBeVisible();
   await page.getByRole('button', { name: /next|weiter/i }).click();
   await page.getByRole('button', { name: /next|weiter/i }).click();
-  await expect(page.getByText(/Exercise 2\s*\/\s*8/i)).toBeVisible();
+  await expect(page.locator('.workout-status').getByText(/Exercise 2\s*\/\s*8/i)).toBeVisible();
   const kneeOption = page.getByRole('button', { name: /Knee Push-up/i });
   await expect(kneeOption).toBeVisible();
   await expect(page.getByText(/Alternatives/i).first()).toBeVisible();

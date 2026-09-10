@@ -1,13 +1,14 @@
 # Mutation testing report
 
-Final local run: 893 mutants across the validator, import/export, persistence, plan transformations, timer, and workout engine.
+Final local run on 2026-09-10: 1,460 mutants across the validator, import/export, persistence, plan transformations, timer, and workout engine. It used four workers to avoid load-induced timeouts on the local host and completed in 4 minutes 3 seconds.
 
-- Mutation score: **83.76%**
-- Covered mutation score: **84.23%**
-- Killed: **748**
-- Survived: **140**
-- No coverage: **5**
+- Mutation score: **74.79%**
+- Covered mutation score: **76.69%**
+- Killed: **1,092**
+- Survived: **332**
+- No coverage: **36**
 - Timeouts/errors: **0**
+- Configured break threshold: **70%** — passed
 
 The independent mutation-review pass added behavior-focused tests for exact import error contracts and causes, input non-leakage, strict persisted-session shapes, stable storage keys, validator boundaries and issue paths, plus pause/resume elapsed-time arithmetic. It exposed a real gap in persisted-session validation; production now rejects missing runtime fields and unknown properties.
 

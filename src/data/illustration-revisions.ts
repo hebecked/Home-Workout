@@ -1,6 +1,6 @@
 export const REVISED_ILLUSTRATIONS = new Set(`squat sumo-squat split-squat glute-bridge single-leg-glute-bridge calf-raise wall-sit push-up scapular-push-up incline-push-up knee-push-up resistance-band-row dead-bug plank mountain-climber hollow-hold high-knees marching-in-place burpee squat-to-reach superman superman-dynamic heel-dig shoulder-roll arm-circle leg-swing hip-circles ankle-rocks torso-rotations bodyweight-good-morning dynamic-lunge-reach inchworm calf-stretch hamstring-stretch hip-flexor-stretch shoulder-upper-back-stretch chest-stretch child-pose cobra-stretch yoga-bridge`.split(' '));
 const ROUND_THREE_ILLUSTRATIONS = new Set('resistance-band-row dead-bug mountain-climber hamstring-stretch child-pose'.split(' '));
+const ROUND_SIX_ILLUSTRATIONS = new Set(['burpee']);
 const ROUND_EIGHT_ILLUSTRATIONS = new Set('hip-circles ankle-rocks torso-rotations bodyweight-good-morning dynamic-lunge-reach inchworm'.split(' '));
-export const CURRENT_REVIEW_ILLUSTRATIONS = new Set(['burpee']);
-export const REVIEW_ROUND = 6;
-export const illustrationRevision = (id: string): number => ROUND_EIGHT_ILLUSTRATIONS.has(id) ? 8 : CURRENT_REVIEW_ILLUSTRATIONS.has(id) ? REVIEW_ROUND : ROUND_THREE_ILLUSTRATIONS.has(id) ? 3 : REVISED_ILLUSTRATIONS.has(id) ? 2 : 1;
+export const CURRENT_REVIEW_ILLUSTRATIONS = new Set<string>();
+export const illustrationRevision = (id: string): number => ROUND_EIGHT_ILLUSTRATIONS.has(id) ? 8 : ROUND_SIX_ILLUSTRATIONS.has(id) ? 6 : ROUND_THREE_ILLUSTRATIONS.has(id) ? 3 : REVISED_ILLUSTRATIONS.has(id) ? 2 : 1;

@@ -1,22 +1,28 @@
 # Product status and roadmap
 
-Last updated: 2026-09-01
+Last updated: 2026-09-10
 
 ## Implemented in the current release
 
 - Six permanent, validated bundled routines. They are source-controlled app data and are never read from or written to browser plan storage.
-- A home-screen routine picker and a dedicated library page.
+- A keyboard-accessible home-screen plan list with a right-aligned duration on every option, plus a dedicated library page.
 - Separate local storage for user-created and imported plans.
 - Direct editing of local plans while preserving their stable plan ID.
 - Safe customization of a bundled routine as a new local copy; the bundled source remains unchanged.
-- Complete movement-specific local SVG coverage for all 51 exercise-library entries with category colors: legs blue, arms orange, core purple, cardio/full body red, warm-up gold, and stretching teal.
+- Complete movement-specific local SVG coverage for all 58 exercise-library entries with category colors: legs blue, arms orange, core purple, cardio/full body red, warm-up gold, and stretching teal.
 - The Plan Studio exercise picker is grouped by bilingual category and alphabetized within each group.
-- Small motion arrows, same-scale overlaid movement poses, single-pose static holds, and corrected floor contact for easily confused movements.
+- Small motion arrows, same-scale overlays for most two-position movements, separated numbered poses for the Burpee sequence, single-pose static holds, and corrected floor contact for easily confused movements.
 - AI plan guide, strict direct-link validation, import preview, and JSON-file fallback.
 - Stable workout controls, reload-safe timing, skippable rests, and a confirmed abort flow.
 - The optional repetition tap counter is intentionally disabled in the UI. Repetition targets remain visible, and duration/rest/total timers remain active.
 - Per-round `Exercise X / Y · Übung X / Y` progress and a visible alternative-exercise chooser during workouts.
 - Per-exercise target editing plus duplicate and confirmed-delete actions for local plans.
+- Schema version 2 plans with warm-up, one or more training phases, optional active recovery, cool-down, and phase-specific timing rules.
+- Lossless, non-mutating migration of stored, imported, and linked schema version 1 plans while retaining the public v1 reader and schema.
+- A directly translated 16-locale interface, including Arabic right-to-left layout, independent from user-authored workout languages.
+- Optional consent-based Cloudflare pre-translation with visible provenance and mandatory manual review before use.
+- Opt-in, locally synthesized timer-end signals with a compact plan-summary checkbox, disclosed volume, and in-workout mute immediately left of End workout; spoken names remain deferred for offline, privacy, language-coverage, and screen-reader reasons.
+- Screen-reader smoke coverage for semantic plan/audio controls, polite atomic workout announcements, state changes, and focus retention across rerenders.
 
 ## Bundled plan catalogue
 
@@ -39,24 +45,22 @@ Evidence basis:
 
 ## Remaining work
 
-### Owner decisions
+### Owner decision
 
 - Choose a final Cloudflare hostname: attach a custom domain or create a new globally unique Pages project name. The generated `-65g` suffix cannot simply be edited on the existing `pages.dev` hostname.
 
-### Illustration status
+### Completed illustration status
 
-- All 51 SVG files contain a movement-specific pose, the category palette, and file-level contract tests. Moving exercises use a bounded motion arrow; static holds and stretches intentionally do not.
+- All 58 SVG files contain a movement-specific pose, the category palette, and file-level contract tests. Moving exercises use a bounded motion arrow; static holds and stretches intentionally do not.
 - Pull-up, Assisted Pull-up, Chin-up, and Pike Push-up use same-scale overlaid positions so no sideways travel is implied. Side Plank uses one static figure.
-- All 51 exercises have movement-specific German and English instructions. The remaining independent source comparison is tracked row by row in `docs/exercise-audit.md`.
+- All 58 exercises have movement-specific German and English instructions, reliable-source assignment, and completed text and pose sign-off in `docs/exercise-audit.md`.
 - Source notes and the meaning of the translucent pose are recorded in `docs/exercise-sources.md`.
 
 ### Later enhancements
 
-- Optional plan history/migrations if the JSON schema moves beyond version 1.
-- Phase-aware schema version 2 with warm-up, multiple training phases, cool-down, per-phase rounds, and independent rest rules; see `docs/phased-workout-proposal.md`.
 - Optional workout history and progression tracking, stored locally and opt-in only.
-- Consent-based Cloudflare pre-translation is implemented with visible provenance and mandatory manual review. Additional translated UI chrome remains later work.
 - A richer native install prompt and offline/update feedback; device-specific installation instructions are already visible on the guide page.
-- Accessibility review with screen-reader smoke tests in addition to the current semantic, focus, contrast, motion, and touch-target checks.
+- Physical-Safari offline verification; native Windows WebKit is covered, while local native Firefox remains blocked at process launch.
+- Decide whether a chosen easier alternative should persist across reloads during an active session.
 
 The concise authoritative checklist is [`../BACKLOG.md`](../BACKLOG.md). Every unfinished task must be added there before work stops.
