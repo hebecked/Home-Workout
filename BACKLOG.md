@@ -1,12 +1,12 @@
 # Home Workout backlog
 
-Last reviewed: 2026-09-08
+Last reviewed: 2026-09-10
 
 This file is the durable hand-off for work that must not exist only in an AI conversation. `docs/product-roadmap.md` contains the fuller product context; this file is the short operational checklist.
 
-## External app-testing findings — decisions pending
+## External app-testing findings — historical decisions
 
-The following findings come from `feedback-home-workout-debugging.md` (03.09.2026). They are **not accepted TODOs**. We will review them one by one and explicitly choose **Fix**, **fix differently**, or **ignore** before changing the product. The order is the order in which we will discuss them.
+The following findings come from `feedback-home-workout-debugging.md` (03.09.2026). All four decisions below were accepted and implemented on 2026-09-07. The native cross-browser rerun remains open because WebKit and Firefox are unavailable on this workstation.
 
 ### Resolutions accepted 2026-09-07
 
@@ -16,15 +16,16 @@ The following findings come from `feedback-home-workout-debugging.md` (03.09.202
 - [x] BUG-HW-002: render the skip link as the first focusable element and retain a focusable main-content target.
 - [ ] Rerun the four cases and manual-translation regression in Chromium and WebKit. Firefox remains a separate local-runner issue.
 
-1. **BUG-HW-004 · Automatic translation consent (high):** The `Pre-translate draft` button was reported enabled before the Cloudflare transfer-consent checkbox was selected. The decision must cover the disabled state, no-request guarantee, continued translation after consent, and preservation of existing manual translations. Report evidence: TC-HW-011/TC-HW-012, Chromium and WebKit.
-2. **BUG-HW-003 · Zero rounds accepted (high):** A locally saved plan was reported to accept `Rounds = 0`. The decision must cover client-side and schema validation, a clear error, and preventing invalid persistence while retaining values from `1` upward. Report evidence: TC-HW-018, Chromium and WebKit.
-3. **BUG-HW-001 · Start-page color contrast (high):** The external accessibility run reported serious WCAG 2 AA contrast failures for the brand mark, `START WORKOUT`, and category labels. The decision must cover normal, focus, hover, disabled, and workout states and a Chromium/WebKit recheck. Report evidence: TC-HW-021 and axe-core output.
-4. **BUG-HW-002 · Skip-link focus in WebKit (medium/high):** The first `Tab` reportedly did not focus `Zum Inhalt springen` in WebKit, although Chromium passed. The decision must cover first-focus order, visible focus, main-content focus after activation, and absence of a keyboard trap. Report evidence: TC-HW-022.
+1. **[x] BUG-HW-004 · Automatic translation consent (high):** Consent gating, no-request behavior, continued translation after consent, and preservation of manual translations are implemented. Report evidence: TC-HW-011/TC-HW-012.
+2. **[x] BUG-HW-003 · Zero rounds accepted (high):** Shared validation, clear errors, and prevention of invalid persistence are implemented while values from `1` upward remain valid. Report evidence: TC-HW-018.
+3. **[x] BUG-HW-001 · Start-page color contrast (high):** WCAG 2 AA colors and the affected normal, focus, hover, disabled, and workout states are implemented. Report evidence: TC-HW-021 and axe-core output.
+4. **[x] BUG-HW-002 · Skip-link focus in WebKit (medium/high):** The focus order, visible focus, main-content target, and keyboard-trap behavior are implemented; native WebKit rerun remains open above. Report evidence: TC-HW-022.
 
 The report also notes that Firefox could not start because of `spawn UNKNOWN`; this is currently a test-environment issue rather than an app finding. Firefox coverage should be considered separately after the local runner problem is resolved, and the four cases above plus the manual-translation regression case should be rerun after any chosen changes.
 
-## Priority 0 — movement safety and correctness
+## Priority 0 — public release hygiene, movement safety, and correctness
 
+- [x] **PRIV-HW-001 · Repository-public-content audit (2026-09-10):** Audited 168 tracked files and reachable Git history for private addresses, credentials, environment files, feedback/reviewer exports, generated reports, and local paths. No private values or sensitive artifacts were found. `docs/private-release-config.md` contains process guidance only; `.env.production.local`, build output, and test artifacts remain ignored.
 - [x] Correct **Burpee** to one readable phase with exactly two arms and two legs; avoid limb multiplication caused by overlaid multi-stage poses.
 - [x] Make **Side Plank** unambiguously forearm-supported: elbow below the shoulder and forearm visibly grounded.
 - [x] Correct **Incline Push-up** so the hands are visibly on the raised support and the feet remain on the floor.
@@ -36,7 +37,7 @@ The report also notes that Firefox could not start because of `spawn UNKNOWN`; t
 - [x] Redesign the **Pike Push-up** illustration with same-scale overlaid start/lowering poses, fixed hands and feet, and no implied sideways movement.
 - [x] Add sourced DE/EN entries and original local SVGs for **Shadowboxing**, **Sumo Squat Hold**, four dynamic warm-ups, and four post-workout stretches.
 - [x] Replace every generic exercise sentence with a concise, movement-specific DE/EN setup, action, and key form cue. The complete per-exercise source/pose audit remains open above.
-- [ ] Run a human review of every exercise illustration with a temporary sequential viewer: show one image at a time, provide a comment field, and allow **Confirm** or **Needs correction**. Iterate through all flagged images until every graphic is confirmed, then remove the review-only viewer.
+- [x] Run the human illustration review workflow and remove its temporary reviewer and feedback data. The six new dynamic warm-up images were owner-confirmed on 2026-09-10; remaining Burpee approval is tracked in the review item below.
 
 ## Priority 1 — multilingual editing and comprehension
 
@@ -46,6 +47,7 @@ The report also notes that Firefox could not start because of `spawn UNKNOWN`; t
 - [x] Mark the workout variant selector explicitly as **easier alternatives** and explain that the original movement remains selectable.
 - [x] Add optional Cloudflare Workers AI pre-translation with explicit user consent, visible source/provider/review status, request limits, and mandatory manual review before saving, exporting, or starting.
 - [x] Put repetition targets and duration counters directly below the image and compact the controls without dropping below 44px touch targets. Regression checks cover phone, tablet, desktop and 844×390 landscape layouts.
+- [ ] **UI-HW-001 · Plan-selection layout:** Remove the helper text `BEREIT, WENN DU ES BIST` and place the time estimate right-aligned inside the training-plan selector. Verify responsive layout, keyboard focus, and screen-reader labeling.
 - [x] Investigate historical `quality` failures and retain future diagnostics. The latest historical failure was the coverage step, already followed by a boundary-test fix and successful runs. Current local coverage passes unchanged 95% thresholds. See `docs/ci-quality.md` for evidence and limitations; a fresh remote run awaits an authorized push.
 - [x] Add a footer-linked **Impressum** with the owner-supplied name and address. Email omission relies on the stated private, non-economic character, not absence of data storage. Chromium offline reload passes. See `docs/review-round-2.md` for the legal scope.
 - [ ] Verify offline reload on Safari/device or Linux WebKit; Windows WebKit fails internally. Native Firefox also cannot launch on this workstation. These limitations are recorded, not counted as successful browser tests.
@@ -54,7 +56,7 @@ The report also notes that Firefox could not start because of `spawn UNKNOWN`; t
 
 - [x] Revise all 33 owner-flagged SVGs; preserve the 18 confirmed images byte-for-byte. Add a separate Dynamic Superman exercise.
 - [x] Open only the 34 revised/new images in the second review queue; preserve revision-1 feedback, and save blank comments as confirmation.
-- [ ] Obtain owner approval for revision 2, apply any further feedback, and repeat. Agent checks are not owner acceptance.
+- [ ] Obtain owner approval for the remaining revision-2 item (**Burpee**), apply any further feedback, and repeat if needed. Agent checks are not owner acceptance.
 
 ## Priority 2 — phase-aware workout model
 
@@ -62,6 +64,8 @@ The report also notes that Firefox could not start because of `spawn UNKNOWN`; t
 - [x] Add **active recovery** as an optional phase kind. It accepts duration or untimed exercises and remains distinct from passive rest.
 - [x] Add phase-aware editor controls, import/export migration, progress UI, and validators after schema-v1 plans can be migrated losslessly.
 - [x] Add explicit, non-mutating schema-v1 to schema-v2 migration while retaining the v1 reader for stored plans and shared links.
+
+- [ ] **AUDIO-HW-001 · Timer audio options:** Evaluate opt-in sounds when a timer ends and optional spoken exercise names. Check browser support, autoplay/user-gesture restrictions, mute and volume controls, localization, offline behavior, accessibility, and privacy before deciding whether to implement.
 
 ## Priority 3 — final public URL (owner decision)
 
