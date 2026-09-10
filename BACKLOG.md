@@ -4,6 +4,18 @@ Last reviewed: 2026-09-10
 
 This file is the durable hand-off for work that must not exist only in an AI conversation. `docs/product-roadmap.md` contains the fuller product context; this file is the short operational checklist.
 
+## Requested execution order (owner, 2026-09-10)
+
+The following order is the agreed work sequence. The numbers are work phases, not an automatic renumbering of backlog priorities:
+
+0. **DOC-HW-001** — refresh the README and project documentation, including a new README screenshot.
+3. **UI-HW-001** — remove the start-page helper text and right-align the time estimate inside the plan selector.
+5. **AUDIO-HW-001** — evaluate optional timer sounds and spoken exercise names.
+5a. If the evaluation supports it, implement the audio options with the documented browser, accessibility, localization, offline, and privacy constraints.
+0. **DOC-HW-001 (follow-up)** — update the documentation again so it reflects the implemented UI/audio decisions and current evidence.
+10. **A11Y-HW-001** — add and run screen-reader smoke tests.
+After that, re-evaluate the remaining backlog, remove items that are no longer necessary, continue with the still-relevant work in the existing priority order, and finish with one final **DOC-HW-001** documentation pass.
+
 ## External app-testing findings — historical decisions
 
 The following findings come from `feedback-home-workout-debugging.md` (03.09.2026). All four decisions below were accepted and implemented on 2026-09-07. The native cross-browser rerun remains open because WebKit and Firefox are unavailable on this workstation.
@@ -25,6 +37,7 @@ The report also notes that Firefox could not start because of `spawn UNKNOWN`; t
 
 ## Priority 0 — public release hygiene, movement safety, and correctness
 
+- [ ] **DOC-HW-001 · Documentation and README refresh:** Bring the README, project documentation, roadmap, audit/review notes, and other public documentation up to date; remove stale or contradictory content; add missing current information; and create a new README screenshot. Keep private release configuration, personal addresses, reviewer feedback, and generated artifacts out of tracked documentation.
 - [x] **PRIV-HW-001 · Repository-public-content audit (2026-09-10):** Audited 168 tracked files and reachable Git history for private addresses, credentials, environment files, feedback/reviewer exports, generated reports, and local paths. No private values or sensitive artifacts were found. `docs/private-release-config.md` contains process guidance only; `.env.production.local`, build output, and test artifacts remain ignored.
 - [x] Correct **Burpee** to one readable phase with exactly two arms and two legs; avoid limb multiplication caused by overlaid multi-stage poses.
 - [x] Make **Side Plank** unambiguously forearm-supported: elbow below the shoulder and forearm visibly grounded.
@@ -37,7 +50,7 @@ The report also notes that Firefox could not start because of `spawn UNKNOWN`; t
 - [x] Redesign the **Pike Push-up** illustration with same-scale overlaid start/lowering poses, fixed hands and feet, and no implied sideways movement.
 - [x] Add sourced DE/EN entries and original local SVGs for **Shadowboxing**, **Sumo Squat Hold**, four dynamic warm-ups, and four post-workout stretches.
 - [x] Replace every generic exercise sentence with a concise, movement-specific DE/EN setup, action, and key form cue. The complete per-exercise source/pose audit remains open above.
-- [x] Run the human illustration review workflow and remove its temporary reviewer and feedback data. The six new dynamic warm-up images were owner-confirmed on 2026-09-10; remaining Burpee approval is tracked in the review item below.
+- [x] Run the human illustration review workflow and remove its temporary reviewer and feedback data. The six new dynamic warm-up images and **Burpee** were owner-confirmed on 2026-09-10; no unapproved image remains in this review round.
 
 ## Priority 1 — multilingual editing and comprehension
 
@@ -56,7 +69,7 @@ The report also notes that Firefox could not start because of `spawn UNKNOWN`; t
 
 - [x] Revise all 33 owner-flagged SVGs; preserve the 18 confirmed images byte-for-byte. Add a separate Dynamic Superman exercise.
 - [x] Open only the 34 revised/new images in the second review queue; preserve revision-1 feedback, and save blank comments as confirmation.
-- [ ] Obtain owner approval for the remaining revision-2 item (**Burpee**), apply any further feedback, and repeat if needed. Agent checks are not owner acceptance.
+- [x] Obtain owner approval for the remaining revision-2 item (**Burpee**), apply any further feedback, and repeat if needed. Owner confirmed Burpee on 2026-09-10; no further feedback remains.
 
 ## Priority 2 — phase-aware workout model
 
@@ -76,9 +89,9 @@ The report also notes that Firefox could not start because of `spawn UNKNOWN`; t
 ## Priority 4 — later product work
 
 - [ ] Add opt-in local workout history and progression views. No analytics or server-side profile is planned.
-- [ ] Add more bundled UI translations beyond German and English.
-- [ ] Add a clearer install prompt plus visible offline/update status.
-- [ ] Add screen-reader smoke tests to the existing keyboard, focus, contrast, reduced-motion, and touch-target checks.
+- [x] Add more bundled UI translations beyond German and English. Owner confirmed this item as implemented on 2026-09-10.
+- [ ] **PWA-HW-001 · Install/update visibility:** Improve install discoverability and show accessible offline and update-available status with clear actions. The existing device-specific installation help is already complete; this former item 9 concerns the in-app prompt and status visibility, not analytics or a server-side profile.
+- [ ] **A11Y-HW-001 · Screen-reader smoke tests:** Add smoke tests to the existing keyboard, focus, contrast, reduced-motion, and touch-target checks.
 - [ ] Optionally persist a chosen alternative exercise across a page reload during an active session. The current chooser intentionally affects only the running in-memory session.
 
 ## Completed polish, installability, and ownership
