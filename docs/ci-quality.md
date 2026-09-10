@@ -15,6 +15,8 @@ The final local release checks completed with Node.js on Windows:
 
 Browser coverage includes routine-option time alignment, responsive layouts, keyboard operation and focus, translated labels, audio opt-in/volume/mute behavior, touch targets, offline reload, and accessibility-tree/live-region smoke tests.
 
+The public [CI run 34527897023](https://github.com/hebecked/Home-Workout/actions/runs/34527897023) completed successfully for release commit `3a4f502`. After Cloudflare Pages deployment, the canonical `https://home-workout-65g.pages.dev` URL also passed the Chromium phone suite with seven tests and one intentional tablet-only skip. The immutable deployment preview is `https://55bd8242.home-workout-65g.pages.dev`.
+
 ## Historical diagnostic context
 
 The latest failed historical quality run located on 2026-09-07 was [33551809454](https://github.com/hebecked/Home-Workout/actions/runs/33551809454), commit `31d3d80`. Its public job metadata identifies `npm run coverage` as the failed step; mutation succeeded. Raw log download requires authentication and was not available in the local unauthenticated GitHub CLI.
