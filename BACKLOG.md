@@ -8,7 +8,7 @@ This file is the durable hand-off for work that must not exist only in an AI con
 
 - [x] **DOC-HW-001:** refreshed the README, project documentation, roadmap, audit/review notes, quality reports, and README screenshot; removed stale review and implementation status.
 - [x] **UI-HW-001:** removed the helper text. The accessible plan list now shows each routine's estimate right-aligned beside its name, supports pointer and keyboard selection, and retains focus after selection.
-- [x] **AUDIO-HW-001:** evaluated signals and speech. Implemented only an opt-in local timer tone; a visually subdued checkbox is right-aligned below the plan actions, the device controls volume, and the workout mute button sits immediately left of End workout. Speech remains rejected for this release.
+- [x] **AUDIO-HW-001:** evaluated signals and speech. Implemented only an opt-in local timer tone; a compact stateful button sits immediately right of Start workout, the device controls volume, and the workout mute button sits immediately left of End workout. Speech remains rejected for this release.
 - [x] **A11Y-HW-001:** added accessibility-tree smoke tests for the plan list, optional audio, workout announcements, state changes, and focus retention.
 
 The remaining owner URL choice and later product ideas were re-evaluated below. They remain useful but are not release blockers and were not expanded during this release pass.
@@ -75,7 +75,7 @@ The report also notes that Firefox could not start because of `spawn UNKNOWN`; t
 - [x] Add phase-aware editor controls, import/export migration, progress UI, and validators after schema-v1 plans can be migrated losslessly.
 - [x] Add explicit, non-mutating schema-v1 to schema-v2 migration while retaining the v1 reader for stored plans and shared links.
 
-- [x] **AUDIO-HW-001 · Timer audio options (updated 2026-09-11):** Implemented an opt-in, locally synthesized timer-end signal with a fixed moderate output, persistent mute, user-gesture unlock, and silent failure. The secondary checkbox is right-aligned below the plan actions, while the in-workout mute button remains left of End workout. Listening volume follows the device setting; no redundant in-app slider is shown. It uses no media request and works with cached code. Spoken names remain rejected because browser voices can be missing, device-dependent, or remote. See `docs/audio-decision.md`.
+- [x] **AUDIO-HW-001 · Timer audio options (updated 2026-09-11):** Implemented an opt-in, locally synthesized timer-end signal with a fixed moderate output, persistent mute, user-gesture unlock, and silent failure. A compact `aria-pressed` button sits immediately right of the wide Start workout action, while the in-workout mute button remains left of End workout. Listening volume follows the device setting; no checkbox or redundant in-app slider is shown. It uses no media request and works with cached code. Spoken names remain rejected because browser voices can be missing, device-dependent, or remote. See `docs/audio-decision.md`.
 
 ## Priority 3 — final public URL (owner decision)
 

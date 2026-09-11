@@ -69,8 +69,9 @@ test('plan selection keeps its estimate, label, focus, and responsive alignment'
 test('timer audio remains opt-in, local, and mutable during a workout', async ({ page }) => {
   await page.goto('/');
 
-  const toggle = page.getByRole('checkbox', { name: /timer end signals|Timer-Endsignale/i });
-  await expect(toggle).not.toBeChecked();
+  const toggle = page.getByRole('button', { name: /timer end signals|Timer-Endsignale/i });
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.getByRole('checkbox', { name: /timer end signals|Timer-Endsignale/i })).toHaveCount(0);
   await expect(page.getByRole('slider', { name: /volume|Lautstärke/i })).toHaveCount(0);
   if (await toggle.isDisabled()) {
     await expect(toggle).toBeDisabled();
@@ -79,20 +80,21 @@ test('timer audio remains opt-in, local, and mutable during a workout', async ({
   }
   await expect(toggle).toBeEnabled();
 
-  await toggle.check();
+  await toggle.click();
+  await expect(page.getByRole('button', { name: /timer end signals|Timer-Endsignale/i })).toBeFocused();
+  await expect(page.getByRole('button', { name: /timer end signals|Timer-Endsignale/i })).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByRole('slider')).toHaveCount(0);
   expect(await page.evaluate(() => localStorage.getItem('home-workout:timer-audio'))).toBe('{"enabled":true}');
-  const audioSettings = page.locator('.audio-settings');
-  const audioLabel = audioSettings.locator('.audio-toggle');
-  const createPlan = page.locator('.create-plan-button');
-  const [audioBox, labelBox, createBox] = await Promise.all([audioSettings.boundingBox(), audioLabel.boundingBox(), createPlan.boundingBox()]);
+  const start = page.getByRole('button', { name: /start workout|Training starten/i });
+  const homeAudio = page.getByRole('button', { name: /timer end signals|Timer-Endsignale/i });
+  const [startBox, audioBox] = await Promise.all([start.boundingBox(), homeAudio.boundingBox()]);
+  expect(startBox).not.toBeNull();
   expect(audioBox).not.toBeNull();
-  expect(labelBox).not.toBeNull();
-  expect(createBox).not.toBeNull();
-  expect(audioBox!.y).toBeGreaterThanOrEqual(createBox!.y + createBox!.height);
-  expect(Math.abs(labelBox!.x + labelBox!.width - (createBox!.x + createBox!.width))).toBeLessThanOrEqual(1);
+  expect(Math.abs(startBox!.y - audioBox!.y)).toBeLessThanOrEqual(1);
+  expect(audioBox!.x).toBeGreaterThanOrEqual(startBox!.x + startBox!.width);
+  expect(startBox!.width).toBeGreaterThan(audioBox!.width * 4);
 
-  await page.getByRole('button', { name: /start workout/i }).click();
+  await start.click();
   const workoutToggle = page.getByRole('button', { name: /timer end signals|Timer-Endsignale/i });
   await expect(page.locator('.workout-header-controls')).toContainText(/end workout|Workout beenden/i);
   const headerButtons = page.locator('.workout-header-controls').getByRole('button');

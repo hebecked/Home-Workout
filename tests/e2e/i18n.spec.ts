@@ -20,8 +20,14 @@ test('applies Arabic copy and right-to-left document direction together', async 
 
   await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
-  await expect(page.getByRole('button', { name: 'بدء التمرين' })).toBeVisible();
+  const start = page.getByRole('button', { name: 'بدء التمرين' });
+  const audio = page.locator('[data-action="home-timer-audio"]');
+  await expect(start).toBeVisible();
   await expect(page.getByRole('link', { name: 'خططي' })).toBeVisible();
+  const [startBox, audioBox] = await Promise.all([start.boundingBox(), audio.boundingBox()]);
+  expect(startBox).not.toBeNull();
+  expect(audioBox).not.toBeNull();
+  expect(audioBox!.x).toBeGreaterThanOrEqual(startBox!.x + startBox!.width);
 });
 
 test('keeps interface and two training languages independent', async ({ page }) => {

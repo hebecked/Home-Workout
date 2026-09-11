@@ -6,7 +6,7 @@ Decision date: 2026-09-10
 
 Implement an optional timer-end signal. Do not implement spoken exercise names in this release.
 
-The timer signal is a short tone synthesized with the Web Audio API. It is off by default. A visually subdued checkbox is right-aligned below Start workout and Create your own routine; the workout mute button sits immediately left of End workout. The tone never replaces the visible timer, exercise name, or phase state. Unsupported, suspended, or interrupted audio fails silently while the workout continues.
+The timer signal is a short tone synthesized with the Web Audio API. It is off by default. A compact stateful sound button sits immediately right of the wide Start workout action; the workout mute button sits immediately left of End workout. The tone never replaces the visible timer, exercise name, or phase state. Unsupported, suspended, or interrupted audio fails silently while the workout continues.
 
 The separate in-app volume slider was removed on 2026-09-11. Without an immediate preview it was not useful, and it made a secondary feature too prominent. The signal now uses a fixed moderate output; users control listening volume through their device and can disable or mute the signal inside the app.
 
@@ -32,7 +32,7 @@ A backgrounded browser may suspend or delay audio despite prior activation. The 
 
 ## Accessibility
 
-Audio remains opt-in because unexpected sound can mask or compete with screen-reader output. The setting is a labeled checkbox, and the workout exposes a compact labeled toggle with `aria-pressed`. The signal carries no unique information: the timer reaching zero already advances the visible phase/exercise state, and a polite atomic status region announces phase, round, exercise, pause, and rest changes separately.
+Audio remains opt-in because unexpected sound can mask or compete with screen-reader output. Both the home and workout controls are compact labeled buttons whose state is exposed with `aria-pressed`; their speaker icons are hidden from the accessibility tree. The signal carries no unique information: the timer reaching zero already advances the visible phase/exercise state, and a polite atomic status region announces phase, round, exercise, pause, and rest changes separately.
 
 The design follows Web Content Accessibility Guidelines (WCAG) advice to let users request and stop sound. The cue is well below the three-second threshold in WCAG 2.2 success criterion 1.4.2; the application provides opt-in and mute controls, while the device controls listening volume.
 

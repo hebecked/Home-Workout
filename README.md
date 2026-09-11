@@ -17,7 +17,7 @@ Home Workout makes a structured routine easy to follow without an account or ser
 - A 16-language interface plus one- or two-language exercise presentation; German and English exercise copy is bundled
 - Six permanent bundled routines for general fitness, beginners, strength, cardio, active circuits, and advanced bodyweight training
 - A keyboard-accessible routine picker with a right-aligned estimate on every plan row; bundled routines cannot be overwritten, while local plans are stored separately
-- Optional, locally synthesized timer-end signals behind a visually subdued, right-aligned checkbox below the plan actions and an in-workout mute
+- Optional, locally synthesized timer-end signals controlled by a compact button beside Start workout and an in-workout mute
 - Visual phase editor for warm-up, training blocks, active recovery, and cool-down, with per-phase rounds and rest rules
 - Validated AI-plan launch links plus a public machine-readable guide for ChatGPT and other assistants
 - 58 extensible exercises with movement-specific original local SVG illustrations, including dedicated warm-up and stretching categories
@@ -118,7 +118,7 @@ The library contains 58 stable records across legs, push, pull, core, cardio, fu
 
 ## Optional timer audio
 
-Timer-end signals are off by default. A visually subdued checkbox is right-aligned below Start workout and Create your own routine. It enables a short local Web Audio tone; a mute button sits immediately left of End workout while training. The app uses a fixed moderate signal level, while the device or operating system controls listening volume. No audio file or speech service is requested. Browser autoplay rules still apply, so the app unlocks audio only from an explicit interaction and treats unavailable or suspended audio as a silent no-op.
+Timer-end signals are off by default. Start workout takes the available width in a shared action row, with a compact sound button immediately to its right. Its accessible name identifies the control, while its icon and `aria-pressed` expose the state; during a workout, an equivalent control sits immediately left of End workout. The app uses a fixed moderate signal level, while the device or operating system controls listening volume. No audio file or speech service is requested. Browser autoplay rules still apply, so the app unlocks audio only from an explicit interaction and treats unavailable or suspended audio as a silent no-op.
 
 Spoken exercise names are not included. Browser voices may be device-dependent or remote, so the app cannot guarantee offline availability, language coverage, privacy, or non-interference with screen readers. The evidence and reconsideration criteria are in [`docs/audio-decision.md`](docs/audio-decision.md).
 

@@ -10,7 +10,7 @@ test.describe('screen-reader smoke tests', () => {
     const card = page.locator('.workout-card');
     const tree = await card.ariaSnapshot();
     expect(tree).toContain('combobox "Choose routine"');
-    expect(tree).toContain('checkbox "Timer end signals"');
+    expect(tree).toContain('button "Timer end signals"');
 
     const picker = page.getByRole('combobox', { name: 'Choose routine' });
     await expect(picker).toContainText(/30 Minute Full Body.*\d+ min/i);
@@ -20,17 +20,18 @@ test.describe('screen-reader smoke tests', () => {
     expect(await listbox.ariaSnapshot()).toContain('option "30 Minute Full Body');
     await picker.press('Escape');
     await expect(listbox).toBeHidden();
-    const toggle = page.getByRole('checkbox', { name: 'Timer end signals' });
-    await expect(toggle).not.toBeChecked();
+    const toggle = page.getByRole('button', { name: 'Timer end signals' });
+    await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.getByRole('checkbox', { name: 'Timer end signals' })).toHaveCount(0);
     await expect(page.getByRole('slider')).toHaveCount(0);
 
-    await toggle.check();
-    await expect(toggle).toBeChecked();
+    await toggle.click();
+    await expect(page.getByRole('button', { name: 'Timer end signals' })).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByRole('slider')).toHaveCount(0);
   });
 
   test('workout state is announced and keyboard focus survives rerenders', async ({ page }) => {
-    await page.getByRole('checkbox', { name: 'Timer end signals' }).check();
+    await page.getByRole('button', { name: 'Timer end signals' }).click();
     await page.getByRole('button', { name: 'Start workout' }).click();
 
     const announcement = page.locator('[data-workout-announcement]');

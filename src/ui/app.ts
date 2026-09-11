@@ -306,11 +306,11 @@ export class HomeWorkoutApp {
             <span>${escapeHtml(this.t('home.rounds', { count: totalRounds(this.activePlan) }))}</span>
             <span>${escapeHtml(this.t('home.exercises', { count: activeExercises.length }))}</span>
           </div>
-          <button class="primary start-button" data-action="start">${escapeHtml(this.t('button.startWorkout'))}</button>
-          <a class="button-link create-plan-button" href="#editor" data-create-plan>${escapeHtml(this.t('home.createPlan'))}</a>
-          <div class="audio-settings">
-            <label class="audio-toggle"><span>${escapeHtml(this.t('audio.timerCues'))}</span><input type="checkbox" data-timer-audio ${this.audioSettings.enabled ? 'checked' : ''} ${audioSupported ? '' : 'disabled'}></label>
+          <div class="start-actions">
+            <button class="primary start-button" data-action="start">${escapeHtml(this.t('button.startWorkout'))}</button>
+            <button class="home-audio" type="button" data-action="home-timer-audio" aria-label="${escapeHtml(this.t('audio.timerCues'))}" aria-pressed="${this.audioSettings.enabled}" title="${escapeHtml(this.t('audio.timerCues'))}" ${audioSupported ? '' : 'disabled'}><span aria-hidden="true">${this.audioSettings.enabled ? '🔊' : '🔇'}</span></button>
           </div>
+          <a class="button-link create-plan-button" href="#editor" data-create-plan>${escapeHtml(this.t('home.createPlan'))}</a>
           <p class="home-safety">${escapeHtml(this.t('home.safety'))} <a href="#impressum">${escapeHtml(this.t('home.moreSafety'))}</a></p>
         </article>
       </section>
@@ -387,11 +387,12 @@ export class HomeWorkoutApp {
     this.root.querySelector('.routine-combobox')?.addEventListener('focusout', (event) => {
       if (!(event.currentTarget as HTMLElement).contains((event as FocusEvent).relatedTarget as Node | null)) closeListbox();
     });
-    const audioToggle = this.root.querySelector<HTMLInputElement>('[data-timer-audio]');
-    audioToggle?.addEventListener('change', () => {
-      this.audioSettings = { enabled: audioToggle.checked };
+    this.root.querySelector<HTMLButtonElement>('[data-action="home-timer-audio"]')?.addEventListener('click', () => {
+      this.audioSettings = { enabled: !this.audioSettings.enabled };
       saveTimerAudioSettings(localStorage, this.audioSettings);
       this.unlockTimerAudio();
+      this.renderHome();
+      this.root.querySelector<HTMLButtonElement>('[data-action="home-timer-audio"]')?.focus();
     });
   }
 
