@@ -1,5 +1,18 @@
 # CI quality diagnostics
 
+## Audio UI follow-up — 2026-09-11
+
+The slider-free audio follow-up passed the following local checks:
+
+- ESLint and strict TypeScript: passed.
+- Vitest: 19 files and 199 tests passed.
+- V8 coverage: 99.26% statements, 95.61% branches, 98.52% functions, and 99.26% lines; every configured 95% threshold passed.
+- Vite production build: 38 modules transformed successfully.
+- Relevant phone, desktop, and tablet profile tests: 18 passed and 12 intentionally project-specific skips.
+- A dedicated Chromium regression confirms that the audio row sits below the plan actions and that its label is right-aligned with those actions.
+- Screen-reader smoke coverage confirms a single labeled checkbox with no slider and retains the in-workout toggle behavior.
+- The configured mutation targets are unchanged core plan/timer files; the 2026-09-10 mutation result therefore remains applicable to that scope. Audio and UI files are not included in the current Stryker configuration.
+
 ## Release verification — 2026-09-10
 
 The final local release checks completed with Node.js on Windows:
@@ -13,7 +26,7 @@ The final local release checks completed with Node.js on Windows:
 - Native Windows WebKit: 20 passed and 18 intentionally project-specific skips, including the isolated-origin offline case. This Playwright WebKit build exposes no `AudioContext`, so the optional control is disabled and its non-interference path passes.
 - Native Windows Firefox: blocked before app load by `browserType.launch: spawn UNKNOWN`; CI on Ubuntu remains the native Firefox verification environment.
 
-Browser coverage includes routine-option time alignment, responsive layouts, keyboard operation and focus, translated labels, audio opt-in/volume/mute behavior, touch targets, offline reload, and accessibility-tree/live-region smoke tests.
+Browser coverage includes routine-option time alignment, responsive layouts, keyboard operation and focus, translated labels, audio opt-in/mute behavior, touch targets, offline reload, and accessibility-tree/live-region smoke tests.
 
 The public [CI run 34527897023](https://github.com/hebecked/Home-Workout/actions/runs/34527897023) completed successfully for release commit `3a4f502`. After Cloudflare Pages deployment, the canonical `https://home-workout-65g.pages.dev` URL also passed the Chromium phone suite with seven tests and one intentional tablet-only skip. The immutable deployment preview is `https://55bd8242.home-workout-65g.pages.dev`.
 

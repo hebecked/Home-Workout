@@ -1,6 +1,6 @@
 # Product status and roadmap
 
-Last updated: 2026-09-10
+Last updated: 2026-09-11
 
 ## Implemented in the current release
 
@@ -21,7 +21,7 @@ Last updated: 2026-09-10
 - Lossless, non-mutating migration of stored, imported, and linked schema version 1 plans while retaining the public v1 reader and schema.
 - A directly translated 16-locale interface, including Arabic right-to-left layout, independent from user-authored workout languages.
 - Optional consent-based Cloudflare pre-translation with visible provenance and mandatory manual review before use.
-- Opt-in, locally synthesized timer-end signals with a compact plan-summary checkbox, disclosed volume, and in-workout mute immediately left of End workout; spoken names remain deferred for offline, privacy, language-coverage, and screen-reader reasons.
+- Opt-in, locally synthesized timer-end signals with a visually subdued, right-aligned checkbox below the plan actions, fixed moderate output governed by device volume, and in-workout mute immediately left of End workout; spoken names remain deferred for offline, privacy, language-coverage, and screen-reader reasons.
 - Screen-reader smoke coverage for semantic plan/audio controls, polite atomic workout announcements, state changes, and focus retention across rerenders.
 
 ## Bundled plan catalogue

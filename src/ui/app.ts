@@ -241,7 +241,7 @@ export class HomeWorkoutApp {
       const nextPosition = `${snapshot.phase}:${snapshot.phaseIndex}:${snapshot.roundIndex}:${snapshot.exerciseIndex}:${snapshot.paused}`;
 
       if (previousPosition !== nextPosition) {
-        if (this.audioSettings.enabled) this.timerEndSignal.play(this.audioSettings.volume);
+        if (this.audioSettings.enabled) this.timerEndSignal.play();
         this.renderWorkout();
         return;
       }
@@ -301,19 +301,16 @@ export class HomeWorkoutApp {
             </div>
           </div>
           <h2>${escapeHtml(title)}</h2>
-          <div class="plan-meta">
-            <div class="plan-stats" aria-label="${escapeHtml(this.t('home.summary'))}">
-              <span>${escapeHtml(this.t('home.phases', { count: this.activePlan.phases.length }))}</span>
-              <span>${escapeHtml(this.t('home.rounds', { count: totalRounds(this.activePlan) }))}</span>
-              <span>${escapeHtml(this.t('home.exercises', { count: activeExercises.length }))}</span>
-            </div>
-            <div class="audio-settings">
-              <label class="check audio-toggle"><input type="checkbox" data-timer-audio ${this.audioSettings.enabled ? 'checked' : ''} ${audioSupported ? '' : 'disabled'}><span>${escapeHtml(this.t('audio.timerCues'))}</span></label>
-              <details class="audio-volume-settings" data-audio-volume-settings ${this.audioSettings.enabled && audioSupported ? '' : 'hidden'}><summary>${escapeHtml(this.t('audio.volume'))}</summary><label><span class="sr-only">${escapeHtml(this.t('audio.volume'))}</span><input type="range" aria-label="${escapeHtml(this.t('audio.volume'))}" min="0" max="100" step="5" value="${Math.round(this.audioSettings.volume * 100)}" data-timer-audio-volume></label></details>
-            </div>
+          <div class="plan-stats" aria-label="${escapeHtml(this.t('home.summary'))}">
+            <span>${escapeHtml(this.t('home.phases', { count: this.activePlan.phases.length }))}</span>
+            <span>${escapeHtml(this.t('home.rounds', { count: totalRounds(this.activePlan) }))}</span>
+            <span>${escapeHtml(this.t('home.exercises', { count: activeExercises.length }))}</span>
           </div>
           <button class="primary start-button" data-action="start">${escapeHtml(this.t('button.startWorkout'))}</button>
           <a class="button-link create-plan-button" href="#editor" data-create-plan>${escapeHtml(this.t('home.createPlan'))}</a>
+          <div class="audio-settings">
+            <label class="audio-toggle"><span>${escapeHtml(this.t('audio.timerCues'))}</span><input type="checkbox" data-timer-audio ${this.audioSettings.enabled ? 'checked' : ''} ${audioSupported ? '' : 'disabled'}></label>
+          </div>
           <p class="home-safety">${escapeHtml(this.t('home.safety'))} <a href="#impressum">${escapeHtml(this.t('home.moreSafety'))}</a></p>
         </article>
       </section>
@@ -391,20 +388,10 @@ export class HomeWorkoutApp {
       if (!(event.currentTarget as HTMLElement).contains((event as FocusEvent).relatedTarget as Node | null)) closeListbox();
     });
     const audioToggle = this.root.querySelector<HTMLInputElement>('[data-timer-audio]');
-    const volume = this.root.querySelector<HTMLInputElement>('[data-timer-audio-volume]');
-    const volumeSettings = this.root.querySelector<HTMLDetailsElement>('[data-audio-volume-settings]');
     audioToggle?.addEventListener('change', () => {
-      this.audioSettings = { ...this.audioSettings, enabled: audioToggle.checked };
+      this.audioSettings = { enabled: audioToggle.checked };
       saveTimerAudioSettings(localStorage, this.audioSettings);
-      if (volumeSettings) {
-        volumeSettings.hidden = !audioToggle.checked;
-        if (!audioToggle.checked) volumeSettings.open = false;
-      }
       this.unlockTimerAudio();
-    });
-    volume?.addEventListener('input', () => {
-      this.audioSettings = { ...this.audioSettings, volume: Number(volume.value) / 100 };
-      saveTimerAudioSettings(localStorage, this.audioSettings);
     });
   }
 
@@ -556,7 +543,7 @@ export class HomeWorkoutApp {
     act('previous', { type: 'PREVIOUS' }); act('next', { type: 'NEXT' });
     act('pause', { type: snapshot.paused ? 'RESUME' : 'PAUSE' });
     this.root.querySelector('[data-action="timer-audio"]')?.addEventListener('click', () => {
-      this.audioSettings = { ...this.audioSettings, enabled: !this.audioSettings.enabled };
+      this.audioSettings = { enabled: !this.audioSettings.enabled };
       saveTimerAudioSettings(localStorage, this.audioSettings);
       this.unlockTimerAudio();
       this.renderWorkout();

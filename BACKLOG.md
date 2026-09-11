@@ -1,14 +1,14 @@
 # Home Workout backlog
 
-Last reviewed: 2026-09-10
+Last reviewed: 2026-09-11
 
 This file is the durable hand-off for work that must not exist only in an AI conversation. `docs/product-roadmap.md` contains the fuller product context; this file is the short operational checklist.
 
-## Release work completed on 2026-09-10
+## Release work completed on 2026-09-10 and refined on 2026-09-11
 
 - [x] **DOC-HW-001:** refreshed the README, project documentation, roadmap, audit/review notes, quality reports, and README screenshot; removed stale review and implementation status.
 - [x] **UI-HW-001:** removed the helper text. The accessible plan list now shows each routine's estimate right-aligned beside its name, supports pointer and keyboard selection, and retains focus after selection.
-- [x] **AUDIO-HW-001:** evaluated signals and speech. Implemented only an opt-in local timer tone; the compact checkbox sits beside the plan summary, volume is disclosed on demand, and the workout mute button sits immediately left of End workout. Speech remains rejected for this release.
+- [x] **AUDIO-HW-001:** evaluated signals and speech. Implemented only an opt-in local timer tone; a visually subdued checkbox is right-aligned below the plan actions, the device controls volume, and the workout mute button sits immediately left of End workout. Speech remains rejected for this release.
 - [x] **A11Y-HW-001:** added accessibility-tree smoke tests for the plan list, optional audio, workout announcements, state changes, and focus retention.
 
 The remaining owner URL choice and later product ideas were re-evaluated below. They remain useful but are not release blockers and were not expanded during this release pass.
@@ -75,7 +75,7 @@ The report also notes that Firefox could not start because of `spawn UNKNOWN`; t
 - [x] Add phase-aware editor controls, import/export migration, progress UI, and validators after schema-v1 plans can be migrated losslessly.
 - [x] Add explicit, non-mutating schema-v1 to schema-v2 migration while retaining the v1 reader for stored plans and shared links.
 
-- [x] **AUDIO-HW-001 · Timer audio options (2026-09-10):** Implemented an opt-in, locally synthesized timer-end signal with bounded volume, persistent mute, user-gesture unlock, and silent failure. The secondary checkbox is beside the plan statistics, its volume control stays collapsed until requested, and the in-workout mute button is left of End workout. It uses no media request and works with cached code. Spoken names were rejected because browser voices can be missing, device-dependent, or remote. See `docs/audio-decision.md`.
+- [x] **AUDIO-HW-001 · Timer audio options (updated 2026-09-11):** Implemented an opt-in, locally synthesized timer-end signal with a fixed moderate output, persistent mute, user-gesture unlock, and silent failure. The secondary checkbox is right-aligned below the plan actions, while the in-workout mute button remains left of End workout. Listening volume follows the device setting; no redundant in-app slider is shown. It uses no media request and works with cached code. Spoken names remain rejected because browser voices can be missing, device-dependent, or remote. See `docs/audio-decision.md`.
 
 ## Priority 3 — final public URL (owner decision)
 
@@ -90,7 +90,7 @@ Reassessment on 2026-09-10: all four items remain coherent optional enhancements
 - [ ] Add opt-in local workout history and progression views. No analytics or server-side profile is planned.
 - [x] Add more bundled UI translations beyond German and English. Owner confirmed this item as implemented on 2026-09-10.
 - [ ] **PWA-HW-001 · Install/update visibility:** Improve install discoverability and show accessible offline and update-available status with clear actions. The existing device-specific installation help is already complete; this former item 9 concerns the in-app prompt and status visibility, not analytics or a server-side profile.
-- [x] **A11Y-HW-001 · Screen-reader smoke tests (2026-09-10):** Added Chromium accessibility-tree and live-region smoke coverage for plan selection, audio disclosure, exercise/phase/round announcements, pause state, and focus retention across rerenders.
+- [x] **A11Y-HW-001 · Screen-reader smoke tests (2026-09-10):** Added Chromium accessibility-tree and live-region smoke coverage for plan selection, the opt-in audio control, exercise/phase/round announcements, pause state, and focus retention across rerenders.
 - [ ] Optionally persist a chosen alternative exercise across a page reload during an active session. The current chooser intentionally affects only the running in-memory session.
 
 ## Completed polish, installability, and ownership

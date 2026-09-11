@@ -61,16 +61,12 @@ h1 { font-size: clamp(3rem, 8vw, 7rem); line-height: .88; letter-spacing: -.075e
 [data-routine-option][data-active], [data-routine-option]:hover { background: var(--soft); }
 [data-routine-option][aria-selected="true"] { box-shadow: inset 3px 0 0 var(--accent); }
 .workout-card h2 { font-size: clamp(2.2rem, 5vw, 4.8rem); line-height: .95; letter-spacing: -.055em; max-width: 12ch; margin: 1.5rem 0; }
-.plan-meta { display: flex; flex-wrap: wrap; align-items: start; gap: .35rem 1rem; }
-.plan-stats { display: flex; flex: 1 1 15rem; flex-wrap: wrap; gap: 1.2rem 2rem; color: var(--muted); font-size: .9rem; }
+.plan-stats { display: flex; flex-wrap: wrap; gap: 1.2rem 2rem; color: var(--muted); font-size: .9rem; }
 .plan-stats strong { color: var(--accent); font-size: 1.4rem; margin-right: .3rem; }
-.audio-settings { flex: 0 0 auto; margin-inline-start: auto; color: var(--muted); font-size: .78rem; }
-.audio-toggle { display: inline-flex; min-height: 44px; align-items: center; gap: .5rem; }
-.audio-volume-settings { margin-inline-start: 1.45rem; width: min(15rem, calc(100% - 1.45rem)); }
-.audio-volume-settings summary { min-height: 36px; display: flex; align-items: center; cursor: pointer; font-weight: 700; }
-.audio-volume-settings summary::before { content: '›'; margin-inline-end: .35rem; }
-.audio-volume-settings[open] summary::before { transform: rotate(90deg); }
-.audio-volume-settings input { width: 100%; min-height: 36px; padding: 0; }
+.audio-settings { display: flex; justify-content: flex-end; margin-top: .45rem; }
+.audio-toggle { display: inline-flex; min-height: 44px; align-items: center; gap: .55rem; color: var(--muted); font-size: .76rem; font-weight: 700; cursor: pointer; }
+.audio-toggle input { width: 18px; height: 18px; min-height: auto; margin: 0; accent-color: var(--accent); }
+.audio-toggle:has(input:disabled) { opacity: .55; cursor: not-allowed; }
 .primary { background: var(--accent); color: #fff; border-color: var(--accent); }
 .primary:hover { background: var(--accent-strong); }
 .start-button { margin-top: 2rem; width: 100%; display: flex; justify-content: center; align-items: center; padding: 1rem 1.2rem; }

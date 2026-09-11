@@ -66,7 +66,7 @@ test('plan selection keeps its estimate, label, focus, and responsive alignment'
   await expect(updatedPicker).toContainText(/\d+\s*(min|Min\.)/);
 });
 
-test('timer audio remains opt-in, local, adjustable, and mutable during a workout', async ({ page }) => {
+test('timer audio remains opt-in, local, and mutable during a workout', async ({ page }) => {
   await page.goto('/');
 
   const toggle = page.getByRole('checkbox', { name: /timer end signals|Timer-Endsignale/i });
@@ -80,13 +80,17 @@ test('timer audio remains opt-in, local, adjustable, and mutable during a workou
   await expect(toggle).toBeEnabled();
 
   await toggle.check();
-  const volumeDetails = page.locator('[data-audio-volume-settings]');
-  await expect(volumeDetails).toBeVisible();
-  await volumeDetails.locator('summary').click();
-  const volume = page.getByRole('slider', { name: /volume|Lautstärke/i });
-  await expect(volume).toBeEnabled();
-  await volume.fill('25');
-  expect(await page.evaluate(() => localStorage.getItem('home-workout:timer-audio'))).toBe('{"enabled":true,"volume":0.25}');
+  await expect(page.getByRole('slider')).toHaveCount(0);
+  expect(await page.evaluate(() => localStorage.getItem('home-workout:timer-audio'))).toBe('{"enabled":true}');
+  const audioSettings = page.locator('.audio-settings');
+  const audioLabel = audioSettings.locator('.audio-toggle');
+  const createPlan = page.locator('.create-plan-button');
+  const [audioBox, labelBox, createBox] = await Promise.all([audioSettings.boundingBox(), audioLabel.boundingBox(), createPlan.boundingBox()]);
+  expect(audioBox).not.toBeNull();
+  expect(labelBox).not.toBeNull();
+  expect(createBox).not.toBeNull();
+  expect(audioBox!.y).toBeGreaterThanOrEqual(createBox!.y + createBox!.height);
+  expect(Math.abs(labelBox!.x + labelBox!.width - (createBox!.x + createBox!.width))).toBeLessThanOrEqual(1);
 
   await page.getByRole('button', { name: /start workout/i }).click();
   const workoutToggle = page.getByRole('button', { name: /timer end signals|Timer-Endsignale/i });
@@ -98,7 +102,7 @@ test('timer audio remains opt-in, local, adjustable, and mutable during a workou
   await expect(workoutToggle).toHaveAttribute('aria-pressed', 'true');
   await workoutToggle.click();
   await expect(page.getByRole('button', { name: /timer end signals|Timer-Endsignale/i })).toHaveAttribute('aria-pressed', 'false');
-  expect(await page.evaluate(() => localStorage.getItem('home-workout:timer-audio'))).toBe('{"enabled":false,"volume":0.25}');
+  expect(await page.evaluate(() => localStorage.getItem('home-workout:timer-audio'))).toBe('{"enabled":false}');
 
   await page.reload();
   await page.getByRole('button', { name: /resume|fortsetzen/i }).click();

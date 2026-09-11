@@ -1,10 +1,9 @@
 export interface TimerAudioSettings {
   enabled: boolean;
-  volume: number;
 }
 
 export const TIMER_AUDIO_SETTINGS_KEY = 'home-workout:timer-audio';
-export const DEFAULT_TIMER_AUDIO_SETTINGS: Readonly<TimerAudioSettings> = { enabled: false, volume: 0.5 };
+export const DEFAULT_TIMER_AUDIO_SETTINGS: Readonly<TimerAudioSettings> = { enabled: false };
 
 export function loadTimerAudioSettings(storage: Pick<Storage, 'getItem'>): TimerAudioSettings {
   try {
@@ -13,19 +12,15 @@ export function loadTimerAudioSettings(storage: Pick<Storage, 'getItem'>): Timer
     const parsed: unknown = JSON.parse(raw);
     if (!parsed || typeof parsed !== 'object') return { ...DEFAULT_TIMER_AUDIO_SETTINGS };
     const candidate = parsed as Record<string, unknown>;
-    if (typeof candidate.enabled !== 'boolean' || typeof candidate.volume !== 'number'
-      || !Number.isFinite(candidate.volume) || candidate.volume < 0 || candidate.volume > 1) {
-      return { ...DEFAULT_TIMER_AUDIO_SETTINGS };
-    }
-    return { enabled: candidate.enabled, volume: candidate.volume };
+    if (typeof candidate.enabled !== 'boolean') return { ...DEFAULT_TIMER_AUDIO_SETTINGS };
+    return { enabled: candidate.enabled };
   } catch {
     return { ...DEFAULT_TIMER_AUDIO_SETTINGS };
   }
 }
 
 export function saveTimerAudioSettings(storage: Pick<Storage, 'setItem'>, settings: TimerAudioSettings): void {
-  const volume = Number.isFinite(settings.volume) ? Math.min(1, Math.max(0, settings.volume)) : DEFAULT_TIMER_AUDIO_SETTINGS.volume;
-  storage.setItem(TIMER_AUDIO_SETTINGS_KEY, JSON.stringify({ enabled: settings.enabled, volume }));
+  storage.setItem(TIMER_AUDIO_SETTINGS_KEY, JSON.stringify({ enabled: settings.enabled }));
 }
 
 type AudioContextFactory = () => AudioContext;
@@ -49,10 +44,9 @@ export class TimerEndSignal {
     }
   }
 
-  play(volume: number): boolean {
-    if (this.context?.state !== 'running' || !Number.isFinite(volume) || volume <= 0) return false;
+  play(): boolean {
+    if (this.context?.state !== 'running') return false;
     try {
-      const normalizedVolume = Math.min(1, volume);
       const start = this.context.currentTime;
       const stop = start + 0.32;
       const oscillator = this.context.createOscillator();
@@ -62,7 +56,7 @@ export class TimerEndSignal {
       oscillator.frequency.setValueAtTime(880, start);
       oscillator.frequency.exponentialRampToValueAtTime(660, stop);
       gain.gain.setValueAtTime(0.0001, start);
-      gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, normalizedVolume * 0.16), start + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.08, start + 0.015);
       gain.gain.exponentialRampToValueAtTime(0.0001, stop);
       oscillator.connect(gain);
       gain.connect(this.context.destination);

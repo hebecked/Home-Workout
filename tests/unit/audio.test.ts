@@ -13,8 +13,8 @@ const storage = (value: string | null = null) => ({
 });
 
 describe('timer audio settings', () => {
-  it('is opt-in and uses a moderate default volume', () => {
-    expect(loadTimerAudioSettings(storage())).toStrictEqual({ enabled: false, volume: 0.5 });
+  it('is opt-in', () => {
+    expect(loadTimerAudioSettings(storage())).toStrictEqual({ enabled: false });
     expect(DEFAULT_TIMER_AUDIO_SETTINGS.enabled).toBe(false);
   });
 
@@ -22,20 +22,16 @@ describe('timer audio settings', () => {
     'not-json',
     'null',
     '{}',
-    '{"enabled":"yes","volume":0.5}',
-    '{"enabled":true,"volume":-0.1}',
-    '{"enabled":true,"volume":1.1}'
+    '{"enabled":"yes"}'
   ])('falls back safely for invalid stored settings: %s', (value) => {
-    expect(loadTimerAudioSettings(storage(value))).toStrictEqual({ enabled: false, volume: 0.5 });
+    expect(loadTimerAudioSettings(storage(value))).toStrictEqual({ enabled: false });
   });
 
-  it('loads valid settings and persists a bounded volume', () => {
-    expect(loadTimerAudioSettings(storage('{"enabled":true,"volume":0.25}'))).toStrictEqual({ enabled: true, volume: 0.25 });
+  it('loads legacy volume settings and persists only the current enabled state', () => {
+    expect(loadTimerAudioSettings(storage('{"enabled":true,"volume":0.25}'))).toStrictEqual({ enabled: true });
     const target = storage();
-    saveTimerAudioSettings(target, { enabled: true, volume: 5 });
-    expect(target.setItem).toHaveBeenCalledWith(TIMER_AUDIO_SETTINGS_KEY, '{"enabled":true,"volume":1}');
-    saveTimerAudioSettings(target, { enabled: false, volume: Number.NaN });
-    expect(target.setItem).toHaveBeenLastCalledWith(TIMER_AUDIO_SETTINGS_KEY, '{"enabled":false,"volume":0.5}');
+    saveTimerAudioSettings(target, { enabled: true });
+    expect(target.setItem).toHaveBeenCalledWith(TIMER_AUDIO_SETTINGS_KEY, '{"enabled":true}');
   });
 });
 
@@ -79,13 +75,13 @@ describe('timer end signal', () => {
     const factory = vi.fn(() => fake.context);
     const signal = new TimerEndSignal(factory, true);
 
-    expect(signal.play(0.5)).toBe(false);
+    expect(signal.play()).toBe(false);
     expect(factory).not.toHaveBeenCalled();
     await expect(signal.unlock()).resolves.toBe(true);
     await expect(signal.unlock()).resolves.toBe(true);
     expect(factory).toHaveBeenCalledTimes(1);
     expect(fake.resume).toHaveBeenCalledTimes(1);
-    expect(signal.play(0.5)).toBe(true);
+    expect(signal.play()).toBe(true);
     expect(fake.events).toStrictEqual([
       'frequency-start', 'frequency-end', 'gain-start', 'gain-ramp', 'gain-ramp',
       'oscillator-connect', 'gain-connect', 'start', 'stop'
@@ -93,7 +89,7 @@ describe('timer end signal', () => {
     expect(fake.oscillator.stop).toHaveBeenCalledWith(4.32);
   });
 
-  it('fails silently when unsupported, unavailable, suspended, muted, or passed an invalid volume', async () => {
+  it('fails silently when unsupported, unavailable, or suspended', async () => {
     const factory = vi.fn(() => { throw new Error('blocked'); });
     await expect(new TimerEndSignal(factory, false).unlock()).resolves.toBe(false);
     expect(factory).not.toHaveBeenCalled();
@@ -102,7 +98,6 @@ describe('timer end signal', () => {
     const fake = audioContext('running');
     const signal = new TimerEndSignal(() => fake.context, true);
     await signal.unlock();
-    expect(signal.play(0)).toBe(false);
-    expect(signal.play(Number.NaN)).toBe(false);
+    expect(signal.play()).toBe(true);
   });
 });

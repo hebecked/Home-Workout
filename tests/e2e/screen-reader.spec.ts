@@ -11,7 +11,6 @@ test.describe('screen-reader smoke tests', () => {
     const tree = await card.ariaSnapshot();
     expect(tree).toContain('combobox "Choose routine"');
     expect(tree).toContain('checkbox "Timer end signals"');
-    expect(tree).not.toContain('slider "Volume"');
 
     const picker = page.getByRole('combobox', { name: 'Choose routine' });
     await expect(picker).toContainText(/30 Minute Full Body.*\d+ min/i);
@@ -23,13 +22,11 @@ test.describe('screen-reader smoke tests', () => {
     await expect(listbox).toBeHidden();
     const toggle = page.getByRole('checkbox', { name: 'Timer end signals' });
     await expect(toggle).not.toBeChecked();
-    await expect(page.getByRole('slider', { name: 'Volume' })).toHaveCount(0);
+    await expect(page.getByRole('slider')).toHaveCount(0);
 
     await toggle.check();
     await expect(toggle).toBeChecked();
-    await page.locator('[data-audio-volume-settings] summary').click();
-    const volume = page.getByRole('slider', { name: 'Volume' });
-    await expect(volume).toBeEnabled();
+    await expect(page.getByRole('slider')).toHaveCount(0);
   });
 
   test('workout state is announced and keyboard focus survives rerenders', async ({ page }) => {
