@@ -1,5 +1,29 @@
 # CI quality diagnostics
 
+## Countdown audio and screen wake lock — 2026-09-11
+
+The louder 3-2-1-0 cue pattern and best-effort Screen Wake Lock passed the following local checks:
+
+- ESLint, strict TypeScript, and the Vite production build passed; the build transformed 39 modules.
+- Vitest passed 20 files and 202 tests.
+- V8 coverage passed every configured 95% threshold with 99.26% statements, 95.67% branches, 98.52% functions, and 99.26% lines.
+- The complete Windows fallback phone, desktop, and tablet profile matrix passed 77 tests with 46 intentional project-specific skips. This matrix uses Chromium for the three responsive profiles and is not reported as native Firefox/WebKit coverage.
+- A deterministic browser audio double confirms exactly three short 880Hz cues at 3, 2, and 1 seconds, a longer 1046.5Hz completion cue at 0, and the raised output gains. A Screen Wake Lock double confirms acquisition on workout start, release on pause, reacquisition on resume, and release on confirmed exit.
+- Unit tests cover unsupported, rejected, automatically released, visibility-restored, and late-resolving wake-lock requests without making workout progress depend on the API.
+- The configured Stryker targets do not include the changed audio or UI modules. The 2026-09-10 result remains applicable to the unchanged mutation scope.
+
+## Phase-grouped exercise overview — 2026-09-11
+
+The phase grouping and instruction-popover follow-up passed the following local checks:
+
+- ESLint, strict TypeScript, and the Vite production build passed; the build transformed 38 modules.
+- Vitest passed 19 files and 199 tests.
+- V8 coverage passed every configured 95% threshold with 99.26% statements, 95.62% branches, 98.52% functions, and 99.26% lines.
+- The complete phone, desktop, and tablet profile matrix passed 75 tests with 42 intentional project-specific skips.
+- Browser assertions cover localized phase grouping, 17 preview cards, pointer hover, keyboard focus, touch/click, Escape with retained focus, `aria-expanded`, `aria-controls`, `aria-describedby`, tooltip roles, content-language metadata, right-to-left layout, horizontal overflow, and 44px tablet touch targets. A separate custom-plan regression covers long instructions and the same custom exercise in warm-up and training sections at a 390px viewport.
+- The README screenshot was regenerated at 1440×1600 from a production preview on a dynamically allocated free port so the new phase sections are visible.
+- The configured mutation targets remain unchanged core plan/timer files. This UI-only change does not enter the Stryker scope, so the 2026-09-10 mutation result remains applicable.
+
 ## Audio UI follow-up — 2026-09-11
 
 The compact-button audio follow-up passed the following local checks:

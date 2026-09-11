@@ -28,6 +28,14 @@ test('applies Arabic copy and right-to-left document direction together', async 
   expect(startBox).not.toBeNull();
   expect(audioBox).not.toBeNull();
   expect(audioBox!.x).toBeGreaterThanOrEqual(startBox!.x + startBox!.width);
+  await expect(page.locator('.exercise-preview-phase')).toHaveCount(3);
+  const instructions = page.locator('[data-preview-info]').first();
+  await instructions.focus();
+  const tooltipId = await instructions.getAttribute('aria-controls');
+  expect(tooltipId).toBeTruthy();
+  await expect(page.locator(`#${tooltipId}`)).toHaveAttribute('lang', 'ar');
+  await expect(page.locator(`#${tooltipId}`)).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
 
 test('keeps interface and two training languages independent', async ({ page }) => {

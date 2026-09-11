@@ -24,6 +24,7 @@ export function saveTimerAudioSettings(storage: Pick<Storage, 'setItem'>, settin
 }
 
 type AudioContextFactory = () => AudioContext;
+export type TimerCueKind = 'countdown' | 'complete';
 
 export class TimerEndSignal {
   private context: AudioContext | null = null;
@@ -44,19 +45,20 @@ export class TimerEndSignal {
     }
   }
 
-  play(): boolean {
+  play(kind: TimerCueKind = 'complete'): boolean {
     if (this.context?.state !== 'running') return false;
     try {
       const start = this.context.currentTime;
-      const stop = start + 0.32;
+      const complete = kind === 'complete';
+      const stop = start + (complete ? 0.48 : 0.16);
       const oscillator = this.context.createOscillator();
       const gain = this.context.createGain();
 
       oscillator.type = 'sine';
-      oscillator.frequency.setValueAtTime(880, start);
-      oscillator.frequency.exponentialRampToValueAtTime(660, stop);
+      oscillator.frequency.setValueAtTime(complete ? 1046.5 : 880, start);
+      oscillator.frequency.exponentialRampToValueAtTime(complete ? 880 : 760, stop);
       gain.gain.setValueAtTime(0.0001, start);
-      gain.gain.exponentialRampToValueAtTime(0.08, start + 0.015);
+      gain.gain.exponentialRampToValueAtTime(complete ? 0.24 : 0.2, start + 0.01);
       gain.gain.exponentialRampToValueAtTime(0.0001, stop);
       oscillator.connect(gain);
       gain.connect(this.context.destination);

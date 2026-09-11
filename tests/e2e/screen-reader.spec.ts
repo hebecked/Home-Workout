@@ -28,6 +28,22 @@ test.describe('screen-reader smoke tests', () => {
     await toggle.click();
     await expect(page.getByRole('button', { name: 'Timer end signals' })).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByRole('slider')).toHaveCount(0);
+
+    const instructions = page.getByRole('button', { name: /Instructions: Marching/i });
+    await expect(instructions).toHaveAttribute('aria-expanded', 'false');
+    await instructions.focus();
+    const tooltipId = await instructions.getAttribute('aria-controls');
+    expect(tooltipId).toBeTruthy();
+    await expect(instructions).toHaveAttribute('aria-expanded', 'true');
+    await expect(instructions).toHaveAttribute('aria-describedby', tooltipId!);
+    const tooltip = page.locator(`#${tooltipId}`);
+    await expect(tooltip).toHaveAttribute('role', 'tooltip');
+    await expect(tooltip).toHaveAttribute('lang', 'en');
+    await expect(tooltip).toBeVisible();
+    expect(await page.locator('.exercise-preview').ariaSnapshot()).toContain('button "Instructions: Marching');
+    await instructions.press('Escape');
+    await expect(instructions).toBeFocused();
+    await expect(tooltip).toBeHidden();
   });
 
   test('workout state is announced and keyboard focus survives rerenders', async ({ page }) => {

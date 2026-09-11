@@ -9,11 +9,12 @@ Home Workout is a framework-free TypeScript PWA for following multilingual worko
 The default experience is deliberately simple:
 
 1. Select a permanent bundled routine or local plan from the keyboard-accessible list; each option shows its estimate in a right-aligned column.
-2. Review its warm-up, training, and cool-down exercises and illustrations.
+2. Review its warm-up, training, active-recovery, and cool-down exercises in subtly outlined phase groups; open any card's localized instructions from its compact information control.
 3. Start the workout.
 4. Follow phase, round, and exercise progress; optionally select a stored easier movement; and use Previous, Pause/Resume, Next, or the confirmed Abort action.
 5. Duration exercises, transitions, and rests count down automatically; total workout time continues independently.
-6. If explicitly enabled, hear a short local tone at automatic timer transitions; mute it at any time without changing workout state.
+6. If explicitly enabled, hear short local tones at 3, 2, and 1 seconds plus a longer completion tone at 0; mute them at any time without changing workout state.
+7. On supported devices, keep the screen awake while the workout is active and visible.
 
 The manual repetition counter is disabled because it caused unwanted scroll repositioning and offered limited value. Repetition target ranges are still shown. The session model retains its versioned repetition field for backward-compatible restoration of already stored sessions, but the current interface does not expose increment/decrement controls.
 
@@ -98,6 +99,7 @@ The implemented schema-v2 phase model is documented in `docs/phased-workout-prop
 
 ## Code map
 - `src/core/audio.ts`: strict local audio preferences plus user-gesture-safe Web Audio tone synthesis.
+- `src/ui/wake-lock.ts`: best-effort Screen Wake Lock acquisition, release, and visibility recovery.
 - `src/ui/app.ts`: hash routing, rendering, event binding, editor, plan library, imports, instructions, and workout UI.
 - `src/data/default-workout.ts`: permanent bundled routine catalogue.
 - `src/data/exercises.ts`: exercise metadata, translations, targets, variants, and illustration paths.
@@ -113,9 +115,13 @@ The implemented schema-v2 phase model is documented in `docs/phased-workout-prop
 
 ## Optional audio
 
-Timer-end signals are an opt-in enhancement, not part of workout correctness. A compact stateful sound button sits immediately right of the wide Start workout action, and the in-workout mute button is immediately left of End workout. Both expose their state through `aria-pressed`. The tone uses a fixed moderate output and follows the device's listening volume; there is no checkbox or redundant in-app slider. Existing `{ enabled, volume }` settings remain readable, ignore the retired volume, and are simplified to `{ enabled }` after the next toggle change. The app creates or resumes its `AudioContext` only after an explicit interaction and synthesizes a sub-second oscillator tone without a media file or network request. A blocked, suspended, unsupported, or failed audio context is silent and does not alter the timestamp-based engine.
+Timer cues are an opt-in enhancement, not part of workout correctness. A compact stateful sound button sits immediately right of the wide Start workout action, and the in-workout mute button is immediately left of End workout. Both expose their state through `aria-pressed`. Short, louder cues play as a countdown enters 3, 2, and 1 seconds; a longer, higher cue marks 0. Output remains fixed and follows the device's listening volume, with no checkbox or redundant in-app slider. Existing `{ enabled, volume }` settings remain readable, ignore the retired volume, and are simplified to `{ enabled }` after the next toggle change. The app creates or resumes its `AudioContext` only after an explicit interaction and synthesizes sub-second oscillator tones without a media file or network request. A blocked, suspended, unsupported, or failed audio context is silent and does not alter the timestamp-based engine. Missed background cues are not replayed later in a burst.
 
 Spoken exercise names are intentionally not implemented. Browser speech voices may be local or remote and cannot provide guaranteed offline, privacy, or language coverage for the 16 interface locales and arbitrary plan languages. `docs/audio-decision.md` records the decision, sources, accessibility constraints, and criteria for reconsideration.
+
+## Screen wake lock
+
+While a workout is active, unpaused, and visible, the app requests a screen wake lock so supported devices do not dim or lock during exercise. It releases the lock on pause, completion, confirmed abort, or route exit. Browsers can revoke a lock when the page becomes hidden; returning to a still-active workout requests it again. The API is feature-detected and best-effort: an unsupported browser, insecure context, operating-system power policy, low battery, or rejected request never blocks the workout and needs no plan or session-schema change.
 
 ## Development and verification
 
@@ -130,7 +136,7 @@ npm run e2e
 npm run build
 ```
 
-Vitest covers validation, transformations, persistence, timers, audio, the workout engine, the bundled catalogue, and illustration contracts. Playwright covers representative phone, desktop, and tablet journeys, including plan creation/editing, immutable bundled plans, import/AI links, workout controls, fixed action placement, abort/home behavior, reload restoration, touch targets, plan-list keyboard behavior, and responsive time-column alignment.
+Vitest covers validation, transformations, persistence, timers, audio, the workout engine, the bundled catalogue, and illustration contracts. Playwright covers representative phone, desktop, and tablet journeys, including plan creation/editing, immutable bundled plans, import/AI links, workout controls, fixed action placement, abort/home behavior, reload restoration, touch targets, plan-list keyboard behavior, responsive time-column alignment, phase-grouped exercise previews, and instruction popovers opened by pointer, keyboard, or touch.
 
 Audio unit tests cover invalid, current, and legacy preferences, simplified persistence, deferred context creation, user-gesture resume behavior, tone scheduling, mute, and failure-safe behavior. Browser tests cover the opt-in default, shared Start/audio action row, button state and focus, absence of checkbox and slider, and in-workout mute.
 

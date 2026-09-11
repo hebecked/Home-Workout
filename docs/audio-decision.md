@@ -4,11 +4,11 @@ Decision date: 2026-09-10
 
 ## Outcome
 
-Implement an optional timer-end signal. Do not implement spoken exercise names in this release.
+Implement an optional timer countdown pattern. Do not implement spoken exercise names in this release.
 
-The timer signal is a short tone synthesized with the Web Audio API. It is off by default. A compact stateful sound button sits immediately right of the wide Start workout action; the workout mute button sits immediately left of End workout. The tone never replaces the visible timer, exercise name, or phase state. Unsupported, suspended, or interrupted audio fails silently while the workout continues.
+The timer signal is synthesized with the Web Audio API and remains off by default. When enabled, it plays a short tone as a visible countdown enters 3, 2, and 1 seconds, then a longer, higher tone when the timer reaches 0 and advances. The output gain was raised from the original single-tone implementation: the short cues peak at 0.20 and the completion cue at 0.24. A compact stateful sound button sits immediately right of the wide Start workout action; the workout mute button sits immediately left of End workout. The pattern never replaces the visible timer, exercise name, or phase state. Unsupported, suspended, or interrupted audio fails silently while the workout continues.
 
-The separate in-app volume slider was removed on 2026-09-11. Without an immediate preview it was not useful, and it made a secondary feature too prominent. The signal now uses a fixed moderate output; users control listening volume through their device and can disable or mute the signal inside the app.
+The separate in-app volume slider was removed on 2026-09-11. Without an immediate preview it was not useful, and it made a secondary feature too prominent. The signal now uses a fixed output; users control listening volume through their device and can disable or mute the signal inside the app.
 
 Existing stored objects containing `enabled` and the former `volume` value remain readable. The old volume is ignored; the next toggle change stores only the current `enabled` state. This keeps existing opt-in choices without preserving a control that no longer exists.
 
@@ -24,17 +24,17 @@ The signal uses an oscillator and gain node rather than a downloaded file:
 
 - it is available with the cached app while offline;
 - it adds no media request, cookie, permission, microphone access, or third-party service;
-- it has a fixed moderate output and follows the device's listening volume;
-- it is shorter than one second and stops itself;
+- it has a fixed, more audible output and follows the device's listening volume;
+- every cue is shorter than one second and stops itself;
 - failure to create or resume an audio context does not affect timing or navigation.
 
-A backgrounded browser may suspend or delay audio despite prior activation. The timestamp-based workout engine remains authoritative, so returning to the app shows the correct state even when a cue could not be heard.
+A backgrounded browser may suspend or delay audio despite prior activation. Missed countdown tones are not replayed in a burst after background throttling, and the completion tone only follows a recently emitted one-second cue. The timestamp-based workout engine remains authoritative, so returning to the app shows the correct state even when a cue could not be heard.
 
 ## Accessibility
 
 Audio remains opt-in because unexpected sound can mask or compete with screen-reader output. Both the home and workout controls are compact labeled buttons whose state is exposed with `aria-pressed`; their speaker icons are hidden from the accessibility tree. The signal carries no unique information: the timer reaching zero already advances the visible phase/exercise state, and a polite atomic status region announces phase, round, exercise, pause, and rest changes separately.
 
-The design follows Web Content Accessibility Guidelines (WCAG) advice to let users request and stop sound. The cue is well below the three-second threshold in WCAG 2.2 success criterion 1.4.2; the application provides opt-in and mute controls, while the device controls listening volume.
+The design follows Web Content Accessibility Guidelines (WCAG) advice to let users request and stop sound. Each cue is well below the three-second threshold in WCAG 2.2 success criterion 1.4.2; the application provides opt-in and mute controls, while the device controls listening volume.
 
 ## Localization
 

@@ -70,7 +70,7 @@ describe('timer end signal', () => {
     return { context: context as unknown as AudioContext, events, oscillator, gain, resume };
   };
 
-  it('creates and resumes the context only after unlock, then synthesizes a short cue', async () => {
+  it('creates and resumes the context only after unlock, then synthesizes distinct louder countdown cues', async () => {
     const fake = audioContext();
     const factory = vi.fn(() => fake.context);
     const signal = new TimerEndSignal(factory, true);
@@ -81,12 +81,19 @@ describe('timer end signal', () => {
     await expect(signal.unlock()).resolves.toBe(true);
     expect(factory).toHaveBeenCalledTimes(1);
     expect(fake.resume).toHaveBeenCalledTimes(1);
-    expect(signal.play()).toBe(true);
+    expect(signal.play('countdown')).toBe(true);
     expect(fake.events).toStrictEqual([
       'frequency-start', 'frequency-end', 'gain-start', 'gain-ramp', 'gain-ramp',
       'oscillator-connect', 'gain-connect', 'start', 'stop'
     ]);
-    expect(fake.oscillator.stop).toHaveBeenCalledWith(4.32);
+    expect(fake.oscillator.frequency.setValueAtTime).toHaveBeenCalledWith(880, 4);
+    expect(fake.gain.gain.exponentialRampToValueAtTime).toHaveBeenCalledWith(0.2, 4.01);
+    expect(fake.oscillator.stop).toHaveBeenCalledWith(4.16);
+
+    expect(signal.play('complete')).toBe(true);
+    expect(fake.oscillator.frequency.setValueAtTime).toHaveBeenLastCalledWith(1046.5, 4);
+    expect(fake.gain.gain.exponentialRampToValueAtTime).toHaveBeenCalledWith(0.24, 4.01);
+    expect(fake.oscillator.stop).toHaveBeenLastCalledWith(4.48);
   });
 
   it('fails silently when unsupported, unavailable, or suspended', async () => {

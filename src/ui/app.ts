@@ -12,6 +12,7 @@ import { clearWorkoutSession, deletePlan, loadPlans, loadWorkoutSession, savePla
 import { planExercises, validateWorkoutPlan, type PlanExercise, type WorkoutPlan, type WorkoutPhaseKind } from '../core/plan-schema';
 import { translatePlanDraft } from '../core/translation';
 import { createWorkoutSession, dispatchWorkout, getWorkoutSnapshot, type WorkoutSession } from '../core/workout-engine';
+import { WorkoutWakeLock } from './wake-lock';
 import {
   applyDocumentLocale,
   exerciseTranslation,
@@ -100,6 +101,10 @@ export class HomeWorkoutApp {
   private uiLocale: SupportedLocale;
   private audioSettings: TimerAudioSettings = loadTimerAudioSettings(localStorage);
   private readonly timerEndSignal = new TimerEndSignal();
+  private readonly workoutWakeLock = new WorkoutWakeLock();
+  private countdownCueKey: string | null = null;
+  private countdownCueSecond: number | null = null;
+  private countdownCueAtMs = 0;
   private t: Translator;
 
   constructor(private readonly root: HTMLElement) {
@@ -140,6 +145,38 @@ export class HomeWorkoutApp {
   private unlockTimerAudio(): void {
     if (!this.audioSettings.enabled) return;
     void this.timerEndSignal.unlock();
+  }
+
+  private resetCountdownCue(): void {
+    this.countdownCueKey = null;
+    this.countdownCueSecond = null;
+    this.countdownCueAtMs = 0;
+  }
+
+  private updateCountdownCue(snapshot: ReturnType<typeof getWorkoutSnapshot>, now: number): void {
+    if (snapshot.paused || snapshot.phase === 'completed' || typeof snapshot.remainingMs !== 'number') {
+      this.resetCountdownCue();
+      return;
+    }
+    const key = `${snapshot.phase}:${snapshot.phaseIndex}:${snapshot.roundIndex}:${snapshot.exerciseIndex}`;
+    if (key !== this.countdownCueKey) {
+      this.countdownCueKey = key;
+      this.countdownCueSecond = null;
+      this.countdownCueAtMs = 0;
+    }
+    const second = Math.ceil(snapshot.remainingMs / 1000);
+    if (!this.audioSettings.enabled || second < 1 || second > 3 || second === this.countdownCueSecond) return;
+    if (this.timerEndSignal.play('countdown')) {
+      this.countdownCueSecond = second;
+      this.countdownCueAtMs = now;
+    }
+  }
+
+  private finishCountdownCue(now: number): void {
+    if (this.audioSettings.enabled && this.countdownCueSecond === 1 && now - this.countdownCueAtMs <= 1500) {
+      this.timerEndSignal.play('complete');
+    }
+    this.resetCountdownCue();
   }
 
   private route(): string { return location.hash.replace(/^#\/?/, '') || 'home'; }
@@ -212,6 +249,7 @@ export class HomeWorkoutApp {
   private render(): void {
     this.clearScheduledTick();
     const route = this.route();
+    if (route !== 'workout') this.workoutWakeLock.setActive(false);
     if (route === 'workout') this.renderWorkout();
     else if (route === 'editor') this.renderEditor();
     else if (route === 'import') this.renderImport();
@@ -241,10 +279,12 @@ export class HomeWorkoutApp {
       const nextPosition = `${snapshot.phase}:${snapshot.phaseIndex}:${snapshot.roundIndex}:${snapshot.exerciseIndex}:${snapshot.paused}`;
 
       if (previousPosition !== nextPosition) {
-        if (this.audioSettings.enabled) this.timerEndSignal.play();
+        this.finishCountdownCue(now);
         this.renderWorkout();
         return;
       }
+
+      this.updateCountdownCue(snapshot, now);
 
       const total = this.root.querySelector<HTMLElement>('[data-workout-total]');
       const countdown = this.root.querySelector<HTMLElement>('[data-workout-countdown]');
@@ -272,16 +312,36 @@ export class HomeWorkoutApp {
     ].join('');
     const activeExercises = planExercises(this.activePlan);
     const audioSupported = this.timerEndSignal.supported;
-    const previews = activeExercises.map((exercise, index) => {
-      const definition = EXERCISES_BY_ID.get(exercise.exerciseId);
-      const localized = isBuiltInWorkout(this.activePlan.id) ? exerciseTranslation(exercise.exerciseId, this.uiLocale) : undefined;
-      const exerciseName = localized?.name ?? exercise.translations[this.uiLocale]?.name ?? exercise.translations.en?.name ?? Object.values(exercise.translations)[0]?.name ?? exercise.exerciseId;
-      const category = previewCategory(definition?.category, this.t);
-      return `<article class="exercise-preview-card">
-        <span class="preview-number">${String(index + 1).padStart(2, '0')}</span>
-        <img src="${definition?.illustration ?? '/icon.svg'}" alt="${escapeHtml(exerciseName)}" loading="eager">
-        <div>${category ? `<span class="preview-category ${category.className}">${escapeHtml(category.label)}</span>` : ''}<strong>${escapeHtml(exerciseName)}</strong></div>
-      </article>`;
+    let previewIndex = 0;
+    const previews = this.activePlan.phases.map((phase, phaseIndex) => {
+      const cards = phase.exercises.map((exercise) => {
+        const index = previewIndex++;
+        const definition = EXERCISES_BY_ID.get(exercise.exerciseId);
+        const catalogueCopy = isBuiltInWorkout(this.activePlan.id) ? exerciseTranslation(exercise.exerciseId, this.uiLocale) : undefined;
+        const storedCopy = exercise.translations[this.uiLocale];
+        const englishCopy = exercise.translations.en;
+        const firstStoredCopy = Object.entries(exercise.translations)[0];
+        const localized = catalogueCopy ?? storedCopy ?? englishCopy ?? firstStoredCopy?.[1];
+        const localizedCode = catalogueCopy || storedCopy ? this.uiLocale : englishCopy ? 'en' : firstStoredCopy?.[0] ?? this.uiLocale;
+        const exerciseName = localized?.name ?? exercise.exerciseId;
+        const instructions = localized?.instructions ?? '';
+        const category = previewCategory(definition?.category, this.t);
+        const tooltipId = `exercise-preview-instructions-${phaseIndex}-${index}`;
+        return `<article class="exercise-preview-card">
+          <span class="preview-number">${String(index + 1).padStart(2, '0')}</span>
+          <img src="${definition?.illustration ?? '/icon.svg'}" alt="${escapeHtml(exerciseName)}" loading="eager">
+          <div class="exercise-preview-meta"><div class="exercise-preview-name">${category ? `<span class="preview-category ${category.className}">${escapeHtml(category.label)}</span>` : ''}<strong>${escapeHtml(exerciseName)}</strong></div>
+            <div class="preview-info-wrap"><button class="preview-info" type="button" data-preview-info aria-label="${escapeHtml(`${this.t('nav.instructions')}: ${exerciseName}`)}" aria-expanded="false" aria-controls="${tooltipId}"><span aria-hidden="true">&#105;</span></button>
+              <div class="preview-tooltip" id="${tooltipId}" role="tooltip" lang="${escapeHtml(localizedCode)}" hidden>${escapeHtml(instructions)}</div>
+            </div>
+          </div>
+        </article>`;
+      }).join('');
+      const headingId = `exercise-preview-phase-${phaseIndex}`;
+      return `<section class="exercise-preview-phase" data-phase-kind="${escapeHtml(phase.kind)}" aria-labelledby="${headingId}">
+        <div class="exercise-preview-phase-heading"><h3 id="${headingId}"><span>${escapeHtml(this.t('phase.label', { current: phaseIndex + 1, total: this.activePlan.phases.length }))}</span>${escapeHtml(phaseLabel(phase.kind, this.t))}</h3><span>${escapeHtml(this.t('home.exercises', { count: phase.exercises.length }))}</span></div>
+        <div class="exercise-preview-grid">${cards}</div>
+      </section>`;
     }).join('');
     this.shell(`
       <section class="home-grid">
@@ -316,7 +376,7 @@ export class HomeWorkoutApp {
       </section>
       <section class="exercise-preview" aria-labelledby="exercise-preview-title">
         <div class="preview-heading"><div><p class="eyebrow">${escapeHtml(this.t('home.localIllustrations'))}</p><h2 id="exercise-preview-title">${escapeHtml(this.t('home.insideWorkout'))}</h2></div><span>${escapeHtml(this.t('home.illustratedMovements', { count: activeExercises.length }))}</span></div>
-        <div class="exercise-preview-grid">${previews}</div>
+        <div class="exercise-preview-phases">${previews}</div>
       </section>
       <section class="plan-options"><div class="plan-options-heading"><p class="eyebrow">${escapeHtml(this.t('home.makeItYours'))}</p><h2>${escapeHtml(this.t('home.planOptionsTitle'))}</h2><p>${escapeHtml(this.t('home.planOptionsCopy'))}</p></div><nav class="action-grid" aria-label="${escapeHtml(this.t('home.summary'))}">
         <a class="action-card" href="#instructions"><span class="action-number">01</span><strong>${escapeHtml(this.t('nav.instructions'))}</strong><span>${escapeHtml(this.t('home.optionInstructions'))}</span></a>
@@ -389,10 +449,55 @@ export class HomeWorkoutApp {
     });
     this.root.querySelector<HTMLButtonElement>('[data-action="home-timer-audio"]')?.addEventListener('click', () => {
       this.audioSettings = { enabled: !this.audioSettings.enabled };
+      if (!this.audioSettings.enabled) this.resetCountdownCue();
       saveTimerAudioSettings(localStorage, this.audioSettings);
       this.unlockTimerAudio();
       this.renderHome();
       this.root.querySelector<HTMLButtonElement>('[data-action="home-timer-audio"]')?.focus();
+    });
+    const previewButtons = [...this.root.querySelectorAll<HTMLButtonElement>('[data-preview-info]')];
+    const closePreview = (button: HTMLButtonElement): void => {
+      const tooltipId = button.getAttribute('aria-controls');
+      const tooltip = tooltipId ? this.root.querySelector<HTMLElement>(`#${CSS.escape(tooltipId)}`) : null;
+      if (tooltip) tooltip.hidden = true;
+      button.setAttribute('aria-expanded', 'false');
+      button.removeAttribute('aria-describedby');
+      delete button.dataset.pinned;
+      button.closest('.exercise-preview-card')?.classList.remove('has-open-info');
+    };
+    const openPreview = (button: HTMLButtonElement, pinned = false): void => {
+      for (const otherButton of previewButtons) if (otherButton !== button) closePreview(otherButton);
+      const tooltipId = button.getAttribute('aria-controls');
+      const tooltip = tooltipId ? this.root.querySelector<HTMLElement>(`#${CSS.escape(tooltipId)}`) : null;
+      if (!tooltip) return;
+      tooltip.hidden = false;
+      button.setAttribute('aria-expanded', 'true');
+      button.setAttribute('aria-describedby', tooltip.id);
+      if (pinned) button.dataset.pinned = 'true';
+      button.closest('.exercise-preview-card')?.classList.add('has-open-info');
+    };
+    for (const button of previewButtons) {
+      const wrapper = button.closest<HTMLElement>('.preview-info-wrap');
+      wrapper?.addEventListener('pointerenter', () => openPreview(button, button.dataset.pinned === 'true'));
+      wrapper?.addEventListener('pointerleave', () => { if (button.dataset.pinned !== 'true') closePreview(button); });
+      button.addEventListener('focus', () => openPreview(button, button.dataset.pinned === 'true'));
+      button.addEventListener('click', () => {
+        if (button.dataset.pinned === 'true') closePreview(button);
+        else openPreview(button, true);
+      });
+      button.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape') return;
+        event.preventDefault();
+        closePreview(button);
+        button.focus();
+      });
+      wrapper?.addEventListener('focusout', (event) => {
+        if (!wrapper.contains(event.relatedTarget as Node | null)) closePreview(button);
+      });
+    }
+    this.root.querySelector('.exercise-preview')?.addEventListener('click', (event) => {
+      if ((event.target as Element).closest('[data-preview-info]')) return;
+      for (const button of previewButtons) closePreview(button);
     });
   }
 
@@ -462,11 +567,13 @@ export class HomeWorkoutApp {
 
   private renderWorkout(): void {
     this.clearScheduledTick();
-    if (!this.session) { location.hash = 'home'; return; }
+    if (!this.session) { this.workoutWakeLock.setActive(false); location.hash = 'home'; return; }
     const now = Date.now();
     this.session = dispatchWorkout(this.session, this.activePlan, { type: 'TICK' }, now);
     saveWorkoutSession(localStorage, this.session);
     const snapshot = getWorkoutSnapshot(this.session, this.activePlan, now);
+    this.workoutWakeLock.setActive(snapshot.phase !== 'completed' && !snapshot.paused);
+    this.updateCountdownCue(snapshot, now);
     const workoutPhase = this.activePlan.phases[snapshot.phaseIndex]!;
     const exercise = workoutPhase.exercises[snapshot.exerciseIndex]!;
     const selectedExerciseId = this.exerciseOverrides.get(exercise.id) ?? exercise.exerciseId;
@@ -545,6 +652,7 @@ export class HomeWorkoutApp {
     act('pause', { type: snapshot.paused ? 'RESUME' : 'PAUSE' });
     this.root.querySelector('[data-action="timer-audio"]')?.addEventListener('click', () => {
       this.audioSettings = { enabled: !this.audioSettings.enabled };
+      if (!this.audioSettings.enabled) this.resetCountdownCue();
       saveTimerAudioSettings(localStorage, this.audioSettings);
       this.unlockTimerAudio();
       this.renderWorkout();

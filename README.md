@@ -17,7 +17,9 @@ Home Workout makes a structured routine easy to follow without an account or ser
 - A 16-language interface plus one- or two-language exercise presentation; German and English exercise copy is bundled
 - Six permanent bundled routines for general fitness, beginners, strength, cardio, active circuits, and advanced bodyweight training
 - A keyboard-accessible routine picker with a right-aligned estimate on every plan row; bundled routines cannot be overwritten, while local plans are stored separately
-- Optional, locally synthesized timer-end signals controlled by a compact button beside Start workout and an in-workout mute
+- A phase-grouped home-screen exercise overview with compact, keyboard- and touch-accessible instruction popovers
+- Optional, locally synthesized 3-2-1-0 timer cues with a louder, longer completion tone, controlled by a compact button beside Start workout and an in-workout mute
+- Best-effort Screen Wake Lock during active workouts, released on pause, completion, or leaving the workout
 - Visual phase editor for warm-up, training blocks, active recovery, and cool-down, with per-phase rounds and rest rules
 - Validated AI-plan launch links plus a public machine-readable guide for ChatGPT and other assistants
 - 58 extensible exercises with movement-specific original local SVG illustrations, including dedicated warm-up and stretching categories

@@ -6,6 +6,7 @@ Last updated: 2026-09-11
 
 - Six permanent, validated bundled routines. They are source-controlled app data and are never read from or written to browser plan storage.
 - A keyboard-accessible home-screen plan list with a right-aligned duration on every option, plus a dedicated library page.
+- A phase-grouped home-screen exercise overview with subtle section outlines and localized instruction popovers that support pointer, keyboard, touch, and screen readers.
 - Separate local storage for user-created and imported plans.
 - Direct editing of local plans while preserving their stable plan ID.
 - Safe customization of a bundled routine as a new local copy; the bundled source remains unchanged.
@@ -21,7 +22,8 @@ Last updated: 2026-09-11
 - Lossless, non-mutating migration of stored, imported, and linked schema version 1 plans while retaining the public v1 reader and schema.
 - A directly translated 16-locale interface, including Arabic right-to-left layout, independent from user-authored workout languages.
 - Optional consent-based Cloudflare pre-translation with visible provenance and mandatory manual review before use.
-- Opt-in, locally synthesized timer-end signals with a compact stateful button immediately right of the wide Start workout action, fixed moderate output governed by device volume, and in-workout mute immediately left of End workout; spoken names remain deferred for offline, privacy, language-coverage, and screen-reader reasons.
+- Opt-in, locally synthesized 3-2-1-0 timer cues with raised fixed output, a longer and higher completion tone, a compact stateful button immediately right of the wide Start workout action, and in-workout mute immediately left of End workout; spoken names remain deferred for offline, privacy, language-coverage, and screen-reader reasons.
+- Best-effort Screen Wake Lock during visible, unpaused workouts, with release on pause, completion, abort, or route exit and safe degradation when browser or device policy denies it.
 - Screen-reader smoke coverage for semantic plan/audio controls, polite atomic workout announcements, state changes, and focus retention across rerenders.
 
 ## Bundled plan catalogue
