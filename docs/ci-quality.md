@@ -14,6 +14,7 @@ The language, exercise-copy, installation, update, and screen-reader follow-up p
 - Screen-reader smoke tests cover the two language selects and their retained selection/focus in addition to plan, audio, tooltip, workout-state, phase, round, and pause announcements.
 - Stryker passed its 70% break threshold with a 74.79% total score and 76.69% covered score: 1,092 killed, 332 survived, 36 without coverage, and no timeouts or errors across 1,460 mutants. The four-worker run completed in 2 minutes 45 seconds.
 - The 1440×1600 README screenshot was regenerated from the final production build on an operating-system-assigned free port.
+- Release commit `7f1b6e3` was pushed to `main` and deployed to the existing Cloudflare Pages project. The immutable deployment is `https://889122e8.home-workout-65g.pages.dev`; the canonical `https://home-workout-65g.pages.dev` URL passed 18 targeted Chromium phone smoke tests with 3 intentional device-specific skips.
 
 ## Countdown audio and screen wake lock — 2026-09-11
 

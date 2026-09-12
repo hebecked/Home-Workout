@@ -15,6 +15,8 @@ This file is the durable hand-off for work that must not exist only in an AI con
 
 The remaining owner URL choice and later product ideas were re-evaluated below. They remain useful but are not release blockers and were not expanded during this release pass.
 
+Release verification on 2026-09-12 passed 212 unit tests, every configured coverage threshold, a 74.79% mutation score against the 70% break threshold, and the complete local browser matrix with 84 passes and 48 intentional profile-specific skips. Commit 7f1b6e3 was pushed to main and deployed to the existing Cloudflare Pages project; the canonical URL then passed 18 targeted Chromium phone smoke tests with 3 intentional device-specific skips.
+
 ## External app-testing findings — historical decisions
 
 The following findings came from a private debugging review on 2026-09-03. All four decisions below were accepted and implemented on 2026-09-07. Native Windows WebKit now passes the isolated-origin offline test; Firefox still cannot launch on this workstation. The private source report is not tracked.
