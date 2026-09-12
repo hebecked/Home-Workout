@@ -236,7 +236,7 @@ export class HomeWorkoutApp {
     </div></details>`;
     this.root.innerHTML = `
       <header class="site-header">
-        <a href="#home" class="brand" aria-label="${escapeHtml(this.t('app.name'))}"><span class="brand-mark">HW</span><span>${escapeHtml(this.t('app.name'))}</span></a>
+        <a href="#home" class="brand" aria-label="${escapeHtml(this.t('app.name'))}"><img class="brand-mark" src="/assets/branding/header-logo.png" alt="" aria-hidden="true" width="42" height="42"><span>${escapeHtml(this.t('app.name'))}</span></a>
         <div class="header-actions">${this.route() === 'workout' && this.session?.phase !== 'completed' ? `<div class="workout-header-controls">
           ${this.timerEndSignal.supported ? `<button class="workout-audio" data-action="timer-audio" aria-label="${escapeHtml(this.t('audio.timerCues'))}" aria-pressed="${this.audioSettings.enabled}">${this.audioSettings.enabled ? '🔊' : '🔇'}</button>` : ''}
           <button class="workout-exit" data-action="abort" aria-label="${escapeHtml(this.t('button.endWorkout'))}"><span aria-hidden="true">×</span><span class="workout-exit-label">${escapeHtml(this.t('button.endWorkout'))}</span></button>
@@ -376,7 +376,7 @@ export class HomeWorkoutApp {
         const tooltipId = `exercise-preview-instructions-${phaseIndex}-${index}`;
         return `<article class="exercise-preview-card">
           <span class="preview-number">${String(index + 1).padStart(2, '0')}</span>
-          <img src="${definition?.illustration ?? '/icon.svg'}" alt="${escapeHtml(exerciseName)}" loading="eager">
+          <img src="${definition?.illustration ?? '/icon-192.png'}" alt="${escapeHtml(exerciseName)}" loading="eager">
           <div class="exercise-preview-meta"><div class="exercise-preview-name">${category ? `<span class="preview-category ${category.className}">${escapeHtml(category.label)}</span>` : ''}<strong>${escapeHtml(exerciseName)}</strong></div>
             <div class="preview-info-wrap"><button class="preview-info" type="button" data-preview-info aria-label="${escapeHtml(`${this.t('nav.instructions')}: ${exerciseName}`)}" aria-expanded="false" aria-controls="${tooltipId}"><span aria-hidden="true">&#105;</span></button>
               <div class="preview-tooltip" id="${tooltipId}" role="tooltip" lang="${escapeHtml(localizedCode)}" hidden>${escapeHtml(instructions)}</div>
@@ -679,7 +679,7 @@ export class HomeWorkoutApp {
           <div class="phase-pill">${escapeHtml(statusLabel)}${snapshot.paused ? ` · ${escapeHtml(this.t('status.paused'))}` : ''}</div>
           ${snapshot.phase === 'completed' ? `<div class="completion"><p class="eyebrow">${escapeHtml(this.t('phase.complete'))}</p><h1>${escapeHtml(this.t('phase.complete'))}</h1><p>${escapeHtml(this.t('workout.completeCopy'))}</p><button class="primary" data-action="finish">${escapeHtml(this.t('button.backHome'))}</button></div>` : `
             ${isTransition ? `<div class="completion phase-transition-card"><p class="eyebrow">${escapeHtml(this.t('button.next'))}</p><h1>${escapeHtml(phaseLabel(this.activePlan.phases[snapshot.phaseIndex + 1]!.kind, this.t))}</h1><p>${escapeHtml(this.t('workout.restCopy'))}</p><strong data-workout-countdown>${formatClock(snapshot.remainingMs ?? 0)}</strong></div>` : `<div class="exercise-layout">
-              <div class="exercise-visual-column"><div class="workout-exercise-heading">${displayNames.map(({ code, name }) => `<h2 lang="${escapeHtml(code)}">${escapeHtml(name)}</h2>`).join('')}</div><div class="exercise-visual"><img src="${definition?.illustration ?? '/icon.svg'}?v=${illustrationRevision(selectedExerciseId)}" alt="${escapeHtml(imageName)}"></div>
+              <div class="exercise-visual-column"><div class="workout-exercise-heading">${displayNames.map(({ code, name }) => `<h2 lang="${escapeHtml(code)}">${escapeHtml(name)}</h2>`).join('')}</div><div class="exercise-visual"><img src="${definition?.illustration ?? '/icon-192.png'}?v=${illustrationRevision(selectedExerciseId)}" alt="${escapeHtml(imageName)}"></div>
               <div class="target-block"><span>${escapeHtml(isRest ? this.t('workout.readyIn') : exercise.type === 'duration' ? this.t('workout.timeLeft') : this.t('workout.target'))}</span><strong ${isRest || exercise.type === 'duration' ? 'data-workout-countdown' : ''}>${isRest ? formatClock(snapshot.remainingMs ?? 0) : escapeHtml(target)}</strong></div></div>
               <div class="exercise-copy">${isRest ? `<p class="rest-label">${escapeHtml(this.t('workout.restCopy'))}</p>` : translations}</div>
             </div>`}

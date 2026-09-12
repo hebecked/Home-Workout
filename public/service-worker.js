@@ -1,7 +1,7 @@
 /* global Response */
 
-const CACHE = 'home-workout-v22';
-const APP_SHELL = ['/manifest.webmanifest', '/icon.svg', '/maskable-icon.svg', '/ai-workout-guide.txt', '/schema/workout-plan-v1.schema.json', '/schema/workout-plan-v2.schema.json'];
+const CACHE = 'home-workout-v23';
+const APP_SHELL = ['/manifest.webmanifest', '/favicon-32.png', '/apple-touch-icon.png', '/icon-192.png', '/icon-512.png', '/maskable-icon-512.png', '/assets/branding/header-logo.png', '/ai-workout-guide.txt', '/schema/workout-plan-v1.schema.json', '/schema/workout-plan-v2.schema.json'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {

@@ -17,8 +17,10 @@ describe('service worker update strategy', () => {
     expect(entries).not.toContain('/index.html');
     expect(entries).toEqual(expect.arrayContaining([
       '/manifest.webmanifest',
-      '/icon.svg',
-      '/maskable-icon.svg',
+      '/icon-192.png',
+      '/icon-512.png',
+      '/maskable-icon-512.png',
+      '/assets/branding/header-logo.png',
       '/ai-workout-guide.txt'
     ]));
   });

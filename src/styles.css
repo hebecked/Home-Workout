@@ -30,7 +30,7 @@ a { color: inherit; }
 .skip-link:focus { top: 1rem; }
 .site-header { min-height: 78px; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem clamp(1rem, 4vw, 4rem); border-bottom: 1px solid var(--line); }
 .brand { display: inline-flex; align-items: center; gap: .75rem; font-weight: 850; text-decoration: none; letter-spacing: -.03em; }
-.brand-mark { width: 42px; height: 42px; display: grid; place-items: center; background: var(--accent); color: #fff; font-size: .8rem; letter-spacing: .08em; box-shadow: 5px 5px 0 #dce3ff; }
+.brand-mark { width: 42px; height: 42px; flex: none; display: block; object-fit: cover; border-radius: .55rem; }
 .site-header nav { display: flex; gap: clamp(.75rem, 3vw, 2rem); }
 .site-header nav a { font-size: .85rem; text-decoration: none; font-weight: 700; }
 .header-actions { display: flex; align-items: center; gap: clamp(.65rem, 2vw, 1.5rem); }
@@ -43,7 +43,6 @@ a { color: inherit; }
 .language-menu-panel label { display: grid; gap: .35rem; }
 .language-menu-panel label > span { color: var(--muted); }
 .language-menu-panel select { width: 100%; min-height: 42px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); padding: .45rem .6rem; }
-[dir="rtl"] .brand-mark { box-shadow: -5px 5px 0 #dce3ff; }
 main { min-height: calc(100vh - 150px); }
 footer { border-top: 1px solid var(--line); padding: 1.5rem clamp(1rem, 4vw, 4rem); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; color: var(--muted); font-size: .78rem; }
 .pwa-actions { display: inline-flex; align-items: center; gap: .55rem; }
