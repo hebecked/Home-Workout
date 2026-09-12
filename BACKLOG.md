@@ -95,13 +95,14 @@ The report also notes that Firefox could not start because of `spawn UNKNOWN`; t
 
 ## Priority 4 — later product work
 
-Reassessment on 2026-09-10: all four items remain coherent optional enhancements, but none is required for current workout correctness, backward compatibility, accessibility, or deployment. Their current behavior is explicit, so no speculative persistence or interface was added.
+Reassessment on 2026-09-12: the remaining items are optional enhancements. None is required for current workout correctness, backward compatibility, accessibility, or deployment, so no speculative persistence or interface is planned.
 
 - [ ] Add opt-in local workout history and progression views. No analytics or server-side profile is planned.
 - [x] Add more bundled UI translations beyond German and English. Owner confirmed this item as implemented on 2026-09-10.
 - [x] **PWA-HW-001 · In-app install and update status (2026-09-12):** A compact footer action appears only after a supporting browser emits `beforeinstallprompt`; unsupported browsers keep the existing device-specific help without an inert control. A newly installed service worker waits instead of replacing a running workout, and the footer announces the available update with an explicit reload action. Installation and update failures remain non-blocking.
 - [x] **A11Y-HW-001 · Screen-reader smoke tests (updated 2026-09-12):** Added Chromium accessibility-tree and live-region smoke coverage for plan selection, the opt-in audio control, both language preferences, exercise/phase/round announcements, pause state, localized status changes, and focus retention across rerenders.
 - [ ] Optionally persist a chosen alternative exercise across a page reload during an active session. Restore the selected alternative without changing the plan, and always keep the original exercise available in the chooser so the user can switch back. The current in-memory chooser already places the original first and clears the override when it is selected.
+- [ ] **Optional external illustrations for custom JSON plans — deferred:** Reconsider a schema-v3 field for unknown exercise IDs only; do not expose it in Plan Studio. Any future design must require explicit loading consent, HTTPS, visible source/credit/licence metadata, a local fallback, no offline caching, reduced referrer data, and rejection of credentials, local hosts, and private-network addresses. Public availability alone must not be treated as permission. Obtain a focused legal review before implementation; a creator declaration cannot fully transfer copyright or data-protection liability away from the app operator.
 
 ## Completed polish, installability, and ownership
 
