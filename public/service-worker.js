@@ -1,7 +1,7 @@
 /* global Response */
 
-const CACHE = 'home-workout-v23';
-const APP_SHELL = ['/manifest.webmanifest', '/favicon-32.png', '/apple-touch-icon.png', '/icon-192.png', '/icon-512.png', '/maskable-icon-512.png', '/assets/branding/header-logo.png', '/ai-workout-guide.txt', '/schema/workout-plan-v1.schema.json', '/schema/workout-plan-v2.schema.json'];
+const CACHE = 'home-workout-v24';
+const APP_SHELL = ['/manifest.webmanifest', '/mountain-climber-favicon-32.png', '/mountain-climber-apple-touch-icon.png', '/mountain-climber-icon-192.png', '/mountain-climber-icon-512.png', '/mountain-climber-maskable-512.png', '/assets/branding/mountain-climber-header.png', '/ai-workout-guide.txt', '/schema/workout-plan-v1.schema.json', '/schema/workout-plan-v2.schema.json'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
