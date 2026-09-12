@@ -19,6 +19,7 @@ Release verification on 2026-09-12 passed 212 unit tests, every configured cover
 
 - [x] **BRAND-HW-001 · App identity and link preview (2026-09-12):** Replaced the text-only header mark with the selected blue push-up artwork, adopted its dark-green counterpart for favicon, install icons, Apple touch icon, and the maskable PWA icon, and added a landscape link preview built from the selected exercise-mat artwork. The source motifs are retained in the repository; their rounded exterior corners were converted to real transparency while the artwork backgrounds remain continuous. Open Graph and Twitter metadata use the current public Pages URL; update those absolute references if the optional final-URL decision changes it.
   - Verification passed lint, TypeScript, 212 unit tests, all coverage thresholds (97.06% statements, 99.07% lines), build, production-license policy, mutation testing (80.62%, threshold 70%), and the complete browser matrix (84 passed, 48 intentional profile-specific skips). The 1440×1600 README screenshot was regenerated from the final production build on an operating-system-assigned free port.
+  - Deployment `3946b3af` is live on the existing Pages project. The canonical URL served the new header, icon, and link-preview assets with HTTP 200 and passed 11 targeted Chromium phone tests with 3 intentional device-specific skips.
 
 ## External app-testing findings — historical decisions
 
