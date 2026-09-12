@@ -1,6 +1,6 @@
 # Mutation testing report
 
-Final local run on 2026-09-10: 1,460 mutants across the validator, import/export, persistence, plan transformations, timer, and workout engine. It used four workers to avoid load-induced timeouts on the local host and completed in 4 minutes 3 seconds.
+Final local run on 2026-09-12: 1,460 mutants across the validator, import/export, persistence, plan transformations, timer, and workout engine. It used four workers to avoid load-induced timeouts on the local host and completed in 2 minutes 45 seconds.
 
 - Mutation score: **74.79%**
 - Covered mutation score: **76.69%**

@@ -46,6 +46,19 @@ test.describe('screen-reader smoke tests', () => {
     await expect(tooltip).toBeHidden();
   });
 
+  test('language menu exposes both preferences and announces a retained selection', async ({ page }) => {
+    const summary = page.locator('.language-menu summary');
+    await expect(summary).toHaveAttribute('aria-label', 'Language settings');
+    await summary.click();
+    await expect(page.getByLabel('Interface language')).toHaveValue('en');
+    const secondLanguage = page.getByLabel('Second workout language');
+    await expect(secondLanguage).toHaveValue('auto');
+
+    await secondLanguage.selectOption('off');
+    await expect(page.getByLabel('Second workout language')).toBeFocused();
+    await expect(page.getByRole('status')).toHaveText('Workout languages changed');
+  });
+
   test('workout state is announced and keyboard focus survives rerenders', async ({ page }) => {
     await page.getByRole('button', { name: 'Timer end signals' }).click();
     await page.getByRole('button', { name: 'Start workout' }).click();

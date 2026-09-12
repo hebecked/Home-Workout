@@ -3,6 +3,7 @@ dist/
 coverage/
 mutation-report/
 reports/
+.stryker-tmp/
 playwright-report/
 test-results/
 .env

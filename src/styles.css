@@ -34,11 +34,21 @@ a { color: inherit; }
 .site-header nav { display: flex; gap: clamp(.75rem, 3vw, 2rem); }
 .site-header nav a { font-size: .85rem; text-decoration: none; font-weight: 700; }
 .header-actions { display: flex; align-items: center; gap: clamp(.65rem, 2vw, 1.5rem); }
-.language-picker { display: inline-flex; align-items: center; gap: .4rem; color: var(--muted); font-size: .75rem; font-weight: 750; }
-.language-picker select { min-height: 42px; max-width: 10rem; border: 1px solid var(--line); background: var(--surface); color: var(--ink); padding: .45rem .6rem; }
+.language-menu { position: relative; color: var(--muted); font-size: .75rem; font-weight: 750; }
+.language-menu summary { min-height: 42px; display: inline-flex; align-items: center; gap: .4rem; padding: .45rem .65rem; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; list-style: none; }
+.language-menu summary::-webkit-details-marker { display: none; }
+.language-menu summary::after { content: '▾'; color: var(--muted); font-size: .65rem; }
+.language-menu[open] summary, .language-menu summary:hover { border-color: var(--ink); }
+.language-menu-panel { position: absolute; z-index: 60; inset-inline-end: 0; top: calc(100% + .45rem); width: min(19rem, calc(100vw - 2rem)); display: grid; gap: .9rem; padding: 1rem; border: 1px solid var(--line); background: var(--surface); box-shadow: 0 12px 28px rgb(31 41 55 / .16); }
+.language-menu-panel label { display: grid; gap: .35rem; }
+.language-menu-panel label > span { color: var(--muted); }
+.language-menu-panel select { width: 100%; min-height: 42px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); padding: .45rem .6rem; }
 [dir="rtl"] .brand-mark { box-shadow: -5px 5px 0 #dce3ff; }
 main { min-height: calc(100vh - 150px); }
-footer { border-top: 1px solid var(--line); padding: 1.5rem clamp(1rem, 4vw, 4rem); display: flex; justify-content: space-between; gap: 1rem; color: var(--muted); font-size: .78rem; }
+footer { border-top: 1px solid var(--line); padding: 1.5rem clamp(1rem, 4vw, 4rem); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; color: var(--muted); font-size: .78rem; }
+.pwa-actions { display: inline-flex; align-items: center; gap: .55rem; }
+.pwa-actions button { min-height: 36px; padding: .35rem .65rem; border-color: var(--line); background: transparent; color: var(--ink); font-size: .75rem; }
+.pwa-actions [data-pwa-update] { border-color: var(--accent); color: var(--accent-strong); }
 .home-grid { display: grid; grid-template-columns: minmax(0, .8fr) minmax(320px, 1.2fr); gap: clamp(2rem, 6vw, 7rem); align-items: end; padding: clamp(3rem, 9vw, 8rem) clamp(1rem, 7vw, 7rem) clamp(2rem, 5vw, 4rem); }
 .eyebrow { font-size: .72rem; letter-spacing: .16em; font-weight: 850; color: var(--muted); }
 h1, h2, h3, p { margin-top: 0; }
@@ -288,9 +298,9 @@ dialog h2 { font-size: 2.2rem; letter-spacing: -.04em; }
 
 @media (max-width: 520px) {
   .site-header { min-height: 68px; padding-block: .65rem; }
-  .brand > span:last-child, .language-picker > span { display: none; }
+  .brand > span:last-child, .language-current { display: none; }
   .header-actions { gap: .4rem; }
-  .language-picker select { max-width: 7.6rem; min-height: 40px; padding-inline: .35rem; }
+  .language-menu summary { min-height: 40px; padding-inline: .55rem; }
   .workout-exit { width: 44px; padding: 0; justify-content: center; }
   .workout-exit-label { display: none; }
   .workout-screen { height: calc(100vh - 68px); height: calc(100dvh - 68px); }

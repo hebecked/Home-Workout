@@ -1,12 +1,14 @@
 # Internationalization architecture
 
+Last updated: 2026-09-12
+
 ## Scope
 
 The first multilingual release supports exactly these 16 UI locales:
 
 `de`, `en`, `nl`, `es`, `fr`, `ru`, `zh-Hans`, `ko`, `ja`, `ar`, `pt`, `it`, `pl`, `tr`, `uk`, and `hi`.
 
-`pt` is deliberately neutral Portuguese. Arabic is the only right-to-left locale. The selected UI locale is device-local and is independent from the one or two languages shown for exercise names and instructions during a workout.
+`pt` is deliberately neutral Portuguese. Arabic is the only right-to-left locale. The selected interface locale and optional second workout language are device-local preferences stored separately from workout plans.
 
 ## Catalogue model
 
@@ -14,7 +16,7 @@ The first multilingual release supports exactly these 16 UI locales:
 
 The TypeScript types catch missing and extra keys during compilation. The isolated catalogue tests also inspect the materialized runtime objects so that type assertions, empty strings, a partially loaded locale, or a fallback that merely hides a missing value fail continuous integration (CI). Placeholder names must match the English source exactly in every locale.
 
-Exercise copy is catalogue-owned only for the bundled exercise library. User-authored plan names, exercise names, and instructions remain unchanged. The app never sends that free text anywhere unless the user explicitly chooses the existing optional online pre-translation action and accepts its adjacent disclosure.
+Exercise copy is catalogue-owned only for the bundled exercise library. Its German and English entries reuse the audited, movement-specific library instructions; the generic safety template is no longer able to replace them at render time. User-authored plan names, exercise names, and instructions remain unchanged. The app never sends that free text anywhere unless the user explicitly chooses the existing optional online pre-translation action and accepts its adjacent disclosure.
 
 ## UI locale lifecycle
 
@@ -24,7 +26,19 @@ Exercise copy is catalogue-owned only for the bundled exercise library. User-aut
 4. Apply both `document.documentElement.lang` and `document.documentElement.dir` before rendering.
 5. Persist an explicit selection locally and render the current route again.
 
-Changing the UI locale must not mutate a plan's language records or `displayLanguages`. Changing either of the two training-language slots must not change the UI locale.
+Changing the UI locale must not mutate a plan's language records or `displayLanguages`. The language menu stores the optional second workout language globally under `home-workout:second-workout-language`; it never enters a schema-v1 or schema-v2 plan.
+
+## Workout-language resolution
+
+For each exercise, the renderer builds the available-language set from its plan translations and, for known library exercises, the bundled catalogue. Resolution then follows this stable order:
+
+1. Use an exact case-insensitive BCP 47 match for the interface language; otherwise use a base-language match.
+2. If unavailable, use the first matching `displayLanguages` entry, then the first available exercise language.
+3. For **From workout plan**, append the first available `displayLanguages` entry that differs from the primary language.
+4. For an explicit second language, append only its exact or base-language match. If unavailable, show no substitute.
+5. For **Off**, show only the primary language.
+
+The compact menu keeps these controls behind the existing language affordance. Every visible exercise heading and instruction block carries its resolved `lang` value. A localized polite status announces preference changes; focus returns to the changed select after rerendering.
 
 ## User-visible raw-text guard
 
@@ -52,4 +66,4 @@ Automated tests lock the presence of these message keys in every locale. Wording
 
 ## Test boundary
 
-Unit tests cover exact locale and key sets, direct non-empty translations, placeholders, locale normalization, persistence, and the separation of UI and training languages. Browser tests cover selection, reload persistence, unsupported-value fallback, translated accessible names, `lang`, Arabic `dir=rtl`, mirrored layout without reordered workout semantics, and simultaneous exercise copy in two independently selected languages. Schema-v1 fixtures remain regression coverage alongside schema-v2 and phased-plan fixtures.
+Unit tests cover exact locale and key sets, direct non-empty translations, placeholders, locale normalization, independent preference persistence, exact/base language matching, and deterministic primary/secondary resolution. Browser tests cover selection, reload persistence, translated accessible names, per-block `lang`, Arabic `dir=rtl`, mirrored layout, one- and two-language workouts, and confirmation that language settings do not create or rewrite a plan. Schema-v1 fixtures remain regression coverage alongside schema-v2 and phased-plan fixtures.

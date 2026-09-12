@@ -13,15 +13,21 @@ import { planExercises, validateWorkoutPlan, type PlanExercise, type WorkoutPlan
 import { translatePlanDraft } from '../core/translation';
 import { createWorkoutSession, dispatchWorkout, getWorkoutSnapshot, type WorkoutSession } from '../core/workout-engine';
 import { WorkoutWakeLock } from './wake-lock';
+import { PwaController } from './pwa';
 import {
   applyDocumentLocale,
   exerciseTranslation,
   isSupportedLocale,
   LOCALE_DEFINITIONS,
+  persistSecondWorkoutLanguage,
   persistLocale,
+  readSecondWorkoutLanguage,
   readStoredLocale,
+  resolveWorkoutLanguages,
   routineNames,
+  SUPPORTED_LOCALES,
   translator,
+  type SecondWorkoutLanguagePreference,
   type SupportedLocale,
   type Translator
 } from '../i18n';
@@ -98,10 +104,13 @@ export class HomeWorkoutApp {
   private readonly exerciseOverrides = new Map<string, string>();
   private importPreview: WorkoutPlan | null = null;
   private notice = '';
+  private languageAnnouncement = '';
   private uiLocale: SupportedLocale;
+  private secondWorkoutLanguage: SecondWorkoutLanguagePreference;
   private audioSettings: TimerAudioSettings = loadTimerAudioSettings(localStorage);
   private readonly timerEndSignal = new TimerEndSignal();
   private readonly workoutWakeLock = new WorkoutWakeLock();
+  private readonly pwa = new PwaController();
   private countdownCueKey: string | null = null;
   private countdownCueSecond: number | null = null;
   private countdownCueAtMs = 0;
@@ -109,6 +118,7 @@ export class HomeWorkoutApp {
 
   constructor(private readonly root: HTMLElement) {
     this.uiLocale = readStoredLocale(localStorage, navigator.languages);
+    this.secondWorkoutLanguage = readSecondWorkoutLanguage(localStorage);
     this.t = translator(this.uiLocale);
     applyDocumentLocale(document.documentElement, this.uiLocale);
     const skipLink = document.querySelector<HTMLAnchorElement>('.skip-link');
@@ -116,6 +126,7 @@ export class HomeWorkoutApp {
   }
 
   start(): void {
+    this.pwa.start(() => this.renderPwaActions());
     document.querySelector<HTMLAnchorElement>('.skip-link')?.addEventListener('click', (event) => {
       event.preventDefault();
       document.querySelector<HTMLElement>('#main')?.focus();
@@ -213,7 +224,16 @@ export class HomeWorkoutApp {
     this.root.classList.toggle('workout-active', this.route() === 'workout' && this.session !== null && this.session.phase !== 'completed');
     const savedPlansLabel = this.route() === 'home' ? this.t('nav.savedRoutines') : this.t('nav.plans');
     const localeOptions = LOCALE_DEFINITIONS.map(({ code, nativeName }) => `<option value="${code}" ${code === this.uiLocale ? 'selected' : ''}>${escapeHtml(nativeName)}</option>`).join('');
-    const localePicker = `<label class="language-picker"><span aria-hidden="true">文/A</span><select data-ui-locale aria-label="${escapeHtml(this.t('language.label'))}">${localeOptions}</select></label>`;
+    const secondLanguageOptions = [
+      `<option value="auto" ${this.secondWorkoutLanguage === 'auto' ? 'selected' : ''}>${escapeHtml(this.t('language.secondAuto'))}</option>`,
+      `<option value="off" ${this.secondWorkoutLanguage === 'off' ? 'selected' : ''}>${escapeHtml(this.t('language.secondOff'))}</option>`,
+      ...LOCALE_DEFINITIONS.map(({ code, nativeName }) => `<option value="${code}" ${code === this.secondWorkoutLanguage ? 'selected' : ''}>${escapeHtml(nativeName)}</option>`)
+    ].join('');
+    const currentLocaleName = LOCALE_DEFINITIONS.find(({ code }) => code === this.uiLocale)?.nativeName ?? this.uiLocale;
+    const localePicker = `<details class="language-menu"><summary aria-label="${escapeHtml(this.t('language.settings'))}"><span aria-hidden="true">文/A</span><span class="language-current">${escapeHtml(currentLocaleName)}</span></summary><div class="language-menu-panel">
+      <label><span>${escapeHtml(this.t('language.label'))}</span><select data-ui-locale>${localeOptions}</select></label>
+      <label><span>${escapeHtml(this.t('language.secondLabel'))}</span><select data-second-workout-language>${secondLanguageOptions}</select></label>
+    </div></details>`;
     this.root.innerHTML = `
       <header class="site-header">
         <a href="#home" class="brand" aria-label="${escapeHtml(this.t('app.name'))}"><span class="brand-mark">HW</span><span>${escapeHtml(this.t('app.name'))}</span></a>
@@ -223,7 +243,10 @@ export class HomeWorkoutApp {
         </div>` : `<nav aria-label="${escapeHtml(this.t('nav.primary'))}"><a href="#instructions">${escapeHtml(this.t('nav.instructions'))}</a><a href="#plans" aria-label="${escapeHtml(savedPlansLabel)}">${escapeHtml(this.t('nav.plans'))}</a></nav>`}${localePicker}</div>
       </header>
       <main id="main" tabindex="-1">${content}</main>
-      <footer><span>${escapeHtml(this.t('footer.privacy'))}</span><a href="#impressum">${escapeHtml(this.t('nav.legal'))}</a><span>PolyForm Perimeter 1.0.0</span></footer>`;
+      <footer><span>${escapeHtml(this.t('footer.privacy'))}</span><div class="pwa-actions" data-pwa-actions aria-live="polite"></div><a href="#impressum">${escapeHtml(this.t('nav.legal'))}</a><span>PolyForm Perimeter 1.0.0</span></footer>
+      ${this.languageAnnouncement ? `<p class="sr-only" role="status" aria-live="polite" aria-atomic="true">${escapeHtml(this.languageAnnouncement)}</p>` : ''}`;
+    this.languageAnnouncement = '';
+    this.renderPwaActions();
     this.root.querySelector<HTMLAnchorElement>('.brand')?.addEventListener('click', (event) => {
       if (this.route() !== 'workout' || !this.session) return;
       event.preventDefault();
@@ -241,9 +264,33 @@ export class HomeWorkoutApp {
       applyDocumentLocale(document.documentElement, locale);
       const skipLink = document.querySelector<HTMLAnchorElement>('.skip-link');
       if (skipLink) skipLink.textContent = this.t('skip.main');
-      this.notice = this.t('language.changed');
+      this.languageAnnouncement = this.t('language.changed');
       this.render();
+      const picker = this.root.querySelector<HTMLSelectElement>('[data-ui-locale]');
+      picker?.closest('details')?.setAttribute('open', '');
+      picker?.focus();
     });
+    this.root.querySelector<HTMLSelectElement>('[data-second-workout-language]')?.addEventListener('change', (event) => {
+      const preference = (event.currentTarget as HTMLSelectElement).value;
+      if (preference !== 'auto' && preference !== 'off' && !isSupportedLocale(preference)) return;
+      this.secondWorkoutLanguage = preference;
+      persistSecondWorkoutLanguage(localStorage, preference);
+      this.languageAnnouncement = this.t('language.workoutChanged');
+      this.render();
+      const picker = this.root.querySelector<HTMLSelectElement>('[data-second-workout-language]');
+      picker?.closest('details')?.setAttribute('open', '');
+      picker?.focus();
+    });
+  }
+
+  private renderPwaActions(): void {
+    const container = this.root.querySelector<HTMLElement>('[data-pwa-actions]');
+    if (!container) return;
+    const state = this.pwa.state();
+    container.innerHTML = `${state.canInstall ? `<button type="button" data-pwa-install>${escapeHtml(this.t('pwa.install'))}</button>` : ''}${state.updateReady ? `<span role="status">${escapeHtml(this.t('pwa.updateAvailable'))}</span><button type="button" data-pwa-update>${escapeHtml(this.t('pwa.refresh'))}</button>` : ''}`;
+    container.hidden = !state.canInstall && !state.updateReady;
+    container.querySelector<HTMLButtonElement>('[data-pwa-install]')?.addEventListener('click', () => { void this.pwa.promptInstall(); });
+    container.querySelector<HTMLButtonElement>('[data-pwa-update]')?.addEventListener('click', () => this.pwa.applyUpdate());
   }
 
   private render(): void {
@@ -578,7 +625,16 @@ export class HomeWorkoutApp {
     const exercise = workoutPhase.exercises[snapshot.exerciseIndex]!;
     const selectedExerciseId = this.exerciseOverrides.get(exercise.id) ?? exercise.exerciseId;
     const definition = EXERCISES_BY_ID.get(selectedExerciseId) ?? EXERCISES_BY_ID.get(exercise.exerciseId);
-    const languages = this.activePlan.displayLanguages;
+    const availableLanguages = [
+      ...Object.keys(exercise.translations),
+      ...SUPPORTED_LOCALES.filter((code) => exerciseTranslation(selectedExerciseId, code) !== undefined)
+    ];
+    const languages = resolveWorkoutLanguages({
+      interfaceLanguage: this.uiLocale,
+      displayLanguages: this.activePlan.displayLanguages,
+      availableLanguages,
+      secondLanguage: this.secondWorkoutLanguage
+    });
     const isTransition = snapshot.phase === 'phase-transition';
     const isRest = snapshot.phase === 'exercise-rest' || snapshot.phase === 'round-rest' || isTransition;
     const statusLabel = snapshot.phase === 'round-rest' ? this.t('phase.roundRest') : snapshot.phase === 'exercise-rest' || isTransition ? this.t('phase.exerciseRest') : snapshot.phase === 'completed' ? this.t('phase.complete') : this.t('phase.currentExercise');
@@ -588,15 +644,16 @@ export class HomeWorkoutApp {
       const copy = isBuiltInWorkout(this.activePlan.id) || selectedExerciseId !== exercise.exerciseId
         ? catalogueCopy ?? exercise.translations[code]
         : exercise.translations[code] ?? catalogueCopy;
-      return copy ? `<div class="translation"><span>${escapeHtml(localeName(code))}</span><p>${escapeHtml(copy.instructions)}</p></div>` : '';
+      return copy ? `<div class="translation" lang="${escapeHtml(code)}"><span>${escapeHtml(localeName(code))}</span><p>${escapeHtml(copy.instructions)}</p></div>` : '';
     }).join('');
     const displayNames = languages.map((code) => {
       const catalogueCopy = isSupportedLocale(code) ? exerciseTranslation(selectedExerciseId, code) : undefined;
-      return isBuiltInWorkout(this.activePlan.id) || selectedExerciseId !== exercise.exerciseId
+      const name = isBuiltInWorkout(this.activePlan.id) || selectedExerciseId !== exercise.exerciseId
         ? catalogueCopy?.name ?? exercise.translations[code]?.name
         : exercise.translations[code]?.name ?? catalogueCopy?.name;
-    }).filter((name): name is string => Boolean(name));
-    const imageName = displayNames.join(' / ');
+      return name ? { code, name } : null;
+    }).filter((item): item is { code: string; name: string } => item !== null);
+    const imageName = displayNames.map(({ name }) => name).join(' / ');
     const announcement = [
       this.t('phase.label', { current: snapshot.phaseIndex + 1, total: this.activePlan.phases.length }),
       this.t('status.round', { current: snapshot.roundIndex + 1, total: workoutPhase.rounds }),
@@ -622,7 +679,7 @@ export class HomeWorkoutApp {
           <div class="phase-pill">${escapeHtml(statusLabel)}${snapshot.paused ? ` · ${escapeHtml(this.t('status.paused'))}` : ''}</div>
           ${snapshot.phase === 'completed' ? `<div class="completion"><p class="eyebrow">${escapeHtml(this.t('phase.complete'))}</p><h1>${escapeHtml(this.t('phase.complete'))}</h1><p>${escapeHtml(this.t('workout.completeCopy'))}</p><button class="primary" data-action="finish">${escapeHtml(this.t('button.backHome'))}</button></div>` : `
             ${isTransition ? `<div class="completion phase-transition-card"><p class="eyebrow">${escapeHtml(this.t('button.next'))}</p><h1>${escapeHtml(phaseLabel(this.activePlan.phases[snapshot.phaseIndex + 1]!.kind, this.t))}</h1><p>${escapeHtml(this.t('workout.restCopy'))}</p><strong data-workout-countdown>${formatClock(snapshot.remainingMs ?? 0)}</strong></div>` : `<div class="exercise-layout">
-              <div class="exercise-visual-column"><div class="workout-exercise-heading">${displayNames.map(name => `<h2>${escapeHtml(name)}</h2>`).join('')}</div><div class="exercise-visual"><img src="${definition?.illustration ?? '/icon.svg'}?v=${illustrationRevision(selectedExerciseId)}" alt="${escapeHtml(imageName)}"></div>
+              <div class="exercise-visual-column"><div class="workout-exercise-heading">${displayNames.map(({ code, name }) => `<h2 lang="${escapeHtml(code)}">${escapeHtml(name)}</h2>`).join('')}</div><div class="exercise-visual"><img src="${definition?.illustration ?? '/icon.svg'}?v=${illustrationRevision(selectedExerciseId)}" alt="${escapeHtml(imageName)}"></div>
               <div class="target-block"><span>${escapeHtml(isRest ? this.t('workout.readyIn') : exercise.type === 'duration' ? this.t('workout.timeLeft') : this.t('workout.target'))}</span><strong ${isRest || exercise.type === 'duration' ? 'data-workout-countdown' : ''}>${isRest ? formatClock(snapshot.remainingMs ?? 0) : escapeHtml(target)}</strong></div></div>
               <div class="exercise-copy">${isRest ? `<p class="rest-label">${escapeHtml(this.t('workout.restCopy'))}</p>` : translations}</div>
             </div>`}

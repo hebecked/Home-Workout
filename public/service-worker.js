@@ -1,6 +1,6 @@
 /* global Response */
 
-const CACHE = 'home-workout-v21';
+const CACHE = 'home-workout-v22';
 const APP_SHELL = ['/manifest.webmanifest', '/icon.svg', '/maskable-icon.svg', '/ai-workout-guide.txt', '/schema/workout-plan-v1.schema.json', '/schema/workout-plan-v2.schema.json'];
 
 self.addEventListener('install', (event) => {
@@ -9,8 +9,11 @@ self.addEventListener('install', (event) => {
     await cache.addAll(APP_SHELL);
     const offlinePage = await fetch('/index.html', { cache: 'reload' });
     await cache.put('/index.html', offlinePage);
-    await self.skipWaiting();
   })());
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') event.waitUntil(self.skipWaiting());
 });
 
 self.addEventListener('activate', (event) => {

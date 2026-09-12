@@ -1,7 +1,13 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
+
+const openLanguageMenu = async (page: Page): Promise<void> => {
+  const menu = page.locator('.language-menu');
+  if (await menu.getAttribute('open') === null) await menu.locator('summary').click();
+};
 
 test('offers all 16 interface languages and persists the selection', async ({ page }) => {
   await page.goto('/');
+  await openLanguageMenu(page);
 
   const picker = page.getByLabel('Interface language');
   await expect(picker.locator('option')).toHaveCount(16);
@@ -11,11 +17,13 @@ test('offers all 16 interface languages and persists the selection', async ({ pa
   await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
   await expect(page.getByRole('heading', { name: '30 Minuten Ganzkörper' })).toBeVisible();
   await page.reload();
+  await openLanguageMenu(page);
   await expect(page.getByLabel('Sprache der Benutzeroberfläche')).toHaveValue('de');
 });
 
 test('applies Arabic copy and right-to-left document direction together', async ({ page }) => {
   await page.goto('/');
+  await openLanguageMenu(page);
   await page.getByLabel('Interface language').selectOption('ar');
 
   await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
@@ -38,17 +46,55 @@ test('applies Arabic copy and right-to-left document direction together', async 
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
 
-test('keeps interface and two training languages independent', async ({ page }) => {
+test('uses the interface language first and a plan language second', async ({ page }) => {
   await page.goto('/');
+  await openLanguageMenu(page);
   await page.getByLabel('Interface language').selectOption('hi');
   await page.getByRole('button', { name: 'वर्कआउट शुरू करें' }).click();
 
   await expect(page.locator('html')).toHaveAttribute('lang', 'hi');
   await expect(page.getByRole('button', { name: 'अगला' })).toBeVisible();
-  const exerciseImage = page.locator('.exercise-visual img');
-  await expect(exerciseImage).toHaveAttribute('alt', /Marching/i);
-  await expect(exerciseImage).toHaveAttribute('alt', /Marschieren/i);
+  await expect(page.locator('.workout-exercise-heading h2[lang="hi"]')).toBeVisible();
+  await expect(page.locator('.workout-exercise-heading h2[lang="de"]')).toBeVisible();
+  await expect(page.locator('.translation[lang="hi"]')).toHaveCount(1);
+  await expect(page.locator('.translation[lang="de"]')).toHaveCount(1);
   await expect(page.locator('.translation')).toHaveCount(2);
+});
+
+test('stores the optional second workout language without changing the plan', async ({ page }) => {
+  await page.goto('/');
+  await openLanguageMenu(page);
+  await page.locator('[data-second-workout-language]').selectOption('off');
+  await page.reload();
+  await openLanguageMenu(page);
+  await expect(page.locator('[data-second-workout-language]')).toHaveValue('off');
+  await page.getByRole('button', { name: 'Start workout' }).click();
+
+  await expect(page.locator('.translation')).toHaveCount(1);
+  await expect(page.locator('.translation')).toHaveAttribute('lang', 'en');
+  const plan = await page.evaluate(() => localStorage.getItem('home-workout:plans'));
+  expect(plan).toBeNull();
+});
+
+test('shows the unobtrusive install action only when the browser offers installation', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.locator('[data-pwa-install]')).toHaveCount(0);
+
+  await page.evaluate(() => {
+    const event = Object.assign(new Event('beforeinstallprompt', { cancelable: true }), {
+      prompt: () => {
+        document.documentElement.dataset.installPrompted = 'true';
+        return Promise.resolve({ outcome: 'accepted' as const });
+      }
+    });
+    window.dispatchEvent(event);
+  });
+
+  const install = page.getByRole('button', { name: 'Install app' });
+  await expect(install).toBeVisible();
+  await install.click();
+  await expect(page.locator('html')).toHaveAttribute('data-install-prompted', 'true');
+  await expect(install).toHaveCount(0);
 });
 
 test('offers all supported training languages while enforcing a maximum of two', async ({ page }) => {

@@ -1,6 +1,6 @@
 # Product status and roadmap
 
-Last updated: 2026-09-11
+Last updated: 2026-09-12
 
 ## Implemented in the current release
 
@@ -21,10 +21,12 @@ Last updated: 2026-09-11
 - Schema version 2 plans with warm-up, one or more training phases, optional active recovery, cool-down, and phase-specific timing rules.
 - Lossless, non-mutating migration of stored, imported, and linked schema version 1 plans while retaining the public v1 reader and schema.
 - A directly translated 16-locale interface, including Arabic right-to-left layout, independent from user-authored workout languages.
+- Interface-first workout-language resolution with a global second-language preference hidden inside the compact language menu; schema-v1/v2 plans remain unchanged and supply deterministic fallbacks.
 - Optional consent-based Cloudflare pre-translation with visible provenance and mandatory manual review before use.
 - Opt-in, locally synthesized 3-2-1-0 timer cues with raised fixed output, a longer and higher completion tone, a compact stateful button immediately right of the wide Start workout action, and in-workout mute immediately left of End workout; spoken names remain deferred for offline, privacy, language-coverage, and screen-reader reasons.
 - Best-effort Screen Wake Lock during visible, unpaused workouts, with release on pause, completion, abort, or route exit and safe degradation when browser or device policy denies it.
-- Screen-reader smoke coverage for semantic plan/audio controls, polite atomic workout announcements, state changes, and focus retention across rerenders.
+- Screen-reader smoke coverage for semantic plan/audio/language controls, polite atomic workout announcements, localized preference changes, state changes, and focus retention across rerenders.
+- A contextual footer install action on browsers that expose `beforeinstallprompt`, plus a polite update-ready message and explicit reload action. Other browsers retain the device-specific installation guide.
 
 ## Bundled plan catalogue
 
@@ -61,8 +63,7 @@ Evidence basis:
 ### Later enhancements
 
 - Optional workout history and progression tracking, stored locally and opt-in only.
-- A richer native install prompt and offline/update feedback; device-specific installation instructions are already visible on the guide page.
 - Physical-Safari offline verification; native Windows WebKit is covered, while local native Firefox remains blocked at process launch.
-- Decide whether a chosen easier alternative should persist across reloads during an active session.
+- Decide whether a chosen easier alternative should persist across reloads during an active session. If implemented, the original exercise must remain available so the choice is always reversible.
 
 The concise authoritative checklist is [`../BACKLOG.md`](../BACKLOG.md). Every unfinished task must be added there before work stops.

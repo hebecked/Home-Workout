@@ -1,15 +1,17 @@
 # Home Workout backlog
 
-Last reviewed: 2026-09-11
+Last reviewed: 2026-09-12
 
 This file is the durable hand-off for work that must not exist only in an AI conversation. `docs/product-roadmap.md` contains the fuller product context; this file is the short operational checklist.
 
-## Release work completed on 2026-09-10 and refined on 2026-09-11
+## Release work completed on 2026-09-10 and refined through 2026-09-12
 
 - [x] **DOC-HW-001:** refreshed the README, project documentation, roadmap, audit/review notes, quality reports, and README screenshot; removed stale review and implementation status.
 - [x] **UI-HW-001:** removed the helper text. The accessible plan list now shows each routine's estimate right-aligned beside its name, supports pointer and keyboard selection, and retains focus after selection.
 - [x] **AUDIO-HW-001:** evaluated signals and speech. Implemented only an opt-in local timer tone; a compact stateful button sits immediately right of Start workout, the device controls volume, and the workout mute button sits immediately left of End workout. Speech remains rejected for this release.
-- [x] **A11Y-HW-001:** added accessibility-tree smoke tests for the plan list, optional audio, workout announcements, state changes, and focus retention.
+- [x] **A11Y-HW-001:** added accessibility-tree smoke tests for the plan list, optional audio, workout announcements, language preferences, state changes, and focus retention.
+- [x] **LANG-HW-001:** made the interface language the primary workout language when matching copy exists and added a compact, global second-language preference inside the existing language menu.
+- [x] **PWA-HW-001:** added a contextual install action on supporting browsers plus an accessible update-ready message and user-controlled reload.
 
 The remaining owner URL choice and later product ideas were re-evaluated below. They remain useful but are not release blockers and were not expanded during this release pass.
 
@@ -34,7 +36,7 @@ The report also notes that Firefox could not start because of `spawn UNKNOWN`; t
 
 ## Priority 0 — public release hygiene, movement safety, and correctness
 
-- [x] **DOC-HW-001 · Documentation and README refresh (updated 2026-09-11):** Updated all public project/status documents to the implemented UI, countdown audio, screen wake lock, accessibility, plan, translation, testing, and deployment state. The 1440×1600 README screenshot now includes the phase-grouped exercise overview. No private release values, reviewer exports, or generated test artifacts were added.
+- [x] **DOC-HW-001 · Documentation and README refresh (updated 2026-09-12):** Updated all public project/status documents to the implemented UI, countdown audio, screen wake lock, accessibility, plan, translation, PWA lifecycle, testing, and deployment state. The 1440×1600 README screenshot reflects the compact language control and phase-grouped exercise overview. No private release values, reviewer exports, or generated test artifacts were added.
 - [x] **PRIV-HW-001 · Repository-public-content audit (2026-09-10):** Audited tracked public content and reachable Git history for private addresses, credentials, environment files, feedback/reviewer exports, generated reports, and local paths. No private values or sensitive artifacts were found. `docs/private-release-config.md` contains process guidance only; `.env.production.local`, build output, and test artifacts remain ignored.
 - [x] Finalize the owner-confirmed **Burpee** as a readable four-step sequence with separated numbered poses and no ambiguous overlaid limbs.
 - [x] Make **Side Plank** unambiguously forearm-supported: elbow below the shoulder and forearm visibly grounded.
@@ -46,7 +48,7 @@ The report also notes that Firefox could not start because of `spawn UNKNOWN`; t
 - [x] Replace the **Side Plank** illustration with one anatomically clear static forearm-supported pose; no second figure is needed for a hold.
 - [x] Redesign the **Pike Push-up** illustration with same-scale overlaid start/lowering poses, fixed hands and feet, and no implied sideways movement.
 - [x] Add sourced DE/EN entries and original local SVGs for **Shadowboxing**, **Sumo Squat Hold**, four dynamic warm-ups, and four post-workout stretches.
-- [x] Replace every generic exercise sentence with a concise, movement-specific DE/EN setup, action, and key form cue. The per-exercise source and pose audit is complete.
+- [x] Replace every generic exercise sentence with a concise, movement-specific DE/EN setup, action, and key form cue. The per-exercise source and pose audit is complete. On 2026-09-12 the catalogue resolver was also corrected so the interface and tooltips actually use these specific DE/EN texts instead of the generic fallback template.
 - [x] Run the human illustration review workflow and remove its temporary reviewer and feedback data. The six new dynamic warm-up images and **Burpee** were owner-confirmed on 2026-09-10; no unapproved image remains in this review round.
 
 ## Priority 1 — multilingual editing and comprehension
@@ -58,10 +60,10 @@ The report also notes that Firefox could not start because of `spawn UNKNOWN`; t
 - [x] Add optional Cloudflare Workers AI pre-translation with explicit user consent, visible source/provider/review status, request limits, and mandatory manual review before saving, exporting, or starting.
 - [x] Put repetition targets and duration counters directly below the image and compact the controls without dropping below 44px touch targets. Regression checks cover phone, tablet, desktop and 844×390 landscape layouts.
 - [x] **UI-HW-001 · Plan-selection layout (2026-09-10):** Removed the helper text and its translations. A labeled ARIA combobox/listbox shows each routine's estimated duration right-aligned in the same option row. Tests cover pointer and keyboard selection, focus, accessible state, phone/desktop/tablet layouts, and horizontal overflow.
-- [ ] **LANG-HW-001 · Workout-language resolution:** Use the interface language as the primary workout language whenever the plan or bundled catalogue provides a matching translation. Keep a separately stored optional second-language preference with “Off” and explicit language choices; document whether it applies globally or per plan.
-  - Keep schema-v1/v2 plans and their required one- or two-language `displayLanguages` values valid and unchanged. Use them only as deterministic fallbacks or initial preferences; switching interface or workout languages must not rewrite a plan.
-  - Define exact and base-language BCP 47 matching plus deterministic behavior when a plan has no translation for the interface or preferred second language. Valid saved plans remain complete for every language they declare; incomplete editor drafts must continue to fail validation.
-  - Cover editor, import, reload, locale switching, and persistence. The second-language control needs an accessible name and state; every rendered language block needs the correct `lang` attribute, and changes must be perceivable by screen readers.
+- [x] **LANG-HW-001 · Workout-language resolution (2026-09-12):** The interface language is now the primary workout language whenever the exercise's plan copy or bundled catalogue provides it. The existing header language control opens a compact menu containing the interface language and one global, separately persisted second-language preference: plan default, off, or an explicit supported language.
+  - Schema-v1/v2 plans and their required one- or two-language `displayLanguages` values remain valid and unchanged. They provide deterministic primary and automatic-secondary fallbacks only; changing either setting never rewrites a plan.
+  - Resolution checks an exact BCP 47 code before a base-language match. An unavailable interface language falls back to the first available `displayLanguages` entry and then the first available plan language. An unavailable explicit second language is omitted rather than silently replaced.
+  - Unit and browser coverage exercises base/exact matching, invalid stored values, automatic/off/explicit behavior, reload persistence, locale switching, unchanged plan storage, accessible labels/status, and `lang` attributes on every rendered exercise-name and instruction block.
 - [x] **UI-HW-002 · Phase-aware exercise overview and instructions (2026-09-11):** Grouped home-screen exercise cards inside subtly outlined, localized phase sections. Each card exposes its localized instructions through a compact information button and associated tooltip-style popover. Tests cover pointer hover, keyboard focus, touch/click, Escape, retained focus, expanded state, language metadata, right-to-left and long copy, responsive layouts, repeated exercises in different phases, custom exercises, and screen-reader relationships without relying on a native `title` attribute.
 - [x] Investigate historical `quality` failures and retain future diagnostics. The latest historical failure was the coverage step, already followed by a boundary-test fix and successful runs. Current local coverage passes unchanged 95% thresholds, and [CI run 34527897023](https://github.com/hebecked/Home-Workout/actions/runs/34527897023) passed for release commit `3a4f502`. See `docs/ci-quality.md` for evidence and limitations.
 - [x] Add a footer-linked **Impressum** with the owner-supplied name and address. Email omission relies on the stated private, non-economic character, not absence of data storage. Chromium offline reload passes. See `docs/review-round-2.md` for the legal scope.
@@ -95,8 +97,8 @@ Reassessment on 2026-09-10: all four items remain coherent optional enhancements
 
 - [ ] Add opt-in local workout history and progression views. No analytics or server-side profile is planned.
 - [x] Add more bundled UI translations beyond German and English. Owner confirmed this item as implemented on 2026-09-10.
-- [ ] **PWA-HW-001 · In-app install and update status:** The manifest, service worker, offline app shell, and device-specific installation help are complete. Still open are an unobtrusive in-app install entry point where the browser supports it and an accessible update-available status with a clear refresh action.
-- [x] **A11Y-HW-001 · Screen-reader smoke tests (2026-09-10):** Added Chromium accessibility-tree and live-region smoke coverage for plan selection, the opt-in audio control, exercise/phase/round announcements, pause state, and focus retention across rerenders.
+- [x] **PWA-HW-001 · In-app install and update status (2026-09-12):** A compact footer action appears only after a supporting browser emits `beforeinstallprompt`; unsupported browsers keep the existing device-specific help without an inert control. A newly installed service worker waits instead of replacing a running workout, and the footer announces the available update with an explicit reload action. Installation and update failures remain non-blocking.
+- [x] **A11Y-HW-001 · Screen-reader smoke tests (updated 2026-09-12):** Added Chromium accessibility-tree and live-region smoke coverage for plan selection, the opt-in audio control, both language preferences, exercise/phase/round announcements, pause state, localized status changes, and focus retention across rerenders.
 - [ ] Optionally persist a chosen alternative exercise across a page reload during an active session. Restore the selected alternative without changing the plan, and always keep the original exercise available in the chooser so the user can switch back. The current in-memory chooser already places the original first and clears the override when it is selected.
 
 ## Completed polish, installability, and ownership

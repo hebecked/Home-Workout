@@ -77,6 +77,13 @@ describe('localized bundled content', () => {
     }
   });
 
+  it('uses the movement-specific library instructions instead of the generic template in German and English', () => {
+    for (const id of EXERCISE_IDS) {
+      expect(exerciseTranslations[id].de.instructions, `${id}.de`).not.toContain('Führe ' + exerciseTranslations[id].de.name + ' langsam und kontrolliert aus.');
+      expect(exerciseTranslations[id].en.instructions, `${id}.en`).not.toContain('Perform ' + exerciseTranslations[id].en.name + ' slowly and with control.');
+    }
+  });
+
   it('uses exercise-specific instructions in all 16 locales for every new dynamic warm-up', () => {
     const expectedIds = [
       'hip-circles', 'ankle-rocks', 'torso-rotations',

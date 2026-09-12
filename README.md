@@ -14,7 +14,7 @@ Home Workout makes a structured routine easy to follow without an account or ser
 
 - Phase-aware workout, duration, transition, and rest timers that tolerate browser backgrounding
 - Pause/resume across every logical clock and reload-safe active sessions
-- A 16-language interface plus one- or two-language exercise presentation; German and English exercise copy is bundled
+- A 16-language interface that becomes the primary workout language whenever matching copy exists, plus a compact global second-language preference inside the existing language menu
 - Six permanent bundled routines for general fitness, beginners, strength, cardio, active circuits, and advanced bodyweight training
 - A keyboard-accessible routine picker with a right-aligned estimate on every plan row; bundled routines cannot be overwritten, while local plans are stored separately
 - A phase-grouped home-screen exercise overview with compact, keyboard- and touch-accessible instruction popovers
@@ -22,12 +22,12 @@ Home Workout makes a structured routine easy to follow without an account or ser
 - Best-effort Screen Wake Lock during active workouts, released on pause, completion, or leaving the workout
 - Visual phase editor for warm-up, training blocks, active recovery, and cool-down, with per-phase rounds and rest rules
 - Validated AI-plan launch links plus a public machine-readable guide for ChatGPT and other assistants
-- 58 extensible exercises with movement-specific original local SVG illustrations, including dedicated warm-up and stretching categories
+- 58 extensible exercises with movement-specific German/English instructions and original local SVG illustrations, including dedicated warm-up and stretching categories
 - `Phase X / Y`, per-round `Exercise X / Y` progress, transition cards, and a visible easier-alternative chooser during workouts
 - A clear, confirmed workout-abort action; the Home Workout brand uses the same safe return-to-home flow
 - Stable workout controls and automatic timers without a manual repetition tap counter
 - Responsive layouts, keyboard focus, live workout announcements, 44 px controls, a calm light-only theme, and reduced-motion support
-- Installable PWA with an offline app shell, library, images, and local plans
+- Installable PWA with an offline app shell, library, images, local plans, a contextual in-app install action, and an accessible update-and-reload notice
 
 ## Screenshots
 
@@ -37,6 +37,7 @@ Home Workout makes a structured routine easy to follow without an account or ser
 
 To install the published site as an app:
 
+- On supporting Chromium browsers, use the compact **Install app** action when it appears in the footer.
 - Android Chrome: open the site, choose the browser menu, then **Add to home screen → Install**.
 - iPhone/iPad Safari: choose **Share → Add to Home Screen**.
 - Desktop Edge or Chrome: use the install icon in the address bar or **Apps → Install this site as an app** in the browser menu.
@@ -50,6 +51,8 @@ npm run dev
 ```
 
 The app uses Vite, strict Vanilla TypeScript, semantic HTML, and CSS. There are no runtime framework dependencies or external runtime CDNs.
+
+The interface language and optional second workout language live together in the compact header language menu. The second-language preference is global to this browser: **From workout plan** preserves the plan's configured bilingual fallback, **Off** shows one language, and an explicit choice appears only when matching exercise copy is available. These preferences never modify saved or imported plans.
 
 ## Tests and coverage
 

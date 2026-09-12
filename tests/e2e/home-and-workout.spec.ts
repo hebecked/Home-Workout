@@ -51,6 +51,7 @@ test('home presents the default plan and all primary destinations', async ({ pag
   await expect(tooltip).toBeHidden();
   await info.focus();
   await expect(info).toHaveAttribute('aria-expanded', 'true');
+  await expect(tooltip).not.toContainText('Perform Marching in place slowly and with control');
   await expect(info).toHaveAttribute('aria-describedby', await tooltip.getAttribute('id') ?? 'missing');
   await expect(tooltip).toBeVisible();
   await expect(tooltip).not.toBeEmpty();

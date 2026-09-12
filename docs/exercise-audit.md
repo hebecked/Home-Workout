@@ -1,11 +1,12 @@
 # Exercise text and illustration audit
 
-Last updated: 2026-09-10
+Last updated: 2026-09-12
 
 This checklist covers all 58 exercise definitions. The six added dynamic warm-up illustrations and the final separated four-step Burpee sequence were owner-confirmed on 2026-09-10. Earlier revision decisions are documented in [review-round-3.md](review-round-3.md).
 
 ## Corrections made during the completed audit
 
+- The central exercise catalogue now exposes the already audited movement-specific German and English instructions. This closes a display-layer regression that had substituted the generic safety template for many exercises in the home overview and workout.
 - Assisted Pull-up now declares both a pull-up bar and a resistance band.
 - Wall Sit declares stable support. Hamstring Stretch now uses a seated, equipment-free alternative.
 - Split Squat and Single-leg Glute Bridge now use a per-side repetition target.

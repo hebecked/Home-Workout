@@ -35,4 +35,12 @@ describe('service worker update strategy', () => {
     expect(cacheFallback).toBeGreaterThan(networkFetch);
     expect(navigationBranch).not.toContain('caches.match(event.request)');
   });
+
+  it('waits for a user-approved update before activating a replacement worker', () => {
+    const installBranch = serviceWorker.match(/self\.addEventListener\(['"]install['"],([\s\S]*?)\n\}\);/)?.[1];
+    expect(installBranch).toBeDefined();
+    expect(installBranch).not.toContain('skipWaiting');
+    expect(serviceWorker).toContain("event.data?.type === 'SKIP_WAITING'");
+    expect(serviceWorker).toContain('event.waitUntil(self.skipWaiting())');
+  });
 });

@@ -1,6 +1,6 @@
 # Project documentation
 
-Last updated: 2026-09-11
+Last updated: 2026-09-12
 
 ## Product overview
 
@@ -10,11 +10,12 @@ The default experience is deliberately simple:
 
 1. Select a permanent bundled routine or local plan from the keyboard-accessible list; each option shows its estimate in a right-aligned column.
 2. Review its warm-up, training, active-recovery, and cool-down exercises in subtly outlined phase groups; open any card's localized instructions from its compact information control.
-3. Start the workout.
-4. Follow phase, round, and exercise progress; optionally select a stored easier movement; and use Previous, Pause/Resume, Next, or the confirmed Abort action.
-5. Duration exercises, transitions, and rests count down automatically; total workout time continues independently.
-6. If explicitly enabled, hear short local tones at 3, 2, and 1 seconds plus a longer completion tone at 0; mute them at any time without changing workout state.
-7. On supported devices, keep the screen awake while the workout is active and visible.
+3. If useful, open the compact header language menu and choose whether the plan's second workout language, no second language, or one explicit language should accompany the interface language.
+4. Start the workout.
+5. Follow phase, round, and exercise progress; optionally select a stored easier movement; and use Previous, Pause/Resume, Next, or the confirmed Abort action.
+6. Duration exercises, transitions, and rests count down automatically; total workout time continues independently.
+7. If explicitly enabled, hear short local tones at 3, 2, and 1 seconds plus a longer completion tone at 0; mute them at any time without changing workout state.
+8. On supported devices, keep the screen awake while the workout is active and visible.
 
 The manual repetition counter is disabled because it caused unwanted scroll repositioning and offered limited value. Repetition target ranges are still shown. The session model retains its versioned repetition field for backward-compatible restoration of already stored sessions, but the current interface does not expose increment/decrement controls.
 
@@ -30,6 +31,7 @@ Bundled and local plans are intentionally separate:
 - “Edit” preserves the ID of a local plan so saving updates that plan only.
 - Active workout state uses the separate `home-workout:active-session` key.
 - Opt-in timer-audio settings use `home-workout:timer-audio`; audio settings never enter a workout plan or session schema.
+- The optional global second workout language uses `home-workout:second-workout-language`; it never rewrites `languages`, `translations`, or `displayLanguages` in a plan.
 
 If a session references a bundled plan, it is restored from source-controlled bundled data. If it references a local plan, it is restored from browser storage. Invalid or outdated stored data is rejected safely.
 
@@ -93,13 +95,26 @@ Direct links never start a workout immediately. The app validates the payload, r
 - warm-up: gold;
 - stretching: teal.
 
-Most two-position movement assets use same-scale overlays; multi-step sequences such as Burpee use separated numbered poses. Static holds and stretches use one pose without a false direction arrow. All 58 assets are covered by file, palette, pose-mode, and SVG contract tests. Movement and floor-contact sources are recorded in `docs/exercise-sources.md`; completed per-exercise text and pose review is recorded in `docs/exercise-audit.md`.
+Most two-position movement assets use same-scale overlays; multi-step sequences such as Burpee use separated numbered poses. Static holds and stretches use one pose without a false direction arrow. All 58 assets are covered by file, palette, pose-mode, and SVG contract tests. The catalogue resolver uses the same audited, movement-specific German and English instructions as the exercise library, preventing a generic safety template from replacing the actual movement sequence. Movement and floor-contact sources are recorded in `docs/exercise-sources.md`; completed per-exercise text and pose review is recorded in `docs/exercise-audit.md`.
+
+## Workout languages
+
+The interface language becomes the primary exercise language whenever the current plan translation or bundled catalogue supplies an exact or base-language match. Otherwise, the first available plan `displayLanguages` entry is used. The optional second language is a global browser preference inside the existing language menu: plan default, off, or an explicit supported locale. An unavailable explicit choice is omitted rather than replaced. All rendered exercise-name and instruction blocks carry their content-language `lang` attribute.
+
+This resolution is display-only. It does not alter the versioned plan, imported source, editor draft, or saved translation records, so schema-v1 and schema-v2 compatibility is unchanged.
+
+## PWA installation and updates
+
+The footer shows **Install app** only after a supporting browser exposes the non-standard `beforeinstallprompt` event. This makes installation discoverable in Chromium-based browsers without leaving a dead control in Safari or Firefox; the guide page remains the cross-browser fallback. The captured prompt is used once and cleared after the browser returns a choice or reports installation. See [MDN's install-prompt guidance](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/How_to/Trigger_install_prompt).
+
+Replacement service workers now remain in the standard waiting state while the current app stays open. When a waiting worker is detected, a polite footer status announces the update and offers **Reload**. Only that explicit action asks the worker to skip waiting; `controllerchange` then reloads the page. This avoids silently replacing code during an active workout while preserving the saved session across the chosen reload. The strategy follows the documented [service-worker update lifecycle](https://web.dev/learn/pwa/update/) and degrades silently when registration is unavailable or rejected.
 
 The implemented schema-v2 phase model is documented in `docs/phased-workout-proposal.md`. It separates warm-up, independently configured training blocks, optional active recovery, and cool-down, and uses “rounds / Runden” for repeated exercise sequences. Deterministic engine tests cover exercise, round, and phase boundaries, skipping, pausing, and reload persistence.
 
 ## Code map
 - `src/core/audio.ts`: strict local audio preferences plus user-gesture-safe Web Audio tone synthesis.
 - `src/ui/wake-lock.ts`: best-effort Screen Wake Lock acquisition, release, and visibility recovery.
+- `src/ui/pwa.ts`: install-prompt capture, service-worker update detection, and user-approved activation.
 - `src/ui/app.ts`: hash routing, rendering, event binding, editor, plan library, imports, instructions, and workout UI.
 - `src/data/default-workout.ts`: permanent bundled routine catalogue.
 - `src/data/exercises.ts`: exercise metadata, translations, targets, variants, and illustration paths.
@@ -110,7 +125,7 @@ The implemented schema-v2 phase model is documented in `docs/phased-workout-prop
 - `src/core/persistence.ts`: local plan and active-session persistence.
 - `src/core/workout-engine.ts`: deterministic workout state transitions.
 - `src/core/timer.ts`: pause-aware timestamp timer calculations.
-- `public/service-worker.js`: offline app shell caching.
+- `public/service-worker.js`: offline app shell caching and message-driven update activation.
 - Cloudflare Pages serves the generated static files from `dist/`; hash routing keeps direct application routes on the root document.
 
 ## Optional audio
@@ -129,18 +144,21 @@ Use Node.js 22 and npm:
 
 ```bash
 npm ci
+npm run check:licenses
 npm run lint
+npm run typecheck
 npm test
 npm run coverage
+npm run mutation -- --concurrency 4
 npm run e2e
 npm run build
 ```
 
-Vitest covers validation, transformations, persistence, timers, audio, the workout engine, the bundled catalogue, and illustration contracts. Playwright covers representative phone, desktop, and tablet journeys, including plan creation/editing, immutable bundled plans, import/AI links, workout controls, fixed action placement, abort/home behavior, reload restoration, touch targets, plan-list keyboard behavior, responsive time-column alignment, phase-grouped exercise previews, and instruction popovers opened by pointer, keyboard, or touch.
+Vitest covers validation, transformations, persistence, timers, audio, workout-language resolution, PWA lifecycle controls, the workout engine, the bundled catalogue, and illustration contracts. Playwright covers representative phone, desktop, and tablet journeys, including plan creation/editing, immutable bundled plans, import/AI links, language preference persistence, contextual installation, workout controls, fixed action placement, abort/home behavior, reload restoration, touch targets, plan-list keyboard behavior, responsive time-column alignment, phase-grouped exercise previews, and instruction popovers opened by pointer, keyboard, or touch.
 
 Audio unit tests cover invalid, current, and legacy preferences, simplified persistence, deferred context creation, user-gesture resume behavior, tone scheduling, mute, and failure-safe behavior. Browser tests cover the opt-in default, shared Start/audio action row, button state and focus, absence of checkbox and slider, and in-workout mute.
 
-The interface catalogue has 16 locales with compile-time and runtime completeness checks. Playwright verifies locale persistence, translated accessible names, Arabic right-to-left layout, keyboard focus, and representative responsive layouts. Chromium accessibility-tree smoke tests also verify the plan/audio controls, the polite atomic workout status, state changes, and retained focus. Stryker mutation testing covers the validator, import/export, persistence, plan transformations, timer, and workout engine. Exact current results and native-engine limitations are recorded in `docs/ci-quality.md`.
+The interface catalogue has 16 locales with compile-time and runtime completeness checks. Playwright verifies locale persistence, translated accessible names, Arabic right-to-left layout, keyboard focus, and representative responsive layouts. Chromium accessibility-tree smoke tests also verify the plan, audio, and language controls; localized preference status; the polite atomic workout status; state changes; and retained focus. Stryker mutation testing covers the validator, import/export, persistence, plan transformations, timer, and workout engine. Exact current results and native-engine limitations are recorded in `docs/ci-quality.md`.
 
 The build produces a static client in `dist/`. `npm run deploy:cloudflare` publishes that directory to the existing Cloudflare Pages project `home-workout`. Deployment credentials and generated output must never be committed.
 

@@ -2,7 +2,7 @@ import eslint from '@eslint/js';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['dist', 'coverage', 'mutation-report', 'playwright-report', 'test-results'] },
+  { ignores: ['dist', 'coverage', 'mutation-report', 'reports', '.stryker-tmp', 'playwright-report', 'test-results'] },
   {
     ...eslint.configs.recommended,
     files: ['**/*.js', '**/*.mjs'],

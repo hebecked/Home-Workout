@@ -1,5 +1,20 @@
 # CI quality diagnostics
 
+## Workout languages, concrete instructions, and PWA lifecycle — 2026-09-12
+
+The language, exercise-copy, installation, update, and screen-reader follow-up passed the complete local release matrix:
+
+- Production dependency licensing, ESLint, strict TypeScript, and the Vite production build passed; the build transformed 42 modules.
+- Vitest passed 22 files and 212 tests.
+- V8 coverage passed every configured 95% threshold with 97.06% statements (595/613), 95.60% branches (565/591), 99.01% functions (101/102), and 99.07% lines (427/431).
+- The complete Windows fallback phone, desktop, and tablet profile matrix passed 84 tests with 48 intentional project-specific skips. The run used an operating-system-assigned free port. These named profiles use Chromium on this workstation and are not reported as native Firefox or WebKit coverage.
+- Language tests cover exact and base BCP 47 matching, interface-first rendering, automatic/off/explicit second-language behavior, invalid stored preferences, reload persistence, unchanged schema-v1/v2 plan data, per-block `lang` metadata, localized status announcements, and focus restoration inside the compact language menu.
+- Catalogue and browser regressions verify that bundled German and English exercise instructions come from the audited movement-specific library rather than the former generic safety template.
+- PWA tests cover conditional install-prompt exposure, one-time prompt consumption, rejected prompts, installed state, waiting-worker detection, explicit `SKIP_WAITING`, and reload only after `controllerchange`. Unsupported or rejected paths remain silent and non-blocking.
+- Screen-reader smoke tests cover the two language selects and their retained selection/focus in addition to plan, audio, tooltip, workout-state, phase, round, and pause announcements.
+- Stryker passed its 70% break threshold with a 74.79% total score and 76.69% covered score: 1,092 killed, 332 survived, 36 without coverage, and no timeouts or errors across 1,460 mutants. The four-worker run completed in 2 minutes 45 seconds.
+- The 1440×1600 README screenshot was regenerated from the final production build on an operating-system-assigned free port.
+
 ## Countdown audio and screen wake lock — 2026-09-11
 
 The louder 3-2-1-0 cue pattern and best-effort Screen Wake Lock passed the following local checks:

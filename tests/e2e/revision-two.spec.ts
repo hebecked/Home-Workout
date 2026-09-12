@@ -18,6 +18,7 @@ test('target follows image without being covered by workout controls', async ({ 
 
 test('legal notice is reachable and skip link retains the route', async ({ page }) => {
   await page.goto('/');
+  await page.locator('.language-menu summary').click();
   await page.getByLabel('Interface language').selectOption('de');
   await page.evaluate(() => navigator.serviceWorker.ready);
   await page.reload();
