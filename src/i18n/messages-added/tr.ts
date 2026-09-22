@@ -221,6 +221,7 @@ export const trMessages: Record<CoreMessageKey, string> = {
   "legal.responsibilityCopy": "Egzersizlerin ve seçilen yoğunluğun size uygun olup olmadığına siz karar verirsiniz. Uygulama genel antrenman önerileri sunar; tıbbi görüşün veya kişisel antrenör desteğinin yerini almaz.",
   "legal.healthCopy": "Kendi kapasiteniz içinde egzersiz yapın; ağrı veya rahatsızlık hissederseniz durun. Bir sağlık sorununuz ya da şüpheniz varsa, antrenmandan önce uygun yoğunluğu nitelikli bir sağlık uzmanına danışın.",
   "legal.liability": "Bu bildirim, kanundan doğan sorumluluk taleplerini ortadan kaldırmaz.",
+  "legal.aiDisclosure": "Bu uygulama kısmen yapay zekâ desteğiyle oluşturulmuştur.",
   "legal.feedback": "Geri bildirim",
   "legal.feedbackCopy": "Bir hata buldunuz veya geliştirme fikriniz var mı? GitHub'daki kamu geri bildirim ve soru forumu kullanın. Sağlık verilerini veya diğer gizli bilgileri orada yayınlamayın.",
   "legal.feedbackLink": "GitHub'daki kamu geri bildirim ve soru forumu",

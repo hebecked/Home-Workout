@@ -221,6 +221,7 @@ export const ptMessages: Record<CoreMessageKey, string> = {
   "legal.responsibilityCopy": "Cabe-lhe decidir se os exercícios e a intensidade escolhida são adequados para si. A aplicação apresenta sugestões gerais de treino e não substitui aconselhamento médico nem acompanhamento individual.",
   "legal.healthCopy": "Treine dentro das suas capacidades e pare se sentir dor ou mal-estar. Se tiver um problema de saúde ou dúvidas, pergunte antes do treino a um profissional de saúde qualificado qual a intensidade adequada para si.",
   "legal.liability": "Este aviso não exclui as reclamações de responsabilidade previstas na lei.",
+  "legal.aiDisclosure": "Esta aplicação foi criada em parte com a ajuda de IA.",
   "legal.feedback": "Comentários",
   "legal.feedbackCopy": "Encontrou um bug ou tem uma idéia de melhoria? Use o fórum público de feedback e perguntas no GitHub. Não publique dados de saúde ou outras informações confidenciais lá.",
   "legal.feedbackLink": "Fórum público de feedback e perguntas no GitHub",

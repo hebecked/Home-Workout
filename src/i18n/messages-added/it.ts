@@ -221,6 +221,7 @@ export const itMessages: Record<CoreMessageKey, string> = {
   "legal.responsibilityCopy": "Decidi tu se gli esercizi e l’intensità scelta sono adatti a te. L’app offre suggerimenti generali di allenamento e non sostituisce un parere medico né l’assistenza di un allenatore personale.",
   "legal.healthCopy": "Allenati entro le tue capacità e interrompi l’esercizio in caso di dolore o malessere. Se hai un problema di salute o dubbi, chiedi prima dell’allenamento a un professionista sanitario qualificato quale intensità è adatta a te.",
   "legal.liability": "Questo avviso non esclude le pretese di responsabilità previste dalla legge.",
+  "legal.aiDisclosure": "Questa app è stata creata in parte con l’aiuto dell’IA.",
   "legal.feedback": "Segnalazioni",
   "legal.feedbackCopy": "Hai trovato un bug o hai un'idea di miglioramento? usa il forum di feedback e problemi pubblici su GitHub. Non pubblicare dati sulla salute o altre informazioni riservate lì.",
   "legal.feedbackLink": "Forum di feedback e problemi pubblici su GitHub",

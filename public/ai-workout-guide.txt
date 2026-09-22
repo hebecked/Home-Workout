@@ -8,6 +8,7 @@ YOUR TASK
 2. Create a balanced phased plan that matches BASE_URL/schema/workout-plan-v2.schema.json.
 3. Prefer exercise IDs from the supported library below so the app can show a matching illustration.
 4. Return either a Markdown link labelled "Workout öffnen" using BASE_URL/?plan=BASE64URL_UTF8_JSON#import, or the complete JSON in a code block for upload. Encode the compact JSON as UTF-8 base64url without padding.
+   Immediately before the link or JSON block, add this provenance comment in your reply: <!-- AI-generated workout plan -->. Keep it outside the plan data: JSON files and encoded plan URLs cannot contain comments and must remain valid for import.
 5. State clearly that the import check covers technical compatibility, not medical or health suitability. Tell the user to review the exercises and workload, train within their ability, use stable equipment and enough space, stop for pain or illness, and seek qualified advice for health-related uncertainty. Do not imply that this limits statutory liability rights.
 
 SUPPORTED EXERCISE IDS

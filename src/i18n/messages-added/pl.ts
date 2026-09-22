@@ -221,6 +221,7 @@ export const plMessages: Record<CoreMessageKey, string> = {
   "legal.responsibilityCopy": "To Ty decydujesz, czy ćwiczenia i wybrana intensywność są dla Ciebie odpowiednie. Aplikacja podaje ogólne propozycje treningowe i nie zastępuje porady lekarskiej ani indywidualnego prowadzenia przez trenera.",
   "legal.healthCopy": "Ćwicz w granicach swoich możliwości i przestań ćwiczyć, jeśli odczuwasz ból lub dyskomfort. Jeśli masz stan zdrowia lub nie jesteś pewien, zapytaj wykwalifikowanego lekarza przed szkoleniem, która intensywność jest dla Ciebie odpowiednia.",
   "legal.liability": "Niniejsze zawiadomienie nie wyklucza roszczeń prawnych.",
+  "legal.aiDisclosure": "Ta aplikacja została częściowo stworzona przy pomocy AI.",
   "legal.feedback": "Opinie",
   "legal.feedbackCopy": "Znalazłeś błąd lub masz pomysł na ulepszenie? Użyj publicznego forum opinii i problemów na GitHub. Nie publikuj tam danych zdrowotnych ani innych poufnych informacji.",
   "legal.feedbackLink": "Publiczne forum opinii i problemów na GitHub",
