@@ -989,7 +989,7 @@ export class HomeWorkoutApp {
     const withPlan = (callback: (plan: WorkoutPlan) => void): void => { try { callback(this.normalizedDraft()); } catch (error) { this.notice = error instanceof Error && /rounds: must be a positive integer/.test(error.message) ? this.t('editor.roundsMinimum') : error instanceof Error ? error.message : this.t('error.invalidPlan'); this.renderEditor(); } };
     this.root.querySelector('[data-action="save-plan"]')?.addEventListener('click', () => withPlan((plan) => {
       savePlan(localStorage, plan);
-      this.editorMode = 'edit';
+      if (this.editorMode !== 'edit') this.openNewPlan();
       this.notice = this.t('editor.saved');
       this.renderEditor();
     }));

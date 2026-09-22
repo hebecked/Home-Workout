@@ -1,4 +1,4 @@
-import { assertMachineTranslationsReviewed, migrateWorkoutPlan, PlanValidationError, validateWorkoutPlan, type WorkoutPlan } from './plan-schema';
+import { assertMachineTranslationsReviewed, migrateWorkoutPlan, validateWorkoutPlan, type WorkoutPlan } from './plan-schema';
 
 export class PlanImportError extends Error {
   constructor(public readonly userMessage: string, options?: ErrorOptions) {
@@ -18,8 +18,7 @@ export function importPlanJson(json: string): WorkoutPlan {
     return migrateWorkoutPlan(plan);
   } catch (error) {
     if (error instanceof PlanImportError) throw error;
-    const detail = error instanceof PlanValidationError && error.issues[0] ? ` (${error.issues[0].path})` : '';
-    throw new PlanImportError(`The workout plan is invalid${detail}. Please check the JSON file.`, { cause: error });
+    throw new PlanImportError('The workout plan is invalid. Please check the JSON file.', { cause: error });
   }
 }
 

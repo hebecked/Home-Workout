@@ -52,7 +52,7 @@ describe('plan JSON import and export', () => {
       expect(error).toBeInstanceOf(PlanImportError);
       const importError = error as PlanImportError;
       expect(importError.userMessage).toBe(
-        'The workout plan is invalid (phases.0.rounds). Please check the JSON file.'
+        'The workout plan is invalid. Please check the JSON file.'
       );
       expect(importError.cause).toBeInstanceOf(PlanValidationError);
       expect((importError.cause as PlanValidationError).issues[0]?.path).toBe('phases.0.rounds');
@@ -112,7 +112,7 @@ describe('plan JSON import and export', () => {
     expect(plan).toStrictEqual(snapshot);
   });
 
-  it('uses a stable safe error contract and preserves the diagnostic cause', () => {
+  it('keeps validation details out of the user message and preserves them in the diagnostic cause', () => {
     const invalid = clonePlan();
     invalid.phases[0]!.rounds = 0;
 
@@ -124,7 +124,7 @@ describe('plan JSON import and export', () => {
       const importError = error as PlanImportError;
       expect(importError.name).toBe('PlanImportError');
       expect(importError.userMessage).toBe(
-        'The workout plan is invalid (phases.0.rounds). Please check the JSON file.'
+        'The workout plan is invalid. Please check the JSON file.'
       );
       expect(importError.message).toBe(importError.userMessage);
       expect(importError.cause).toBeInstanceOf(PlanValidationError);

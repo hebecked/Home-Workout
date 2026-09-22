@@ -97,6 +97,26 @@ test('desktop editor creates, orders and saves a multilingual plan', async ({ pa
   await expect(page.getByText(/Plan deleted|Plan gelöscht/i)).toBeVisible();
 });
 
+test('create new plan is empty after saving a plan', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'firefox-desktop', 'One browser covers editor state transitions');
+  const savedName = `Saved plan ${Date.now()}`;
+
+  await page.goto('/#editor');
+  await page.getByLabel(/plan name.*English|English.*plan name/i).fill(savedName);
+  const trainingPhase = page.locator('.phase-editor[data-phase="training"]');
+  await trainingPhase.getByRole('button', { name: /add exercise|Übung hinzufügen/i }).click();
+  await page.locator('select[name="exercise-library"]').selectOption('squat');
+  await page.getByRole('button', { name: /add selected|Auswahl hinzufügen/i }).click();
+  await page.getByRole('button', { name: /save locally|lokal speichern/i }).click();
+  await expect(page.getByRole('status')).toContainText(/saved|gespeichert/i);
+
+  await page.goto('/#editor');
+
+  await expect(page.getByLabel(/plan name.*English|English.*plan name/i)).toHaveValue('');
+  await expect(page.getByRole('button', { name: /save locally|lokal speichern/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /save changes|Änderungen speichern/i })).toHaveCount(0);
+});
+
 test('machine translation explains the transfer and requires explicit review before saving', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'firefox-desktop', 'Representative translation-review journey');
   await page.route('**/api/translate', async (route) => {
@@ -233,7 +253,7 @@ test('invalid imports show a useful error and never offer start', async ({ page 
     buffer: Buffer.from('{"schemaVersion":1,"rounds":0}')
   });
 
-  await expect(page.getByRole('alert')).toContainText(/invalid|ungültig|round|Runde/i);
+  await expect(page.getByRole('alert')).toHaveText('The workout plan is invalid. Please check the JSON file.');
   await expect(page.getByRole('button', { name: /^start$|^starten$/i })).toHaveCount(0);
 });
 

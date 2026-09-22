@@ -46,7 +46,9 @@ describe('plan translation workflow', () => {
     });
     expect(plan.translationMetadata).toBeUndefined();
     expect(() => exportPlanJson(translated)).toThrow(/must be reviewed/i);
-    expect(() => importPlanJson(JSON.stringify(translated))).toThrow(/invalid.*translationMetadata\.hi\.reviewStatus/i);
+    expect(() => importPlanJson(JSON.stringify(translated))).toThrow(
+      'The workout plan is invalid. Please check the JSON file.'
+    );
     const setItem = vi.fn();
     const storage = { getItem: () => '[]', setItem } as unknown as Storage;
     expect(() => savePlan(storage, translated)).toThrow(/must be reviewed/i);
