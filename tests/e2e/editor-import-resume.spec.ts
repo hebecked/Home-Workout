@@ -97,7 +97,7 @@ test('desktop editor creates, orders and saves a multilingual plan', async ({ pa
   await expect(page.getByText(/Plan deleted|Plan gelöscht/i)).toBeVisible();
 });
 
-test('create new plan is empty after saving a plan', async ({ page }, testInfo) => {
+test('saving keeps the plan editable and create new plan starts with an empty form', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'firefox-desktop', 'One browser covers editor state transitions');
   const savedName = `Saved plan ${Date.now()}`;
 
@@ -109,6 +109,9 @@ test('create new plan is empty after saving a plan', async ({ page }, testInfo) 
   await page.getByRole('button', { name: /add selected|Auswahl hinzufügen/i }).click();
   await page.getByRole('button', { name: /save locally|lokal speichern/i }).click();
   await expect(page.getByRole('status')).toContainText(/saved|gespeichert/i);
+
+  await expect(page.getByLabel(/plan name.*English|English.*plan name/i)).toHaveValue(savedName);
+  await expect(page.getByRole('button', { name: /save changes|Änderungen speichern/i })).toBeVisible();
 
   await page.goto('/#editor');
 

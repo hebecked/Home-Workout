@@ -131,10 +131,11 @@ export class HomeWorkoutApp {
       event.preventDefault();
       document.querySelector<HTMLElement>('#main')?.focus();
     });
-    window.addEventListener('hashchange', () => { this.render(); window.scrollTo({ top: 0, left: 0, behavior: 'instant' }); });
+    window.addEventListener('hashchange', () => { this.loadEditorRoute(); this.render(); window.scrollTo({ top: 0, left: 0, behavior: 'instant' }); });
     this.session = loadWorkoutSession(localStorage);
     if (this.session) this.activePlan = this.findPlan(this.session.planId) ?? cloneDefault();
     const linkedPlanLoaded = this.loadLinkedPlan();
+    this.loadEditorRoute();
     this.render();
     if (this.session && !linkedPlanLoaded) this.showResumeDialog();
   }
@@ -190,7 +191,11 @@ export class HomeWorkoutApp {
     this.resetCountdownCue();
   }
 
-  private route(): string { return location.hash.replace(/^#\/?/, '') || 'home'; }
+  private rawRoute(): string { return location.hash.replace(/^#\/?/, '') || 'home'; }
+  private route(): string {
+    const route = this.rawRoute();
+    return route === 'editor' || /^(edit|copy)\//.test(route) ? 'editor' : route;
+  }
   private findPlan(id: string): WorkoutPlan | undefined {
     const bundled = BUILT_IN_WORKOUTS_BY_ID.get(id);
     return bundled ? structuredClone(bundled) : loadPlans(localStorage).find((plan) => plan.id === id);
@@ -203,7 +208,7 @@ export class HomeWorkoutApp {
     this.exercisePickerPhaseId = null;
   }
 
-  private openPlanEditor(plan: WorkoutPlan, asCopy: boolean): void {
+  private setPlanEditor(plan: WorkoutPlan, asCopy: boolean): void {
     this.draft = structuredClone(plan);
     this.editorMode = asCopy ? 'copy' : 'edit';
     if (asCopy) {
@@ -216,8 +221,41 @@ export class HomeWorkoutApp {
     }
     this.notice = asCopy ? this.t('editor.copyCreated') : '';
     this.exercisePickerPhaseId = null;
-    if (this.route() === 'editor') this.render();
-    else location.hash = 'editor';
+  }
+
+  private openPlanEditor(plan: WorkoutPlan, asCopy: boolean): void {
+    const route = `${asCopy ? 'copy' : 'edit'}/${encodeURIComponent(plan.id)}`;
+    if (this.rawRoute() === route) {
+      this.setPlanEditor(plan, asCopy);
+      this.render();
+    } else {
+      location.hash = route;
+    }
+  }
+
+  private loadEditorRoute(): void {
+    const route = this.rawRoute();
+    if (route === 'editor') {
+      const state: unknown = history.state;
+      const editorState = typeof state === 'object' && state !== null
+        ? state as Record<string, unknown>
+        : {};
+      const returningToDraft = editorState.homeWorkoutEditorDraft === true && this.editorMode === 'create';
+      if (!returningToDraft) this.openNewPlan();
+      history.replaceState(
+        { ...editorState, homeWorkoutEditorDraft: true },
+        '',
+        location.href
+      );
+      return;
+    }
+    const match = /^(edit|copy)\/(.+)$/.exec(route);
+    if (!match) return;
+    let planId = '';
+    try { planId = decodeURIComponent(match[2]!); } catch { /* Invalid route falls back to a new plan. */ }
+    const plan = this.findPlan(planId);
+    if (plan) this.setPlanEditor(plan, match[1] === 'copy');
+    else this.openNewPlan();
   }
 
   private shell(content: string): void {
@@ -989,7 +1027,8 @@ export class HomeWorkoutApp {
     const withPlan = (callback: (plan: WorkoutPlan) => void): void => { try { callback(this.normalizedDraft()); } catch (error) { this.notice = error instanceof Error && /rounds: must be a positive integer/.test(error.message) ? this.t('editor.roundsMinimum') : error instanceof Error ? error.message : this.t('error.invalidPlan'); this.renderEditor(); } };
     this.root.querySelector('[data-action="save-plan"]')?.addEventListener('click', () => withPlan((plan) => {
       savePlan(localStorage, plan);
-      if (this.editorMode !== 'edit') this.openNewPlan();
+      this.editorMode = 'edit';
+      history.replaceState(null, '', `${location.pathname}${location.search}#edit/${encodeURIComponent(plan.id)}`);
       this.notice = this.t('editor.saved');
       this.renderEditor();
     }));
