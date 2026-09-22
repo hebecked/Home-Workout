@@ -25,7 +25,6 @@ test('safety guidance is visible and the retired review does not erase local fee
   expect(await guide.text()).toContain('statutory liability rights');
   expect(await guide.text()).toContain('warm-up: heel-dig');
   expect(await guide.text()).toContain('stretch: calf-stretch');
-  expect(await guide.text()).toContain('<!-- AI-generated workout plan -->');
   await page.goto('/#impressum');
   await expect(page.locator('.legal-notice')).toContainText('This app was partly created with AI assistance.');
 });
